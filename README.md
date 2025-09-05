@@ -73,6 +73,15 @@ Navigate to `packages/server` or use `pnpm --filter @campus-event-hub/server <sc
 - `pnpm start` - Run the production server
 - `pnpm format` - Format code using Prettier
 
+### Database Setup
+
+The server uses SQLite by default. The database file is created automatically on first run.
+
+1. **Default location**: `./packages/server/data/app.db`
+2. **Configuration**: Set `DATABASE_PATH` in your `.env` file
+3. **Migrations**: Run automatically on server startup
+4. **In-memory DB**: Set `DATABASE_PATH=:memory:` for testing
+
 ## 🛠️ Development
 
 ### Adding New Packages
@@ -100,16 +109,70 @@ Navigate to `packages/server` or use `pnpm --filter @campus-event-hub/server <sc
 
 The server provides the following endpoints:
 
+#### Basic Endpoints
 - `GET /` - Welcome message
 - `GET /health` - Server health check
-- `GET /api/v1` - API information
+- `GET /api/v1` - API information with available endpoints
+
+#### User CRUD Endpoints
+- `GET /api/v1/users` - List all users with pagination
+  - Query params: `?page=1&limit=10`
+- `GET /api/v1/users/:id` - Get a specific user by ID
+- `POST /api/v1/users` - Create a new user
+  - Body: `{ "name": "string", "email": "string" }`
+- `PUT /api/v1/users/:id` - Update an existing user
+  - Body: `{ "name": "string", "email": "string" }` (all fields optional)
+- `DELETE /api/v1/users/:id` - Delete a user
+
+### Database Architecture
+
+The server uses a clean architecture with repository pattern:
+
+- **SQLite Database** with raw SQL queries (easily replaceable)
+- **Repository Pattern** for data access abstraction
+- **Service Layer** for business logic
+- **Dependency Injection** for loose coupling
+
+#### Architecture Layers:
+```
+src/
+├── models/           # Domain models (User)
+├── repositories/     # Abstract interfaces (IUserRepository)
+├── infrastructure/   # Concrete implementations
+│   ├── database/     # Database connection & migrations
+│   └── repositories/ # SQLite repository implementations
+├── services/         # Business logic (UserService)
+└── routes/           # REST API endpoints
+```
 
 ### Error Handling
 
 All errors are handled consistently with:
 - Proper HTTP status codes
 - JSON error responses
+- Custom AppError class for application errors
+- Async error wrapper for route handlers
 - Stack traces in development mode
+
+### Example API Usage
+
+```bash
+# Create a user
+curl -X POST http://localhost:3000/api/v1/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Jane Doe", "email": "jane@example.com"}'
+
+# Get all users
+curl http://localhost:3000/api/v1/users?page=1&limit=10
+
+# Update a user
+curl -X PUT http://localhost:3000/api/v1/users/1 \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Jane Smith"}'
+
+# Delete a user
+curl -X DELETE http://localhost:3000/api/v1/users/1
+```
 
 ## 🤝 Contributing
 

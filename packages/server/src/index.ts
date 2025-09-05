@@ -48,9 +48,21 @@ app.use((req: Request, res: Response) => {
 app.use(errorHandler);
 
 // Start server
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
   console.log(`⚡️[server]: Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    // Close database connection
+    import('./infrastructure/Container').then(({ container }) => {
+      container.close();
+    });
+  });
 });
 
 export default app;
