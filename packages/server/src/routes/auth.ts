@@ -9,22 +9,7 @@ import { UpdateSelfDto } from '../models/User';
 export const createAuthRouter = (authService: AuthService, userService: UserService): Router => {
   const router = Router();
 
-  // POST /api/v1/auth/register - Register new user
-  router.post('/register', asyncHandler(async (req: Request, res: Response) => {
-    const registerDto: RegisterDto = {
-      name: req.body.name,
-      email: req.body.email,
-      password: req.body.password
-    };
-
-    const result = await authService.register(registerDto);
-    
-    res.status(201).json({
-      success: true,
-      data: result,
-      message: 'User registered successfully'
-    });
-  }));
+  // Note: Self-registration removed - users are created by SUPERADMIN/ADMIN via /api/v1/users endpoint
 
   // POST /api/v1/auth/login - Login user
   router.post('/login', asyncHandler(async (req: Request, res: Response) => {

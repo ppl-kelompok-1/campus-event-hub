@@ -13,7 +13,6 @@ router.get('/', (req, res) => {
     version: '1.0.0',
     endpoints: {
       authentication: [
-        'POST /api/v1/auth/register',
         'POST /api/v1/auth/login',
         'GET /api/v1/auth/profile',
         'PUT /api/v1/auth/profile'
@@ -31,7 +30,7 @@ router.get('/', (req, res) => {
       credentials: {
         email: 'superadmin@campus-event-hub.local',
         password: 'SuperAdmin123! (CHANGE IMMEDIATELY)',
-        note: 'Run initialization script to create first SUPERADMIN user'
+        note: 'Run initialization script to create first SUPERADMIN user. Users cannot self-register - they are created by SUPERADMIN/ADMIN via /users endpoint.'
       }
     },
     documentation: {
