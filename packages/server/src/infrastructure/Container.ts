@@ -3,6 +3,7 @@ import { SQLiteDatabase } from './database/SQLiteDatabase';
 import { IUserRepository } from '../repositories/IUserRepository';
 import { SQLiteUserRepository } from './repositories/SQLiteUserRepository';
 import { UserService } from '../services/UserService';
+import { AuthService } from '../services/AuthService';
 import { MigrationRunner } from './database/MigrationRunner';
 import path from 'path';
 
@@ -12,6 +13,7 @@ export class Container {
   private database?: IDatabase;
   private userRepository?: IUserRepository;
   private userService?: UserService;
+  private authService?: AuthService;
 
   private constructor() {}
 
@@ -44,10 +46,18 @@ export class Container {
     return this.userRepository;
   }
 
+  // Auth service (singleton)
+  getAuthService(): AuthService {
+    if (!this.authService) {
+      this.authService = new AuthService(this.getUserRepository());
+    }
+    return this.authService;
+  }
+
   // User service (singleton)
   getUserService(): UserService {
     if (!this.userService) {
-      this.userService = new UserService(this.getUserRepository());
+      this.userService = new UserService(this.getUserRepository(), this.getAuthService());
     }
     return this.userService;
   }
@@ -67,6 +77,7 @@ export class Container {
     this.database = undefined;
     this.userRepository = undefined;
     this.userService = undefined;
+    this.authService = undefined;
   }
 }
 
