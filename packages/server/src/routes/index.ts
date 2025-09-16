@@ -26,7 +26,19 @@ router.get('/', (req, res) => {
         'DELETE /api/v1/users/:id'
       ]
     },
-    documentation: 'See README.md for detailed API usage and examples'
+    setup: {
+      script: 'pnpm run init-superadmin',
+      credentials: {
+        email: 'superadmin@campus-event-hub.local',
+        password: 'SuperAdmin123! (CHANGE IMMEDIATELY)',
+        note: 'Run initialization script to create first SUPERADMIN user'
+      }
+    },
+    documentation: {
+      readme: 'See README.md for detailed API usage and examples',
+      rbac: 'See RBAC_SETUP.md for complete role-based access control guide',
+      security: 'Change default SUPERADMIN password immediately after first login'
+    }
   });
 });
 

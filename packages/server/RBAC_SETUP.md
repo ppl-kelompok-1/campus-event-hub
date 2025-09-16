@@ -19,9 +19,9 @@ The system implements three roles with hierarchical permissions:
 ### Roles & Permissions
 
 - **superadmin**: 
-  - CRUD operations on all users (including admins)
-  - Can assign roles: admin, user
-  - Full system access
+  - CRUD operations on all users (including admins and other superadmins)
+  - Can assign roles: admin, user (cannot create other superadmins via API)
+  - Full system access and highest privilege level
 
 - **admin**: 
   - CRUD operations on users (role: user only)
@@ -124,7 +124,22 @@ curl -X POST http://localhost:3000/api/v1/users \
   -d '{"name": "Admin User", "email": "admin@example.com", "password": "admin123", "role": "admin"}'
 ```
 
-### 4. Update own profile
+### 4. Login as SUPERADMIN (first time)
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "superadmin@campus-event-hub.local", "password": "SuperAdmin123!"}'
+```
+
+### 5. Update SUPERADMIN password (CRITICAL)
+```bash
+curl -X PUT http://localhost:3000/api/v1/auth/profile \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <superadmin_token>" \
+  -d '{"name": "System Administrator", "password": "YourNewSecurePassword123!"}'
+```
+
+### 6. Update own profile (general users)
 ```bash
 curl -X PUT http://localhost:3000/api/v1/auth/profile \
   -H "Content-Type: application/json" \
@@ -176,13 +191,116 @@ src/
     └── users.ts          # User CRUD with permissions
 ```
 
-## 🎯 First Steps
+## 🚀 SUPERADMIN Initialization
 
-1. Install dependencies (see Installation section above)
-2. Start the server: `pnpm dev`
-3. Register your first user (will be 'user' role by default)
-4. Manually promote to superadmin in database or create via SQL
-5. Use superadmin to create admin accounts
-6. Test the role-based permissions
+**NEW**: Use the automated script to create your first SUPERADMIN user:
+
+```bash
+# Run the initialization script
+pnpm run init-superadmin
+```
+
+### Default SUPERADMIN Credentials
+
+The script creates a SUPERADMIN with these **temporary** credentials:
+
+- **Email**: `superadmin@campus-event-hub.local`
+- **Password**: `SuperAdmin123!`
+- **Role**: `superadmin`
+
+### 🔐 **CRITICAL SECURITY NOTICE**
+
+⚠️ **CHANGE THE DEFAULT PASSWORD IMMEDIATELY** after first login:
+
+1. **Login** using the default credentials
+2. **Update profile** via `/api/v1/auth/profile` with a strong password
+3. **Delete or disable** the script after initial setup
+
+### Script Features
+
+- ✅ **Duplicate Prevention**: Won't create multiple SUPERADMINs
+- ✅ **Safety Checks**: Validates database state before creation
+- ✅ **Secure Hashing**: Uses bcryptjs for password security
+- ✅ **Clear Output**: Detailed logging and next steps
+
+## 🎯 Setup Steps (Updated)
+
+1. **Install dependencies** (see Installation section above)
+2. **Initialize SUPERADMIN**: `pnpm run init-superadmin`
+3. **Start the server**: `pnpm dev`
+4. **Login as SUPERADMIN** and **change the default password**
+5. **Create admin accounts** through the API
+6. **Test role-based permissions**
 
 The database and migrations will run automatically on first startup!
+
+## 🛠️ Troubleshooting
+
+### Script Issues
+
+**Problem**: `pnpm run init-superadmin` fails with database error
+```bash
+# Solution: Check database path and permissions
+ls -la ./data/app.db
+# Ensure database directory exists
+mkdir -p ./data
+```
+
+**Problem**: "SUPERADMIN already exists" but you can't login
+```bash
+# Check existing SUPERADMINs in database
+sqlite3 ./data/app.db "SELECT id, name, email, role, created_at FROM users WHERE role = 'superadmin';"
+# Reset password if needed (run script will show existing users)
+```
+
+**Problem**: Script runs but server won't start
+```bash
+# Check environment variables
+cat .env
+# Ensure JWT_SECRET is set
+echo "JWT_SECRET=your-secret-key" >> .env
+```
+
+### Authentication Issues
+
+**Problem**: Token expires too quickly
+```bash
+# Update JWT expiration in .env
+JWT_EXPIRE=7d  # or desired duration
+```
+
+**Problem**: CORS errors in browser
+```bash
+# Server includes CORS middleware, check if server is running on correct port
+curl http://localhost:3000/health
+```
+
+### Permission Issues
+
+**Problem**: Admin can't create users
+- ✅ Check the admin has valid JWT token
+- ✅ Verify the admin role is correctly assigned
+- ✅ Ensure request includes proper Authorization header
+
+**Problem**: User can't update own profile
+- ✅ Check JWT token hasn't expired
+- ✅ Verify user is updating their own ID
+- ✅ Check password complexity requirements (min 8 characters)
+
+### Database Issues
+
+**Problem**: Migration errors on startup
+```bash
+# Delete database and restart (⚠️ loses all data)
+rm ./data/app.db
+pnpm run init-superadmin
+pnpm dev
+```
+
+**Problem**: SQLite database locked
+```bash
+# Stop all Node processes
+pkill -f node
+# Restart server
+pnpm dev
+```
