@@ -57,7 +57,13 @@ npm install -g pnpm
    EOF
    ```
 
-5. **Start the development server**
+5. **Initialize the database and create SUPERADMIN**
+   ```bash
+   # This creates the SQLite database and first SUPERADMIN user
+   pnpm run init-superadmin
+   ```
+
+6. **Start the development server**
    ```bash
    # From the root directory
    cd packages/server
@@ -90,10 +96,17 @@ Navigate to `packages/server` or use `pnpm --filter @campus-event-hub/server <sc
 
 The server uses SQLite by default. The database file is created automatically on first run.
 
-1. **Default location**: `./packages/server/data/app.db`
+1. **Default location**: `./packages/data/app.db` (relative to packages/server)
 2. **Configuration**: Set `DATABASE_PATH` in your `.env` file
-3. **Migrations**: Run automatically on server startup
-4. **In-memory DB**: Set `DATABASE_PATH=:memory:` for testing
+3. **Initialization**: Run `pnpm run init-superadmin` to create database and first user
+4. **Migrations**: Run automatically on server startup
+5. **In-memory DB**: Set `DATABASE_PATH=:memory:` for testing
+6. **Git Ignored**: Database files are automatically ignored by git for security
+
+**Important**: The database directory (`packages/data/`) is excluded from git to prevent:
+- Accidental commit of user data
+- Environment-specific data conflicts
+- Security issues with production data
 
 ## 🛠️ Development
 
