@@ -1,9 +1,12 @@
 import { IDatabase } from './database/IDatabase';
 import { SQLiteDatabase } from './database/SQLiteDatabase';
 import { IUserRepository } from '../repositories/IUserRepository';
+import { IEventRepository } from '../repositories/IEventRepository';
 import { SQLiteUserRepository } from './repositories/SQLiteUserRepository';
+import { SQLiteEventRepository } from './repositories/SQLiteEventRepository';
 import { UserService } from '../services/UserService';
 import { AuthService } from '../services/AuthService';
+import { EventService } from '../services/EventService';
 import { MigrationRunner } from './database/MigrationRunner';
 import path from 'path';
 
@@ -12,8 +15,10 @@ export class Container {
   private static instance: Container;
   private database?: IDatabase;
   private userRepository?: IUserRepository;
+  private eventRepository?: IEventRepository;
   private userService?: UserService;
   private authService?: AuthService;
+  private eventService?: EventService;
 
   private constructor() {}
 
@@ -46,6 +51,14 @@ export class Container {
     return this.userRepository;
   }
 
+  // Event repository (singleton)
+  getEventRepository(): IEventRepository {
+    if (!this.eventRepository) {
+      this.eventRepository = new SQLiteEventRepository(this.getDatabase());
+    }
+    return this.eventRepository;
+  }
+
   // Auth service (singleton)
   getAuthService(): AuthService {
     if (!this.authService) {
@@ -62,6 +75,14 @@ export class Container {
     return this.userService;
   }
 
+  // Event service (singleton)
+  getEventService(): EventService {
+    if (!this.eventService) {
+      this.eventService = new EventService(this.getEventRepository(), this.getUserRepository());
+    }
+    return this.eventService;
+  }
+
   // Method to close database connection
   async close(): Promise<void> {
     if (this.database) {
@@ -76,8 +97,10 @@ export class Container {
     }
     this.database = undefined;
     this.userRepository = undefined;
+    this.eventRepository = undefined;
     this.userService = undefined;
     this.authService = undefined;
+    this.eventService = undefined;
   }
 }
 

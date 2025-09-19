@@ -4,6 +4,7 @@
 export interface QueryResult {
   changes: number;
   lastInsertRowid: number | bigint;
+  lastID: number; // Add this for compatibility
 }
 
 export interface IDatabase {
@@ -12,6 +13,9 @@ export interface IDatabase {
   
   // Execute a query that returns a single row
   get<T>(sql: string, params?: any[]): T | undefined;
+  
+  // Execute a query that returns multiple rows
+  all<T>(sql: string, params?: any[]): T[];
   
   // Execute a query that doesn't return rows (INSERT, UPDATE, DELETE)
   run(sql: string, params?: any[]): QueryResult;
