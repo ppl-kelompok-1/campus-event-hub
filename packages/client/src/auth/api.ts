@@ -66,6 +66,27 @@ export async function fetchApi<T>(
   }
 }
 
+// Types
+export interface User {
+  id: number
+  name: string
+  email: string
+  role: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface PaginatedResponse<T> {
+  success: boolean
+  data: T[]
+  pagination: {
+    total: number
+    page: number
+    totalPages: number
+    limit: number
+  }
+}
+
 // Auth API calls
 export const authApi = {
   login: async (email: string, password: string) => {
@@ -113,6 +134,66 @@ export const authApi = {
     }>('/auth/profile', {
       method: 'PUT',
       body: JSON.stringify({ name, password }),
+    })
+  },
+}
+
+// User management API calls
+export const userApi = {
+  getUsers: async (page = 1, limit = 10) => {
+    return fetchApi<PaginatedResponse<User>>(
+      `/users?page=${page}&limit=${limit}`
+    )
+  },
+  
+  getUserById: async (id: number) => {
+    return fetchApi<{
+      success: boolean
+      data: User
+    }>(`/users/${id}`)
+  },
+  
+  createUser: async (userData: {
+    name: string
+    email: string
+    password: string
+    role: string
+  }) => {
+    return fetchApi<{
+      success: boolean
+      data: User
+      message: string
+    }>('/users', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    })
+  },
+  
+  updateUser: async (
+    id: number,
+    userData: {
+      name?: string
+      email?: string
+      password?: string
+      role?: string
+    }
+  ) => {
+    return fetchApi<{
+      success: boolean
+      data: User
+      message: string
+    }>(`/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    })
+  },
+  
+  deleteUser: async (id: number) => {
+    return fetchApi<{
+      success: boolean
+      message: string
+    }>(`/users/${id}`, {
+      method: 'DELETE',
     })
   },
 }
