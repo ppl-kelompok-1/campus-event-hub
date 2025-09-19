@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import TopBar from './TopBar'
+import Sidebar from './Sidebar'
 import { useAuth } from '../auth/AuthContext'
 
 interface LayoutProps {
@@ -7,116 +9,26 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { user, isAuthenticated } = useAuth()
-  const location = useLocation()
-  
-  const isActive = (path: string) => location.pathname === path
+  const { isAuthenticated } = useAuth()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const handleMenuToggle = () => {
+    setSidebarOpen(!sidebarOpen)
+  }
+
+  const handleSidebarClose = () => {
+    setSidebarOpen(false)
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Navigation Header */}
-      <header style={{ 
-        backgroundColor: '#f8f9fa', 
-        borderBottom: '1px solid #dee2e6',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <nav style={{ 
-          maxWidth: '100%', 
-          margin: '0 auto',
-          padding: '0 5%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: '60px'
-        }}>
-          {/* Logo / Brand */}
-          <Link to="/" style={{ 
-            textDecoration: 'none', 
-            color: '#333',
-            fontSize: '1.5rem',
-            fontWeight: 'bold'
-          }}>
-            Campus Event Hub
-          </Link>
+      {/* Top Bar */}
+      <TopBar onMenuToggle={handleMenuToggle} />
 
-          {/* Navigation Links */}
-          <ul style={{ 
-            display: 'flex', 
-            listStyle: 'none', 
-            gap: '30px', 
-            margin: 0,
-            padding: 0,
-            alignItems: 'center'
-          }}>
-            <li>
-              <Link 
-                to="/" 
-                style={{ 
-                  textDecoration: 'none', 
-                  color: isActive('/') ? '#007bff' : '#666',
-                  fontWeight: isActive('/') ? 'bold' : 'normal'
-                }}
-              >
-                Home
-              </Link>
-            </li>
-            
-            {isAuthenticated ? (
-              <>
-                
-                {(user?.role === 'admin' || user?.role === 'superadmin') && (
-                  <li>
-                    <Link 
-                      to="/users" 
-                      style={{ 
-                        textDecoration: 'none', 
-                        color: location.pathname.startsWith('/users') ? '#007bff' : '#666',
-                        fontWeight: location.pathname.startsWith('/users') ? 'bold' : 'normal'
-                      }}
-                    >
-                      Manage Users
-                    </Link>
-                  </li>
-                )}
-                
-                <li style={{ 
-                  borderLeft: '1px solid #dee2e6', 
-                  paddingLeft: '30px'
-                }}>
-                  <Link 
-                    to="/profile" 
-                    style={{ 
-                      textDecoration: 'none', 
-                      color: isActive('/profile') ? '#007bff' : '#666',
-                      fontWeight: isActive('/profile') ? 'bold' : 'normal'
-                    }}
-                  >
-                    {user?.name} ({user?.role})
-                  </Link>
-                </li>
-              </>
-            ) : (
-              <li>
-                <Link to="/login">
-                  <button style={{
-                    padding: '8px 20px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem'
-                  }}>
-                    Login
-                  </button>
-                </Link>
-              </li>
-            )}
-          </ul>
-        </nav>
-      </header>
+      {/* Sidebar - Only for authenticated users */}
+      {isAuthenticated && (
+        <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} />
+      )}
 
       {/* Main Content */}
       <main style={{ 
