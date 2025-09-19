@@ -14,27 +14,9 @@ const Home = () => {
       {isAuthenticated ? (
         <div>
           <h2>Welcome back, {user?.name}!</h2>
-          <p style={{ marginBottom: '30px' }}>What would you like to do today?</p>
-          
-          <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/profile">
-              <button style={{ padding: '10px 20px', fontSize: '1rem' }}>
-                View Profile
-              </button>
-            </Link>
-            <Link to="/update-profile">
-              <button style={{ padding: '10px 20px', fontSize: '1rem' }}>
-                Update Profile
-              </button>
-            </Link>
-            {(user?.role === 'admin' || user?.role === 'superadmin') && (
-              <Link to="/users">
-                <button style={{ padding: '10px 20px', fontSize: '1rem' }}>
-                  Manage Users
-                </button>
-              </Link>
-            )}
-          </div>
+          <p style={{ marginBottom: '30px' }}>
+            Use the navigation above to access your profile or manage the platform.
+          </p>
         </div>
       ) : (
         <div>

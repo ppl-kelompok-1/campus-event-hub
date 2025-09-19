@@ -8,7 +8,6 @@ import Profile from './pages/Profile'
 import UsersPage from './pages/UsersPage'
 import CreateUserPage from './pages/CreateUserPage'
 import EditUserPage from './pages/EditUserPage'
-import UpdateProfilePage from './pages/UpdateProfilePage'
 import './App.css'
 
 function App() {
@@ -25,14 +24,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/update-profile"
-            element={
-              <ProtectedRoute>
-                <UpdateProfilePage />
               </ProtectedRoute>
             }
           />

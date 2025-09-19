@@ -7,7 +7,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const location = useLocation()
   
   const isActive = (path: string) => location.pathname === path
@@ -65,18 +65,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             
             {isAuthenticated ? (
               <>
-                <li>
-                  <Link 
-                    to="/profile" 
-                    style={{ 
-                      textDecoration: 'none', 
-                      color: isActive('/profile') ? '#007bff' : '#666',
-                      fontWeight: isActive('/profile') ? 'bold' : 'normal'
-                    }}
-                  >
-                    Profile
-                  </Link>
-                </li>
                 
                 {(user?.role === 'admin' || user?.role === 'superadmin') && (
                   <li>
@@ -88,35 +76,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         fontWeight: location.pathname.startsWith('/users') ? 'bold' : 'normal'
                       }}
                     >
-                      Users
+                      Manage Users
                     </Link>
                   </li>
                 )}
                 
                 <li style={{ 
                   borderLeft: '1px solid #dee2e6', 
-                  paddingLeft: '30px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '15px'
+                  paddingLeft: '30px'
                 }}>
-                  <span style={{ color: '#666' }}>
-                    {user?.name} ({user?.role})
-                  </span>
-                  <button 
-                    onClick={logout}
-                    style={{
-                      padding: '6px 16px',
-                      backgroundColor: '#dc3545',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.9rem'
+                  <Link 
+                    to="/profile" 
+                    style={{ 
+                      textDecoration: 'none', 
+                      color: isActive('/profile') ? '#007bff' : '#666',
+                      fontWeight: isActive('/profile') ? 'bold' : 'normal'
                     }}
                   >
-                    Logout
-                  </button>
+                    {user?.name} ({user?.role})
+                  </Link>
                 </li>
               </>
             ) : (
