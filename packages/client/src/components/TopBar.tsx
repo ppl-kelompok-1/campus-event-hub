@@ -6,22 +6,20 @@ interface TopBarProps {
 }
 
 const TopBar: React.FC<TopBarProps> = ({ onMenuToggle }) => {
-  const { user, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   return (
     <header className="topbar">
       <div className="topbar-content">
         {/* Left Section - Menu Button */}
         <div className="topbar-left">
-          {isAuthenticated && (
-            <button 
-              className="menu-toggle"
-              onClick={onMenuToggle}
-              aria-label="Toggle menu"
-            >
-              ☰
-            </button>
-          )}
+          <button 
+            className="menu-toggle"
+            onClick={onMenuToggle}
+            aria-label="Toggle menu"
+          >
+            ☰
+          </button>
         </div>
 
         {/* Center Section - Logo/Brand */}
@@ -31,19 +29,9 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuToggle }) => {
           </Link>
         </div>
 
-        {/* Right Section - User Info or Login */}
+        {/* Right Section - Login for guests only */}
         <div className="topbar-right">
-          {isAuthenticated ? (
-            <Link to="/profile" className="topbar-user">
-              <div className="topbar-user-avatar">
-                {user?.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="topbar-user-info">
-                <div className="topbar-user-name">{user?.name}</div>
-                <div className="topbar-user-role">{user?.role}</div>
-              </div>
-            </Link>
-          ) : (
+          {!isAuthenticated && (
             <Link to="/login" className="topbar-login">
               Login
             </Link>

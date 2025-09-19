@@ -7,7 +7,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-  const { user, logout } = useAuth()
+  const { user, logout, isAuthenticated } = useAuth()
   const location = useLocation()
   
   const isActive = (path: string) => location.pathname === path || 
@@ -47,16 +47,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* User Profile Section */}
-        <div className="sidebar-user">
-          <div className="user-avatar">
-            {user?.name.charAt(0).toUpperCase()}
+        {/* User Profile Section - Only for authenticated users */}
+        {isAuthenticated && user && (
+          <div className="sidebar-user">
+            <div className="user-avatar">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="user-info">
+              <div className="user-name">{user.name}</div>
+              <div className="user-role">{user.role}</div>
+            </div>
           </div>
-          <div className="user-info">
-            <div className="user-name">{user?.name}</div>
-            <div className="user-role">{user?.role}</div>
-          </div>
-        </div>
+        )}
 
         {/* Navigation Sections */}
         <nav className="sidebar-nav">
@@ -71,18 +73,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <span className="nav-icon">🏠</span>
               <span className="nav-text">Home</span>
             </Link>
-            <Link 
-              to="/profile" 
-              className={`nav-item ${isActive('/profile') ? 'nav-item-active' : ''}`}
-              onClick={handleNavigation}
-            >
-              <span className="nav-icon">👤</span>
-              <span className="nav-text">Profile</span>
-            </Link>
+            {isAuthenticated && (
+              <Link 
+                to="/profile" 
+                className={`nav-item ${isActive('/profile') ? 'nav-item-active' : ''}`}
+                onClick={handleNavigation}
+              >
+                <span className="nav-icon">👤</span>
+                <span className="nav-text">Profile</span>
+              </Link>
+            )}
+            {!isAuthenticated && (
+              <Link 
+                to="/login" 
+                className={`nav-item ${isActive('/login') ? 'nav-item-active' : ''}`}
+                onClick={handleNavigation}
+              >
+                <span className="nav-icon">🔑</span>
+                <span className="nav-text">Login</span>
+              </Link>
+            )}
           </div>
 
           {/* Administration Section - Admin/Superadmin only */}
-          {(user?.role === 'admin' || user?.role === 'superadmin') && (
+          {isAuthenticated && (user?.role === 'admin' || user?.role === 'superadmin') && (
             <div className="nav-section">
               <div className="nav-section-title">Administration</div>
               <Link 
@@ -96,17 +110,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             </div>
           )}
 
-          {/* Account Section */}
-          <div className="nav-section">
-            <div className="nav-section-title">Account</div>
-            <button 
-              className="nav-item nav-button"
-              onClick={handleLogout}
-            >
-              <span className="nav-icon">🚪</span>
-              <span className="nav-text">Logout</span>
-            </button>
-          </div>
+          {/* Account Section - Only for authenticated users */}
+          {isAuthenticated && (
+            <div className="nav-section">
+              <div className="nav-section-title">Account</div>
+              <button 
+                className="nav-item nav-button"
+                onClick={handleLogout}
+              >
+                <span className="nav-icon">🚪</span>
+                <span className="nav-text">Logout</span>
+              </button>
+            </div>
+          )}
         </nav>
       </div>
     </>

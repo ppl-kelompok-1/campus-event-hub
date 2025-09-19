@@ -2,14 +2,12 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import TopBar from './TopBar'
 import Sidebar from './Sidebar'
-import { useAuth } from '../auth/AuthContext'
 
 interface LayoutProps {
   children: ReactNode
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { isAuthenticated } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleMenuToggle = () => {
@@ -25,10 +23,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Top Bar */}
       <TopBar onMenuToggle={handleMenuToggle} />
 
-      {/* Sidebar - Only for authenticated users */}
-      {isAuthenticated && (
-        <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} />
-      )}
+      {/* Sidebar - Available for all users */}
+      <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} />
 
       {/* Main Content */}
       <main style={{ 
