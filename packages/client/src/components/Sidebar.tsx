@@ -11,7 +11,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation()
   
   const isActive = (path: string) => location.pathname === path || 
-    (path === '/users' && location.pathname.startsWith('/users'))
+    (path === '/users' && location.pathname.startsWith('/users')) ||
+    (path === '/events/my' && location.pathname.startsWith('/events/my')) ||
+    (path === '/events/create' && location.pathname.startsWith('/events/create'))
 
   const handleNavigation = () => {
     // Auto-close sidebar on mobile after navigation
@@ -92,6 +94,39 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <span className="nav-icon">🔑</span>
                 <span className="nav-text">Login</span>
               </Link>
+            )}
+          </div>
+
+          {/* Events Section */}
+          <div className="nav-section">
+            <div className="nav-section-title">Events</div>
+            <Link 
+              to="/events" 
+              className={`nav-item ${isActive('/events') && !location.pathname.includes('/events/') ? 'nav-item-active' : ''}`}
+              onClick={handleNavigation}
+            >
+              <span className="nav-icon">📅</span>
+              <span className="nav-text">Browse Events</span>
+            </Link>
+            {isAuthenticated && (
+              <>
+                <Link 
+                  to="/events/my" 
+                  className={`nav-item ${isActive('/events/my') ? 'nav-item-active' : ''}`}
+                  onClick={handleNavigation}
+                >
+                  <span className="nav-icon">📋</span>
+                  <span className="nav-text">My Events</span>
+                </Link>
+                <Link 
+                  to="/events/create" 
+                  className={`nav-item ${isActive('/events/create') ? 'nav-item-active' : ''}`}
+                  onClick={handleNavigation}
+                >
+                  <span className="nav-icon">➕</span>
+                  <span className="nav-text">Create Event</span>
+                </Link>
+              </>
             )}
           </div>
 

@@ -76,6 +76,41 @@ export interface User {
   updatedAt?: string
 }
 
+export interface Event {
+  id: number
+  title: string
+  description?: string
+  eventDate: string
+  eventTime: string
+  location: string
+  maxAttendees?: number
+  createdBy: number
+  creatorName: string
+  status: 'draft' | 'published' | 'cancelled' | 'completed'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateEventDto {
+  title: string
+  description?: string
+  eventDate: string
+  eventTime: string
+  location: string
+  maxAttendees?: number
+  status?: 'draft' | 'published'
+}
+
+export interface UpdateEventDto {
+  title?: string
+  description?: string
+  eventDate?: string
+  eventTime?: string
+  location?: string
+  maxAttendees?: number
+  status?: 'draft' | 'published' | 'cancelled' | 'completed'
+}
+
 export interface PaginatedResponse<T> {
   success: boolean
   data: T[]
@@ -85,6 +120,12 @@ export interface PaginatedResponse<T> {
     totalPages: number
     limit: number
   }
+}
+
+export interface ApiResponse<T> {
+  success: boolean
+  data: T
+  message?: string
 }
 
 // Auth API calls
@@ -194,6 +235,67 @@ export const userApi = {
       message: string
     }>(`/users/${id}`, {
       method: 'DELETE',
+    })
+  },
+}
+
+// Event API calls
+export const eventApi = {
+  // Get all published events (public access)
+  getEvents: async (page = 1, limit = 10) => {
+    return fetchApi<PaginatedResponse<Event>>(
+      `/events?page=${page}&limit=${limit}`,
+      { requireAuth: false }
+    )
+  },
+
+  // Get current user's events
+  getMyEvents: async () => {
+    return fetchApi<ApiResponse<Event[]>>('/events/my')
+  },
+
+  // Get event by ID
+  getEventById: async (id: number) => {
+    return fetchApi<ApiResponse<Event>>(
+      `/events/${id}`,
+      { requireAuth: false }
+    )
+  },
+
+  // Create new event
+  createEvent: async (eventData: CreateEventDto) => {
+    return fetchApi<ApiResponse<Event>>('/events', {
+      method: 'POST',
+      body: JSON.stringify(eventData),
+    })
+  },
+
+  // Update event
+  updateEvent: async (id: number, eventData: UpdateEventDto) => {
+    return fetchApi<ApiResponse<Event>>(`/events/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(eventData),
+    })
+  },
+
+  // Delete event
+  deleteEvent: async (id: number) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}`, {
+      method: 'DELETE',
+    })
+  },
+
+  // Publish event
+  publishEvent: async (id: number) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}/publish`, {
+      method: 'POST',
+    })
+  },
+
+  // Cancel event
+  cancelEvent: async (id: number) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}/cancel`, {
+      method: 'POST',
     })
   },
 }
