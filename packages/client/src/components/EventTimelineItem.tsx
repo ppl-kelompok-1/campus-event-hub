@@ -69,24 +69,6 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
     return { localTime, gmtTime }
   }
 
-  const generateEventThumbnail = (title: string) => {
-    // Generate a simple colored thumbnail based on event title
-    const colors = [
-      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-      'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-      'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-      'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-      'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-      'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-      'linear-gradient(135deg, #96fbc4 0%, #f9f586 100%)'
-    ]
-    
-    const index = title.length % colors.length
-    const initials = title.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2)
-    
-    return { background: colors[index], initials }
-  }
 
   const getStatusBadge = (status: string) => {
     const statusStyles: Record<string, React.CSSProperties> = {
@@ -116,7 +98,6 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
 
   const formatDateTime = formatTime(event.eventTime)
   const dateInfo = formatDate(event.eventDate)
-  const thumbnail = generateEventThumbnail(event.title)
 
   return (
     <div style={{ 
@@ -183,25 +164,6 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
         boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
         position: 'relative'
       }}>
-        {/* Event Thumbnail - Moved inside card */}
-        <div style={{ 
-          position: 'absolute',
-          top: '16px',
-          right: '16px',
-          width: isMobile ? '60px' : '80px',
-          height: isMobile ? '45px' : '60px',
-          borderRadius: '6px',
-          background: thumbnail.background,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          fontSize: isMobile ? '16px' : '20px',
-          fontWeight: '600',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-        }}>
-          {thumbnail.initials}
-        </div>
 
         {/* Time */}
         <div style={{ 
@@ -229,8 +191,7 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
             fontWeight: '700',
             color: '#2c3e50',
             lineHeight: '1.3',
-            flex: 1,
-            paddingRight: isMobile ? '70px' : '90px' // Make room for thumbnail
+            flex: 1
           }}>
             <Link 
               to={`/events/${event.id}`}
@@ -332,7 +293,11 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: '8px', 
+          flexWrap: 'wrap'
+        }}>
           {/* Join Button for Browse Events */}
           {showJoinButton && !showManagementActions && (
             <button
