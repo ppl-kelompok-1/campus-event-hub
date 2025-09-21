@@ -77,8 +77,8 @@ export const canManageUser = (authService: AuthService) => {
         return next();
       }
 
-      // Only superadmin and admin can manage other users
-      if (currentUserRole === UserRole.USER) {
+      // Only superadmin and admin can manage other users (approvers cannot manage other users)
+      if (currentUserRole === UserRole.USER || currentUserRole === UserRole.APPROVER) {
         return next(new AppError('Access denied. Cannot manage other users', 403));
       }
 

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { createUserRouter } from './users';
 import { createAuthRouter } from './auth';
+import { createEventRouter } from './events';
 import { container } from '../infrastructure/Container';
 
 const router = Router();
@@ -23,6 +24,17 @@ router.get('/', (req, res) => {
         'POST /api/v1/users',
         'PUT /api/v1/users/:id',
         'DELETE /api/v1/users/:id'
+      ],
+      events: [
+        'GET /api/v1/events',
+        'GET /api/v1/events/my',
+        'GET /api/v1/events/all',
+        'POST /api/v1/events',
+        'GET /api/v1/events/:id',
+        'PUT /api/v1/events/:id',
+        'DELETE /api/v1/events/:id',
+        'POST /api/v1/events/:id/publish',
+        'POST /api/v1/events/:id/cancel'
       ]
     },
     setup: {
@@ -44,6 +56,7 @@ router.get('/', (req, res) => {
 // Get services from container
 const userService = container.getUserService();
 const authService = container.getAuthService();
+const eventService = container.getEventService();
 
 // Mount authentication routes
 router.use('/auth', createAuthRouter(authService, userService));
@@ -51,7 +64,7 @@ router.use('/auth', createAuthRouter(authService, userService));
 // Mount user routes
 router.use('/users', createUserRouter(userService, authService));
 
-// Add more routes here as needed
-// router.use('/events', eventRoutes);
+// Mount event routes
+router.use('/events', createEventRouter(eventService, authService));
 
 export default router;

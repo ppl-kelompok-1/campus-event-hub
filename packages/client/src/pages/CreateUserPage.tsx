@@ -2,13 +2,13 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { userApi } from '../auth/api'
+import { userApi, type UserRole } from '../auth/api'
 
 const CreateUserPage = () => {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState('user')
+  const [role, setRole] = useState<UserRole>('user')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const { user } = useAuth()
@@ -94,10 +94,11 @@ const CreateUserPage = () => {
           <select
             id="role"
             value={role}
-            onChange={(e) => setRole(e.target.value)}
+            onChange={(e) => setRole(e.target.value as UserRole)}
             style={{ width: '100%', padding: '8px' }}
           >
             <option value="user">User</option>
+            {(user?.role === 'admin' || user?.role === 'superadmin') && <option value="approver">Approver</option>}
             {user?.role === 'superadmin' && <option value="admin">Admin</option>}
           </select>
         </div>

@@ -37,12 +37,18 @@ export class SQLiteDatabase implements IDatabase {
     return stmt.get(...(params || [])) as T | undefined;
   }
 
+  all<T>(sql: string, params?: any[]): T[] {
+    const stmt = this.db.prepare(sql);
+    return stmt.all(...(params || [])) as T[];
+  }
+
   run(sql: string, params?: any[]): QueryResult {
     const stmt = this.db.prepare(sql);
     const result = stmt.run(...(params || []));
     return {
       changes: result.changes,
-      lastInsertRowid: result.lastInsertRowid
+      lastInsertRowid: result.lastInsertRowid,
+      lastID: Number(result.lastInsertRowid)
     };
   }
 
@@ -58,7 +64,8 @@ export class SQLiteDatabase implements IDatabase {
         const result = stmt.run(...params);
         return {
           changes: result.changes,
-          lastInsertRowid: result.lastInsertRowid
+          lastInsertRowid: result.lastInsertRowid,
+          lastID: Number(result.lastInsertRowid)
         };
       },
       get: <T>(...params: any[]): T | undefined => {

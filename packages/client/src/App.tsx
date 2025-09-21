@@ -8,6 +8,12 @@ import Profile from './pages/Profile'
 import UsersPage from './pages/UsersPage'
 import CreateUserPage from './pages/CreateUserPage'
 import EditUserPage from './pages/EditUserPage'
+import EventsPage from './pages/EventsPage'
+import MyEventsPage from './pages/MyEventsPage'
+import CreateEventPage from './pages/CreateEventPage'
+import EditEventPage from './pages/EditEventPage'
+import EventDetailsPage from './pages/EventDetailsPage'
+import PendingApprovalsPage from './pages/PendingApprovalsPage'
 import './App.css'
 
 function App() {
@@ -18,12 +24,52 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           
+          {/* Event routes - public */}
+          <Route path="/events" element={<EventsPage />} />
+          <Route path="/events/:id" element={<EventDetailsPage />} />
+          
           {/* Protected routes */}
           <Route
             path="/profile"
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Event routes - protected */}
+          <Route
+            path="/events/my"
+            element={
+              <ProtectedRoute>
+                <MyEventsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events/create"
+            element={
+              <ProtectedRoute>
+                <CreateEventPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events/edit/:id"
+            element={
+              <ProtectedRoute>
+                <EditEventPage />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Approver routes */}
+          <Route
+            path="/approvals"
+            element={
+              <ProtectedRoute>
+                <PendingApprovalsPage />
               </ProtectedRoute>
             }
           />

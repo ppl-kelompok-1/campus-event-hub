@@ -9,6 +9,7 @@
     "start": "node dist/index.js",
     "format": "prettier --write .",
     "init-superadmin": "ts-node scripts/create-superadmin.ts",
+    "reset-db": "ts-node scripts/reset-database.ts",
     "test:api": "./scripts/test_api.sh",
     "test:load": "./scripts/load_test.sh"
   },

@@ -124,8 +124,9 @@ export class AuthService {
   // Role hierarchy check
   canManageRole(currentUserRole: UserRole, targetRole: UserRole): boolean {
     const roleHierarchy = {
-      [UserRole.SUPERADMIN]: 3,
-      [UserRole.ADMIN]: 2,
+      [UserRole.SUPERADMIN]: 4,
+      [UserRole.ADMIN]: 3,
+      [UserRole.APPROVER]: 2,
       [UserRole.USER]: 1
     };
 
@@ -136,9 +137,9 @@ export class AuthService {
   canAssignRole(currentUserRole: UserRole, roleToAssign: UserRole): boolean {
     switch (currentUserRole) {
       case UserRole.SUPERADMIN:
-        return roleToAssign === UserRole.ADMIN || roleToAssign === UserRole.USER;
+        return roleToAssign === UserRole.ADMIN || roleToAssign === UserRole.APPROVER || roleToAssign === UserRole.USER;
       case UserRole.ADMIN:
-        return roleToAssign === UserRole.USER;
+        return roleToAssign === UserRole.APPROVER || roleToAssign === UserRole.USER;
       default:
         return false;
     }

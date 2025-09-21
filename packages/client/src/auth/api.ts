@@ -67,13 +67,60 @@ export async function fetchApi<T>(
 }
 
 // Types
+export type UserRole = 'superadmin' | 'admin' | 'approver' | 'user'
+
 export interface User {
   id: number
   name: string
   email: string
-  role: string
+  role: UserRole
   createdAt?: string
   updatedAt?: string
+}
+
+export type EventStatus = 'draft' | 'pending_approval' | 'revision_requested' | 'published' | 'cancelled' | 'completed'
+
+export interface Event {
+  id: number
+  title: string
+  description?: string
+  eventDate: string
+  eventTime: string
+  location: string
+  maxAttendees?: number
+  createdBy: number
+  creatorName: string
+  status: EventStatus
+  approvedBy?: number
+  approverName?: string
+  approvalDate?: string
+  revisionComments?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateEventDto {
+  title: string
+  description?: string
+  eventDate: string
+  eventTime: string
+  location: string
+  maxAttendees?: number
+  status?: EventStatus
+}
+
+export interface UpdateEventDto {
+  title?: string
+  description?: string
+  eventDate?: string
+  eventTime?: string
+  location?: string
+  maxAttendees?: number
+  status?: EventStatus
+}
+
+export interface ApprovalDto {
+  revisionComments?: string
 }
 
 export interface PaginatedResponse<T> {
@@ -87,6 +134,12 @@ export interface PaginatedResponse<T> {
   }
 }
 
+export interface ApiResponse<T> {
+  success: boolean
+  data: T
+  message?: string
+}
+
 // Auth API calls
 export const authApi = {
   login: async (email: string, password: string) => {
@@ -97,7 +150,7 @@ export const authApi = {
           id: number
           name: string
           email: string
-          role: string
+          role: UserRole
         }
         token: string
       }
@@ -116,7 +169,7 @@ export const authApi = {
         id: number
         name: string
         email: string
-        role: string
+        role: UserRole
       }
     }>('/auth/profile')
   },
@@ -128,7 +181,7 @@ export const authApi = {
         id: number
         name: string
         email: string
-        role: string
+        role: UserRole
       }
       message: string
     }>('/auth/profile', {
@@ -157,7 +210,7 @@ export const userApi = {
     name: string
     email: string
     password: string
-    role: string
+    role: UserRole
   }) => {
     return fetchApi<{
       success: boolean
@@ -194,6 +247,94 @@ export const userApi = {
       message: string
     }>(`/users/${id}`, {
       method: 'DELETE',
+    })
+  },
+}
+
+// Event API calls
+export const eventApi = {
+  // Get all published events (public access)
+  getEvents: async (page = 1, limit = 10) => {
+    return fetchApi<PaginatedResponse<Event>>(
+      `/events?page=${page}&limit=${limit}`,
+      { requireAuth: false }
+    )
+  },
+
+  // Get current user's events
+  getMyEvents: async () => {
+    return fetchApi<ApiResponse<Event[]>>('/events/my')
+  },
+
+  // Get event by ID
+  getEventById: async (id: number) => {
+    return fetchApi<ApiResponse<Event>>(
+      `/events/${id}`,
+      { requireAuth: false }
+    )
+  },
+
+  // Create new event
+  createEvent: async (eventData: CreateEventDto) => {
+    return fetchApi<ApiResponse<Event>>('/events', {
+      method: 'POST',
+      body: JSON.stringify(eventData),
+    })
+  },
+
+  // Update event
+  updateEvent: async (id: number, eventData: UpdateEventDto) => {
+    return fetchApi<ApiResponse<Event>>(`/events/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(eventData),
+    })
+  },
+
+  // Delete event
+  deleteEvent: async (id: number) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}`, {
+      method: 'DELETE',
+    })
+  },
+
+  // Publish event
+  publishEvent: async (id: number) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}/publish`, {
+      method: 'POST',
+    })
+  },
+
+  // Cancel event
+  cancelEvent: async (id: number) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}/cancel`, {
+      method: 'POST',
+    })
+  },
+
+  // Get events pending approval
+  getPendingApprovalEvents: async () => {
+    return fetchApi<ApiResponse<Event[]>>('/events/pending')
+  },
+
+  // Submit event for approval
+  submitForApproval: async (id: number) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}/submit-for-approval`, {
+      method: 'POST',
+    })
+  },
+
+  // Approve event
+  approveEvent: async (id: number) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}/approve`, {
+      method: 'POST',
+    })
+  },
+
+  // Request revision
+  requestRevision: async (id: number, revisionComments: string) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}/request-revision`, {
+      method: 'POST',
+      body: JSON.stringify({ revisionComments }),
     })
   },
 }
