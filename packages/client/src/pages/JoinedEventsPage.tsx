@@ -50,7 +50,25 @@ const JoinedEventsPage = () => {
       const eventResponses = await Promise.all(eventPromises)
       const eventsData = eventResponses
         .filter(response => response.data) // Filter out any null events
-        .map(response => response.data!)
+        .map(response => {
+          const event = response.data!
+          
+          // Find the corresponding registration for this event
+          const registration = registrationsResponse.data.find(reg => reg.eventId === event.id)
+          
+          // Merge registration status with event data
+          if (registration) {
+            return {
+              ...event,
+              isUserRegistered: true,
+              userRegistrationStatus: registration.status,
+              // These properties help the button logic work correctly
+              canRegister: false // User is already registered
+            }
+          }
+          
+          return event
+        })
         
       // Sort events by nearest date first
       const sortedEvents = eventsData.sort((a, b) => {
@@ -243,8 +261,9 @@ const JoinedEventsPage = () => {
                     
                     <EventTimelineItem 
                       event={event}
-                      showJoinButton={false}
+                      showJoinButton={true}
                       showManagementActions={false}
+                      onJoin={() => {}} // Not used since users are already joined
                       onLeave={handleLeaveEvent}
                     />
                   </div>
