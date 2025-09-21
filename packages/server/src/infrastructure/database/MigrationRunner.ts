@@ -2,10 +2,15 @@ import { IDatabase } from './IDatabase';
 import fs from 'fs';
 import path from 'path';
 
+export interface MigrationOptions {
+  silent?: boolean;
+}
+
 export class MigrationRunner {
   constructor(private db: IDatabase) {}
 
-  async runMigrations(migrationsPath: string): Promise<void> {
+  async runMigrations(migrationsPath: string, options?: MigrationOptions): Promise<void> {
+    const silent = options?.silent || false;
     // Create migrations table if it doesn't exist
     this.createMigrationsTable();
 
@@ -19,11 +24,15 @@ export class MigrationRunner {
       
       // Check if migration has already been run
       if (await this.isMigrationRun(migrationName)) {
-        console.log(`Skipping migration: ${migrationName} (already run)`);
+        if (!silent) {
+          console.log(`Skipping migration: ${migrationName} (already run)`);
+        }
         continue;
       }
 
-      console.log(`Running migration: ${migrationName}`);
+      if (!silent) {
+        console.log(`Running migration: ${migrationName}`);
+      }
       
       try {
         // Read and execute migration SQL
@@ -42,9 +51,13 @@ export class MigrationRunner {
           this.recordMigration(migrationName);
         });
         
-        console.log(`Migration completed: ${migrationName}`);
+        if (!silent) {
+          console.log(`Migration completed: ${migrationName}`);
+        }
       } catch (error) {
-        console.error(`Migration failed: ${migrationName}`, error);
+        if (!silent) {
+          console.error(`Migration failed: ${migrationName}`, error);
+        }
         throw error;
       }
     }

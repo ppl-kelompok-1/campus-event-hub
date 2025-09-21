@@ -30,15 +30,15 @@ export class Container {
   }
 
   // Database instance (singleton)
-  getDatabase(): IDatabase {
+  getDatabase(options?: { silent?: boolean }): IDatabase {
     if (!this.database) {
-      const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '../../../data/app.db');
+      const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '../../data/app.db');
       this.database = new SQLiteDatabase(dbPath);
       
       // Run migrations
       const migrationRunner = new MigrationRunner(this.database);
       const migrationsPath = path.join(__dirname, 'database/migrations');
-      migrationRunner.runMigrations(migrationsPath);
+      migrationRunner.runMigrations(migrationsPath, { silent: options?.silent });
     }
     return this.database;
   }
