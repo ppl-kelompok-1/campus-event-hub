@@ -715,5 +715,35 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
     })
   );
 
+  // GET /api/v1/events/:id/attendees - Get public attendee list (names only)
+  router.get('/:id/attendees',
+    asyncHandler(async (req: Request, res: Response) => {
+      const eventId = parseInt(req.params.id);
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid event ID'
+        });
+      }
+
+      try {
+        const attendees = await eventRegistrationService.getEventAttendees(eventId);
+        
+        res.json({
+          success: true,
+          data: attendees
+        });
+      } catch (error) {
+        const statusCode = error instanceof Error && error.message.includes('not found') ? 404 : 500;
+        
+        res.status(statusCode).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to get event attendees'
+        });
+      }
+    })
+  );
+
   return router;
 };

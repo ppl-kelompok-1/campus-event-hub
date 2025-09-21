@@ -414,4 +414,15 @@ export const eventApi = {
       requireAuth: false
     })
   },
+
+  // Get public attendee list for an event (names only)
+  getEventAttendees: async (id: number) => {
+    return fetchApi<ApiResponse<{
+      id: number
+      userName: string
+      registrationDate: string
+    }[]>>(`/events/${id}/attendees`, {
+      requireAuth: false
+    })
+  },
 }

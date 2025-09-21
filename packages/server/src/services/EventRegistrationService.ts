@@ -158,6 +158,42 @@ export class EventRegistrationService {
     };
   }
 
+  // Get public attendee list for an event (only shows names)
+  async getEventAttendees(eventId: number): Promise<{
+    id: number;
+    userName: string;
+    registrationDate: string;
+  }[]> {
+    // Verify event exists
+    const event = await this.eventRepository.findById(eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    // Get all registrations for this event
+    const registrations = await this.eventRegistrationRepository.findByEventId(eventId);
+    
+    // Filter to only registered attendees (not waitlisted or cancelled)
+    const registeredAttendees = registrations.filter(reg => 
+      reg.status === RegistrationStatus.REGISTERED
+    );
+
+    // Map to public attendee information (name only, no email)
+    return Promise.all(registeredAttendees.map(async (reg) => {
+      const userName = await this.eventRegistrationRepository.getUserName(reg.userId);
+      
+      if (!userName) {
+        throw new Error('Failed to get user information for registration');
+      }
+
+      return {
+        id: reg.id,
+        userName,
+        registrationDate: reg.registrationDate.toISOString()
+      };
+    }));
+  }
+
   // Private helper methods
 
   private async validateEventForRegistration(eventId: number): Promise<void> {

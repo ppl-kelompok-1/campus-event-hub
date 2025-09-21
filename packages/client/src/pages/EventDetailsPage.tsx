@@ -3,9 +3,17 @@ import { useParams, Link } from 'react-router-dom'
 import { eventApi } from '../auth/api'
 import type { Event } from '../auth/api'
 
+interface Attendee {
+  id: number
+  userName: string
+  registrationDate: string
+}
+
 const EventDetailsPage = () => {
   const [event, setEvent] = useState<Event | null>(null)
+  const [attendees, setAttendees] = useState<Attendee[]>([])
   const [loading, setLoading] = useState(true)
+  const [attendeesLoading, setAttendeesLoading] = useState(false)
   const [error, setError] = useState('')
   const { id } = useParams<{ id: string }>()
 
@@ -25,11 +33,27 @@ const EventDetailsPage = () => {
       setError('')
       const response = await eventApi.getEventById(Number(id))
       setEvent(response.data)
+      
+      // Also fetch attendees
+      fetchAttendees()
     } catch (err) {
       setError('Failed to load event details.')
       console.error('Error fetching event:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchAttendees = async () => {
+    try {
+      setAttendeesLoading(true)
+      const response = await eventApi.getEventAttendees(Number(id))
+      setAttendees(response.data)
+    } catch (err) {
+      // Don't set error for attendees - just log it
+      console.error('Error fetching attendees:', err)
+    } finally {
+      setAttendeesLoading(false)
     }
   }
 
@@ -248,6 +272,106 @@ const EventDetailsPage = () => {
             </div>
           </div>
         )}
+
+        {/* Attendees Section */}
+        <div style={{ marginTop: '30px' }}>
+          <h3 style={{ 
+            margin: '0 0 16px 0',
+            color: '#2c3e50',
+            fontSize: '1.25rem'
+          }}>
+            Who's Attending
+          </h3>
+          
+          {attendeesLoading ? (
+            <div style={{ 
+              padding: '20px',
+              textAlign: 'center',
+              color: '#6c757d'
+            }}>
+              Loading attendees...
+            </div>
+          ) : attendees.length === 0 ? (
+            <div style={{
+              padding: '20px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '6px',
+              textAlign: 'center',
+              color: '#6c757d',
+              border: '1px solid #e9ecef'
+            }}>
+              No one has registered for this event yet.
+            </div>
+          ) : (
+            <>
+              <div style={{
+                color: '#6c757d',
+                fontSize: '0.9rem',
+                marginBottom: '16px'
+              }}>
+                {attendees.length} {attendees.length === 1 ? 'person is' : 'people are'} attending
+              </div>
+              
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                gap: '12px'
+              }}>
+                {attendees.map((attendee) => (
+                  <div
+                    key={attendee.id}
+                    style={{
+                      padding: '12px 16px',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '6px',
+                      border: '1px solid #e9ecef',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      flexShrink: 0
+                    }}>
+                      {attendee.userName.charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontWeight: '500',
+                        color: '#2c3e50',
+                        fontSize: '14px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {attendee.userName}
+                      </div>
+                      <div style={{
+                        fontSize: '12px',
+                        color: '#6c757d'
+                      }}>
+                        Joined {new Date(attendee.registrationDate).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Event status notice */}
         {event.status === 'cancelled' && (
