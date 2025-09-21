@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 
 /**
- * Script to create initial SUPERADMIN user
+ * Script to create initial users for all roles
  * Usage: pnpm run init-superadmin
  */
 
@@ -12,76 +12,118 @@ import { UserRole } from '../src/models/User';
 // Load environment variables
 dotenv.config();
 
-const SUPERADMIN_EMAIL = 'superadmin@campus-event-hub.local';
-const SUPERADMIN_PASSWORD = 'SuperAdmin123!';
-const SUPERADMIN_NAME = 'System Administrator';
+// Dummy account configurations
+const DUMMY_ACCOUNTS = {
+  [UserRole.SUPERADMIN]: {
+    email: 'superadmin@campus-event-hub.local',
+    password: 'SuperAdmin123!',
+    name: 'System Administrator'
+  },
+  [UserRole.ADMIN]: {
+    email: 'admin@campus-event-hub.local',
+    password: 'Admin123!',
+    name: 'Admin User'
+  },
+  [UserRole.APPROVER]: {
+    email: 'approver@campus-event-hub.local',
+    password: 'Approver123!',
+    name: 'Event Approver'
+  },
+  [UserRole.USER]: {
+    email: 'user@campus-event-hub.local',
+    password: 'User123!',
+    name: 'Regular User'
+  }
+};
 
-async function createSuperAdmin(): Promise<void> {
-  console.log('🚀 Campus Event Hub - SUPERADMIN Initialization Script\n');
+async function createDummyUsers(): Promise<void> {
+  console.log('🚀 Campus Event Hub - User Initialization Script\n');
 
   try {
     // Get services from container
     const userRepository = container.getUserRepository();
     const authService = container.getAuthService();
 
-    console.log('📋 Checking for existing SUPERADMIN users...');
+    console.log('📋 Checking for existing users by role...\n');
 
-    // Check if any SUPERADMIN users already exist
-    const existingSuperAdmins = await userRepository.findByRole(UserRole.SUPERADMIN);
+    const createdUsers: Array<{role: UserRole, user: any, isNew: boolean}> = [];
     
-    if (existingSuperAdmins.length > 0) {
-      console.log('⚠️  SUPERADMIN user already exists!');
-      console.log(`   Found ${existingSuperAdmins.length} SUPERADMIN user(s):`);
-      existingSuperAdmins.forEach((admin, index) => {
-        console.log(`   ${index + 1}. ${admin.name} (${admin.email}) - Created: ${admin.createdAt}`);
-      });
-      console.log('\n✅ No action needed. SUPERADMIN user(s) already configured.\n');
-      return;
+    // Process each role in priority order
+    const roles = [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.APPROVER, UserRole.USER];
+    
+    for (const role of roles) {
+      const config = DUMMY_ACCOUNTS[role];
+      console.log(`🔍 Checking ${role.toUpperCase()} role...`);
+      
+      // Check if any users exist for this role
+      const existingUsers = await userRepository.findByRole(role);
+      
+      if (existingUsers.length > 0) {
+        console.log(`   ✅ Found ${existingUsers.length} existing ${role} user(s)`);
+        existingUsers.forEach((user, index) => {
+          console.log(`      ${index + 1}. ${user.name} (${user.email})`);
+        });
+        createdUsers.push({role, user: existingUsers[0], isNew: false});
+      } else {
+        // Check if email is already in use by a different role
+        const existingUser = await userRepository.findByEmail(config.email);
+        if (existingUser) {
+          console.log(`   ⚠️  Email ${config.email} already in use by ${existingUser.role} user`);
+          console.log(`      Skipping ${role} dummy account creation`);
+          continue;
+        }
+
+        console.log(`   ✨ Creating dummy ${role} user...`);
+        
+        // Hash the password
+        const hashedPassword = await authService.hashPassword(config.password);
+
+        // Create the user
+        const newUser = await userRepository.create({
+          name: config.name,
+          email: config.email,
+          password: hashedPassword,
+          role: role
+        });
+
+        console.log(`   🎉 ${role.toUpperCase()} user created successfully!`);
+        createdUsers.push({role, user: newUser, isNew: true});
+      }
+      console.log('');
     }
 
-    console.log('✨ No SUPERADMIN found. Creating initial SUPERADMIN user...');
-
-    // Check if email is already in use (though it shouldn't be)
-    const existingUser = await userRepository.findByEmail(SUPERADMIN_EMAIL);
-    if (existingUser) {
-      console.log(`❌ Error: Email ${SUPERADMIN_EMAIL} is already in use by a ${existingUser.role} user.`);
-      console.log('   Please manually resolve this conflict in the database.\n');
-      return;
-    }
-
-    // Hash the password
-    const hashedPassword = await authService.hashPassword(SUPERADMIN_PASSWORD);
-
-    // Create the SUPERADMIN user
-    const superAdmin = await userRepository.create({
-      name: SUPERADMIN_NAME,
-      email: SUPERADMIN_EMAIL,
-      password: hashedPassword,
-      role: UserRole.SUPERADMIN
+    // Display summary
+    console.log('📝 LOGIN CREDENTIALS SUMMARY');
+    console.log('=' .repeat(60));
+    
+    createdUsers.forEach(({role, user, isNew}) => {
+      const config = DUMMY_ACCOUNTS[role];
+      const status = isNew ? '🆕 CREATED' : '✅ EXISTS';
+      
+      console.log(`\n${status} - ${role.toUpperCase()}`);
+      console.log(`   Name:     ${user.name}`);
+      console.log(`   Email:    ${user.email}`);
+      console.log(`   Password: ${config.password}`);
+      console.log(`   User ID:  ${user.id}`);
+      console.log(`   Created:  ${user.createdAt}`);
     });
 
-    console.log('🎉 SUPERADMIN user created successfully!\n');
-    console.log('📝 Login Credentials:');
-    console.log(`   Email:    ${SUPERADMIN_EMAIL}`);
-    console.log(`   Password: ${SUPERADMIN_PASSWORD}`);
-    console.log(`   Role:     ${UserRole.SUPERADMIN}`);
-    console.log(`   User ID:  ${superAdmin.id}`);
-    console.log(`   Created:  ${superAdmin.createdAt}\n`);
-
-    console.log('🔐 SECURITY NOTICE:');
-    console.log('   1. Please change the default password immediately after first login');
-    console.log('   2. Use a strong, unique password for production environments');
-    console.log('   3. Consider enabling two-factor authentication if implemented');
-    console.log('   4. This script should only be run once for initial setup\n');
+    console.log('\n' + '=' .repeat(60));
+    console.log('\n🔐 SECURITY NOTICE:');
+    console.log('   1. These are DUMMY accounts for development only');
+    console.log('   2. Change ALL passwords immediately in production');
+    console.log('   3. Use strong, unique passwords for production environments');
+    console.log('   4. Consider enabling two-factor authentication if implemented');
+    console.log('   5. This script should only be run for initial development setup\n');
 
     console.log('🌐 Next Steps:');
     console.log('   1. Start the server: pnpm dev');
     console.log('   2. Login at: POST /api/v1/auth/login');
-    console.log('   3. Update profile: PUT /api/v1/auth/profile');
-    console.log('   4. Begin user management through the API\n');
+    console.log('   3. Test different role permissions with each account');
+    console.log('   4. Update profiles: PUT /api/v1/auth/profile\n');
 
   } catch (error) {
-    console.error('❌ Error creating SUPERADMIN user:');
+    console.error('❌ Error creating dummy users:');
     
     if (error instanceof Error) {
       console.error(`   ${error.message}`);
@@ -108,7 +150,7 @@ async function createSuperAdmin(): Promise<void> {
 }
 
 // Run the script
-createSuperAdmin()
+createDummyUsers()
   .then(() => {
     console.log('✅ Script completed successfully.\n');
     process.exit(0);
