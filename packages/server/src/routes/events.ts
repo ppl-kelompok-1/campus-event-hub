@@ -148,6 +148,33 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
     })
   );
 
+  // GET /api/v1/events/joined - Get user's joined events
+  router.get('/joined',
+    authenticate(authService),
+    asyncHandler(async (req: Request, res: Response) => {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+
+      try {
+        const joinedEvents = await eventRegistrationService.getUserJoinedEvents(req.user.userId);
+        
+        res.json({
+          success: true,
+          data: joinedEvents
+        });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to get joined events'
+        });
+      }
+    })
+  );
+
   // GET /api/v1/events/:id - Get event by ID
   router.get('/:id',
     asyncHandler(async (req: Request, res: Response) => {
@@ -657,32 +684,6 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
     })
   );
 
-  // GET /api/v1/events/joined - Get user's joined events
-  router.get('/joined',
-    authenticate(authService),
-    asyncHandler(async (req: Request, res: Response) => {
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          error: 'User not authenticated'
-        });
-      }
-
-      try {
-        const joinedEvents = await eventRegistrationService.getUserJoinedEvents(req.user.userId);
-        
-        res.json({
-          success: true,
-          data: joinedEvents
-        });
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          error: error instanceof Error ? error.message : 'Failed to get joined events'
-        });
-      }
-    })
-  );
 
   // GET /api/v1/events/:id/stats - Get event registration statistics
   router.get('/:id/stats',
