@@ -1,10 +1,28 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '../auth/AuthContext'
-import { authApi } from '../auth/api'
+import { authApi, eventApi } from '../auth/api'
+import type { Event } from '../auth/api'
+import EventTimelineItem from '../components/EventTimelineItem'
+import { useNavigate } from 'react-router-dom'
+
+interface JoinedEventRegistration {
+  id: number
+  eventId: number
+  userId: number
+  userName: string
+  userEmail: string
+  registrationDate: string
+  status: 'registered' | 'waitlisted' | 'cancelled'
+  createdAt: string
+  updatedAt: string
+}
 
 const Profile = () => {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  
+  // Profile editing state
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState(user?.name || '')
   const [password, setPassword] = useState('')
@@ -12,6 +30,81 @@ const Profile = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'created' | 'joined'>('created')
+  
+  // Events state
+  const [createdEvents, setCreatedEvents] = useState<Event[]>([])
+  const [joinedEvents, setJoinedEvents] = useState<Event[]>([])
+  const [joinedRegistrations, setJoinedRegistrations] = useState<JoinedEventRegistration[]>([])
+  const [eventsLoading, setEventsLoading] = useState(false)
+  const [eventsError, setEventsError] = useState('')
+
+  useEffect(() => {
+    fetchEvents()
+  }, [])
+
+  const fetchEvents = async () => {
+    try {
+      setEventsLoading(true)
+      setEventsError('')
+      
+      // Fetch created events
+      const createdResponse = await eventApi.getMyEvents()
+      setCreatedEvents(createdResponse.data)
+      
+      // Fetch joined events
+      const joinedResponse = await eventApi.getJoinedEvents()
+      setJoinedRegistrations(joinedResponse.data)
+      
+      // Get full event details for each registration
+      const eventPromises = joinedResponse.data.map(reg => 
+        eventApi.getEventById(reg.eventId)
+      )
+      
+      const eventResponses = await Promise.all(eventPromises)
+      const eventsData = eventResponses
+        .filter(response => response.data)
+        .map(response => {
+          const event = response.data!
+          
+          // Find the corresponding registration for this event
+          const registration = joinedResponse.data.find(reg => reg.eventId === event.id)
+          
+          // Merge registration status with event data
+          if (registration) {
+            return {
+              ...event,
+              isUserRegistered: true,
+              userRegistrationStatus: registration.status,
+              canRegister: false
+            }
+          }
+          
+          return event
+        })
+        
+      // Sort events by nearest date first
+      const sortedEvents = eventsData.sort((a, b) => {
+        const dateA = new Date(a.eventDate)
+        const dateB = new Date(b.eventDate)
+        const now = new Date()
+        
+        const diffA = Math.abs(dateA.getTime() - now.getTime())
+        const diffB = Math.abs(dateB.getTime() - now.getTime())
+        
+        return diffA - diffB
+      })
+      
+      setJoinedEvents(sortedEvents)
+    } catch (err) {
+      setEventsError('Failed to load events. Please try again later.')
+      console.error('Error fetching events:', err)
+    } finally {
+      setEventsLoading(false)
+    }
+  }
 
   const handleEdit = () => {
     setIsEditing(true)
@@ -71,6 +164,83 @@ const Profile = () => {
       setError(err.message || 'Failed to update profile')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Event handlers for created events
+  const handleEditEvent = (event: Event) => {
+    navigate(`/events/edit/${event.id}`)
+  }
+
+  const handleDeleteEvent = async (event: Event) => {
+    if (!window.confirm(`Are you sure you want to delete "${event.title}"?`)) {
+      return
+    }
+
+    try {
+      await eventApi.deleteEvent(event.id)
+      setCreatedEvents(createdEvents.filter(e => e.id !== event.id))
+    } catch (err) {
+      setEventsError('Failed to delete event. Please try again.')
+      console.error('Error deleting event:', err)
+    }
+  }
+
+  const handlePublishEvent = async (event: Event) => {
+    try {
+      await eventApi.publishEvent(event.id)
+      setCreatedEvents(createdEvents.map(e => 
+        e.id === event.id ? { ...e, status: 'published' as const } : e
+      ))
+    } catch (err) {
+      setEventsError('Failed to publish event. Please try again.')
+      console.error('Error publishing event:', err)
+    }
+  }
+
+  const handleCancelEvent = async (event: Event) => {
+    if (!window.confirm(`Are you sure you want to cancel "${event.title}"?`)) {
+      return
+    }
+
+    try {
+      await eventApi.cancelEvent(event.id)
+      setCreatedEvents(createdEvents.map(e => 
+        e.id === event.id ? { ...e, status: 'cancelled' as const } : e
+      ))
+    } catch (err) {
+      setEventsError('Failed to cancel event. Please try again.')
+      console.error('Error cancelling event:', err)
+    }
+  }
+
+  const handleSubmitForApproval = async (event: Event) => {
+    try {
+      await eventApi.submitForApproval(event.id)
+      setCreatedEvents(createdEvents.map(e => 
+        e.id === event.id ? { ...e, status: 'pending_approval' as const } : e
+      ))
+    } catch (err) {
+      setEventsError('Failed to submit for approval. Please try again.')
+      console.error('Error submitting for approval:', err)
+    }
+  }
+
+  // Event handler for joined events
+  const handleLeaveEvent = async (event: Event) => {
+    if (!window.confirm(`Are you sure you want to leave "${event.title}"?`)) {
+      return
+    }
+
+    try {
+      await eventApi.leaveEvent(event.id)
+      
+      // Remove the event from the list
+      setJoinedEvents(joinedEvents.filter(e => e.id !== event.id))
+      setJoinedRegistrations(joinedRegistrations.filter(reg => reg.eventId !== event.id))
+    } catch (err) {
+      setEventsError('Failed to leave event. Please try again.')
+      console.error('Error leaving event:', err)
     }
   }
 
@@ -179,48 +349,366 @@ const Profile = () => {
   }
 
   return (
-    <div style={{ maxWidth: '500px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <h1>Profile</h1>
-        <button onClick={handleEdit}>
-          Edit Profile
-        </button>
-      </div>
-      
-      {user && (
-        <div className="card">
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Name</label>
-            <p style={{ margin: 0, padding: '8px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>{user.name}</p>
-          </div>
-          
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Email</label>
-            <p style={{ margin: 0, padding: '8px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>{user.email}</p>
-          </div>
-          
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Role</label>
-            <p style={{ margin: 0, padding: '8px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-              <span style={{ 
-                backgroundColor: user.role === 'superadmin' ? '#007bff' : user.role === 'admin' ? '#28a745' : '#6c757d',
+    <div style={{ 
+      minHeight: '100vh',
+      backgroundColor: '#f8f9fa'
+    }}>
+      {/* Profile Header */}
+      <div style={{ 
+        backgroundColor: 'white',
+        borderBottom: '1px solid #e9ecef',
+        padding: '24px 0'
+      }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            marginBottom: '20px'
+          }}>
+            <h1 style={{ 
+              margin: '0', 
+              color: '#2c3e50',
+              fontSize: '32px',
+              fontWeight: '700'
+            }}>
+              Profile
+            </h1>
+            <button 
+              onClick={handleEdit}
+              style={{
+                backgroundColor: '#007bff',
                 color: 'white',
-                padding: '4px 12px',
-                borderRadius: '3px',
-                fontSize: '0.9rem',
-                textTransform: 'capitalize'
-              }}>
-                {user.role}
-              </span>
-            </p>
+                border: 'none',
+                borderRadius: '6px',
+                padding: '10px 20px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+            >
+              Edit Profile
+            </button>
           </div>
+          
+          {user && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '20px',
+              padding: '20px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '12px',
+              border: '1px solid #e9ecef'
+            }}>
+              {/* Avatar */}
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                backgroundColor: '#007bff',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '32px',
+                fontWeight: '600',
+                flexShrink: 0
+              }}>
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              
+              {/* User Info */}
+              <div style={{ flex: 1 }}>
+                <h2 style={{ 
+                  margin: '0 0 8px 0',
+                  fontSize: '24px',
+                  color: '#2c3e50'
+                }}>
+                  {user.name}
+                </h2>
+                <p style={{ 
+                  margin: '0 0 8px 0',
+                  color: '#6c757d',
+                  fontSize: '16px'
+                }}>
+                  {user.email}
+                </p>
+                <span style={{ 
+                  backgroundColor: user.role === 'superadmin' ? '#007bff' : 
+                                 user.role === 'admin' ? '#28a745' : 
+                                 user.role === 'approver' ? '#ffc107' : '#6c757d',
+                  color: user.role === 'approver' ? '#212529' : 'white',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  textTransform: 'capitalize'
+                }}>
+                  {user.role}
+                </span>
+              </div>
+              
+              {/* Logout Button */}
+              <button 
+                onClick={logout}
+                style={{
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
-      )}
-      
-      <div style={{ marginTop: '30px', textAlign: 'center' }}>
-        <button onClick={logout} className="danger">
-          Logout
-        </button>
+      </div>
+
+      {/* Main Content */}
+      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '32px 20px' }}>
+        {/* Tab Navigation */}
+        <div style={{
+          display: 'flex',
+          marginBottom: '24px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '8px',
+          border: '1px solid #e9ecef'
+        }}>
+          <button
+            onClick={() => setActiveTab('created')}
+            style={{
+              flex: 1,
+              padding: '12px 24px',
+              fontSize: '16px',
+              fontWeight: '500',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'created' ? '#007bff' : 'transparent',
+              color: activeTab === 'created' ? 'white' : '#6c757d',
+              transition: 'all 0.2s'
+            }}
+          >
+            📋 Created Events
+          </button>
+          <button
+            onClick={() => setActiveTab('joined')}
+            style={{
+              flex: 1,
+              padding: '12px 24px',
+              fontSize: '16px',
+              fontWeight: '500',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'joined' ? '#007bff' : 'transparent',
+              color: activeTab === 'joined' ? 'white' : '#6c757d',
+              transition: 'all 0.2s'
+            }}
+          >
+            🎫 Joined Events
+          </button>
+        </div>
+
+        {/* Events Error */}
+        {eventsError && (
+          <div style={{
+            backgroundColor: '#f8d7da',
+            color: '#721c24',
+            padding: '16px',
+            borderRadius: '8px',
+            marginBottom: '24px',
+            border: '1px solid #f5c6cb'
+          }}>
+            {eventsError}
+            <button
+              onClick={() => setEventsError('')}
+              style={{
+                float: 'right',
+                background: 'none',
+                border: 'none',
+                fontSize: '18px',
+                cursor: 'pointer',
+                color: '#721c24'
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Tab Content */}
+        {eventsLoading ? (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '40px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            border: '1px solid #e9ecef'
+          }}>
+            <div>Loading events...</div>
+          </div>
+        ) : (
+          <div>
+            {activeTab === 'created' && (
+              <div>
+                {createdEvents.length === 0 ? (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '80px 20px',
+                    backgroundColor: 'white',
+                    borderRadius: '12px',
+                    color: '#6c757d',
+                    border: '1px solid #e9ecef'
+                  }}>
+                    <h3 style={{ 
+                      margin: '0 0 16px 0',
+                      fontSize: '24px',
+                      color: '#495057'
+                    }}>
+                      No Created Events Yet
+                    </h3>
+                    <p style={{ 
+                      margin: '0 0 24px 0',
+                      fontSize: '16px'
+                    }}>
+                      You haven't created any events yet. Start by creating your first event!
+                    </p>
+                    <button
+                      onClick={() => navigate('/events/create')}
+                      style={{
+                        backgroundColor: '#007bff',
+                        color: 'white',
+                        padding: '12px 24px',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Create Event
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: '40px' }}>
+                    {createdEvents.map((event) => (
+                      <EventTimelineItem 
+                        key={event.id} 
+                        event={event}
+                        showJoinButton={false}
+                        showManagementActions={true}
+                        onEdit={handleEditEvent}
+                        onDelete={handleDeleteEvent}
+                        onPublish={handlePublishEvent}
+                        onCancel={handleCancelEvent}
+                        onSubmitForApproval={handleSubmitForApproval}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'joined' && (
+              <div>
+                {joinedEvents.length === 0 ? (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '80px 20px',
+                    backgroundColor: 'white',
+                    borderRadius: '12px',
+                    color: '#6c757d',
+                    border: '1px solid #e9ecef'
+                  }}>
+                    <h3 style={{ 
+                      margin: '0 0 16px 0',
+                      fontSize: '24px',
+                      color: '#495057'
+                    }}>
+                      No Joined Events Yet
+                    </h3>
+                    <p style={{ 
+                      margin: '0 0 24px 0',
+                      fontSize: '16px'
+                    }}>
+                      You haven't joined any events yet. Explore events and join ones that interest you!
+                    </p>
+                    <button
+                      onClick={() => navigate('/')}
+                      style={{
+                        backgroundColor: '#007bff',
+                        color: 'white',
+                        padding: '12px 24px',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Browse Events
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: '40px' }}>
+                    {joinedEvents.map((event) => {
+                      // Find the registration info for this event
+                      const registration = joinedRegistrations.find(reg => reg.eventId === event.id)
+                      
+                      return (
+                        <div key={event.id} style={{ position: 'relative' }}>
+                          {/* Registration Status Badge */}
+                          {registration && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '16px',
+                              right: '20px',
+                              zIndex: 10,
+                              padding: '4px 8px',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              backgroundColor: registration.status === 'registered' 
+                                ? '#d4edda' 
+                                : registration.status === 'waitlisted'
+                                ? '#fff3cd'
+                                : '#f8d7da',
+                              color: registration.status === 'registered' 
+                                ? '#155724' 
+                                : registration.status === 'waitlisted'
+                                ? '#856404'
+                                : '#721c24'
+                            }}>
+                              {registration.status === 'registered' && '✓ Registered'}
+                              {registration.status === 'waitlisted' && '⏳ Waitlisted'}
+                              {registration.status === 'cancelled' && '❌ Cancelled'}
+                            </div>
+                          )}
+                          
+                          <EventTimelineItem 
+                            event={event}
+                            showJoinButton={true}
+                            showManagementActions={false}
+                            onJoin={() => {}} // Not used since users are already joined
+                            onLeave={handleLeaveEvent}
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

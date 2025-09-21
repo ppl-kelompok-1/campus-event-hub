@@ -12,8 +12,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   
   const isActive = (path: string) => location.pathname === path || 
     (path === '/users' && location.pathname.startsWith('/users')) ||
-    (path === '/events/my' && location.pathname.startsWith('/events/my')) ||
-    (path === '/events/joined' && location.pathname.startsWith('/events/joined')) ||
     (path === '/events/create' && location.pathname.startsWith('/events/create')) ||
     (path === '/approvals' && location.pathname.startsWith('/approvals'))
 
@@ -100,45 +98,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Events Section */}
-          <div className="nav-section">
-            <div className="nav-section-title">Events</div>
-            <Link 
-              to="/events" 
-              className={`nav-item ${isActive('/events') && !location.pathname.includes('/events/') ? 'nav-item-active' : ''}`}
-              onClick={handleNavigation}
-            >
-              <span className="nav-icon">📅</span>
-              <span className="nav-text">Browse Events</span>
-            </Link>
-            {isAuthenticated && (
-              <>
-                <Link 
-                  to="/events/my" 
-                  className={`nav-item ${isActive('/events/my') ? 'nav-item-active' : ''}`}
-                  onClick={handleNavigation}
-                >
-                  <span className="nav-icon">📋</span>
-                  <span className="nav-text">My Created Events</span>
-                </Link>
-                <Link 
-                  to="/events/joined" 
-                  className={`nav-item ${isActive('/events/joined') ? 'nav-item-active' : ''}`}
-                  onClick={handleNavigation}
-                >
-                  <span className="nav-icon">🎫</span>
-                  <span className="nav-text">My Joined Events</span>
-                </Link>
-                <Link 
-                  to="/events/create" 
-                  className={`nav-item ${isActive('/events/create') ? 'nav-item-active' : ''}`}
-                  onClick={handleNavigation}
-                >
-                  <span className="nav-icon">➕</span>
-                  <span className="nav-text">Create Event</span>
-                </Link>
-              </>
-            )}
-          </div>
+          {isAuthenticated && (
+            <div className="nav-section">
+              <div className="nav-section-title">Events</div>
+              <Link 
+                to="/events/create" 
+                className={`nav-item ${isActive('/events/create') ? 'nav-item-active' : ''}`}
+                onClick={handleNavigation}
+              >
+                <span className="nav-icon">➕</span>
+                <span className="nav-text">Create Event</span>
+              </Link>
+            </div>
+          )}
 
           {/* Approval Section - Approver/Admin/Superadmin only */}
           {isAuthenticated && (user?.role === 'approver' || user?.role === 'admin' || user?.role === 'superadmin') && (
