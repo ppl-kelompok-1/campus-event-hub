@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { eventApi } from '../auth/api'
 import type { Event } from '../auth/api'
 import EventTimelineItem from '../components/EventTimelineItem'
+import { useAuth } from '../auth/AuthContext'
 
 const EventsPage = () => {
   const [events, setEvents] = useState<Event[]>([])
@@ -9,18 +10,44 @@ const EventsPage = () => {
   const [error, setError] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [activeFilter, setActiveFilter] = useState<'upcoming' | 'past'>('upcoming')
+  const { isAuthenticated } = useAuth()
 
   useEffect(() => {
     fetchEvents()
-  }, [currentPage])
+  }, [currentPage, activeFilter])
+
+  const filterEventsByDate = (events: Event[]) => {
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    
+    return events.filter(event => {
+      const eventDate = new Date(event.eventDate)
+      const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate())
+      
+      if (activeFilter === 'upcoming') {
+        return eventDateOnly >= today
+      } else {
+        return eventDateOnly < today
+      }
+    })
+  }
 
   const fetchEvents = async () => {
     try {
       setLoading(true)
       setError('')
-      const response = await eventApi.getEvents(currentPage, 10)
-      setEvents(response.data)
-      setTotalPages(response.pagination.totalPages)
+      // Fetch more events to ensure we have enough after filtering
+      const response = await eventApi.getEvents(1, 50)
+      const filteredEvents = filterEventsByDate(response.data)
+      
+      // Simple client-side pagination
+      const startIndex = (currentPage - 1) * 10
+      const endIndex = startIndex + 10
+      const paginatedEvents = filteredEvents.slice(startIndex, endIndex)
+      
+      setEvents(paginatedEvents)
+      setTotalPages(Math.ceil(filteredEvents.length / 10))
     } catch (err) {
       setError('Failed to load events. Please try again later.')
       console.error('Error fetching events:', err)
@@ -45,6 +72,11 @@ const EventsPage = () => {
     // TODO: Implement join event functionality
     console.log('Join event:', event.title)
     // This will be implemented when the join feature is added
+  }
+
+  const handleFilterChange = (filter: 'upcoming' | 'past') => {
+    setActiveFilter(filter)
+    setCurrentPage(1) // Reset to first page when changing filter
   }
 
   if (loading) {
@@ -95,28 +127,36 @@ const EventsPage = () => {
               display: 'flex', 
               gap: '12px' 
             }}>
-              <button style={{
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '10px 20px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}>
+              <button 
+                onClick={() => handleFilterChange('upcoming')}
+                style={{
+                  backgroundColor: activeFilter === 'upcoming' ? '#007bff' : 'transparent',
+                  color: activeFilter === 'upcoming' ? 'white' : '#6c757d',
+                  border: activeFilter === 'upcoming' ? 'none' : '1px solid #dee2e6',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
                 Upcoming
               </button>
-              <button style={{
-                backgroundColor: 'transparent',
-                color: '#6c757d',
-                border: '1px solid #dee2e6',
-                borderRadius: '8px',
-                padding: '10px 20px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}>
+              <button 
+                onClick={() => handleFilterChange('past')}
+                style={{
+                  backgroundColor: activeFilter === 'past' ? '#007bff' : 'transparent',
+                  color: activeFilter === 'past' ? 'white' : '#6c757d',
+                  border: activeFilter === 'past' ? 'none' : '1px solid #dee2e6',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
                 Past
               </button>
             </div>
@@ -183,6 +223,7 @@ const EventsPage = () => {
                 <EventTimelineItem 
                   key={event.id} 
                   event={event}
+                  showJoinButton={isAuthenticated}
                   onJoin={handleJoinEvent}
                 />
               ))}

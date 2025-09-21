@@ -181,8 +181,28 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
         borderRadius: '12px',
         padding: '20px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-        marginRight: '20px'
+        position: 'relative'
       }}>
+        {/* Event Thumbnail - Moved inside card */}
+        <div style={{ 
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
+          width: isMobile ? '60px' : '80px',
+          height: isMobile ? '45px' : '60px',
+          borderRadius: '6px',
+          background: thumbnail.background,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontSize: isMobile ? '16px' : '20px',
+          fontWeight: '600',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+        }}>
+          {thumbnail.initials}
+        </div>
+
         {/* Time */}
         <div style={{ 
           fontSize: '14px',
@@ -209,7 +229,8 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
             fontWeight: '700',
             color: '#2c3e50',
             lineHeight: '1.3',
-            flex: 1
+            flex: 1,
+            paddingRight: isMobile ? '70px' : '90px' // Make room for thumbnail
           }}>
             <Link 
               to={`/events/${event.id}`}
@@ -433,24 +454,6 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
             </>
           )}
         </div>
-      </div>
-
-      {/* Event Thumbnail */}
-      <div style={{ 
-        width: isMobile ? '80px' : '120px',
-        height: isMobile ? '60px' : '80px',
-        borderRadius: '8px',
-        background: thumbnail.background,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'white',
-        fontSize: isMobile ? '18px' : '24px',
-        fontWeight: '600',
-        flexShrink: 0,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-      }}>
-        {thumbnail.initials}
       </div>
     </div>
   )
