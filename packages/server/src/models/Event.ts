@@ -44,6 +44,12 @@ export interface EventResponse {
   revisionComments?: string;
   createdAt: Date;
   updatedAt: Date;
+  // Registration information (populated when user is authenticated)
+  currentAttendees?: number;
+  isUserRegistered?: boolean;
+  userRegistrationStatus?: 'registered' | 'waitlisted' | 'cancelled';
+  isFull?: boolean;
+  canRegister?: boolean;
 }
 
 // DTO for creating a new event

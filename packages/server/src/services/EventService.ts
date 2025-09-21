@@ -1,12 +1,15 @@
 import { IEventRepository } from '../repositories/IEventRepository';
 import { IUserRepository } from '../repositories/IUserRepository';
+import { IEventRegistrationRepository } from '../repositories/IEventRegistrationRepository';
 import { Event, CreateEventDto, UpdateEventDto, EventResponse, EventStatus, ApprovalDto, toEventResponse, isValidEventDate, isValidEventTime, isEventInPast } from '../models/Event';
 import { UserRole } from '../models/User';
+import { RegistrationStatus } from '../models/EventRegistration';
 
 export class EventService {
   constructor(
     private eventRepository: IEventRepository,
-    private userRepository: IUserRepository
+    private userRepository: IUserRepository,
+    private eventRegistrationRepository?: IEventRegistrationRepository
   ) {}
 
   // Create a new event
@@ -38,20 +41,32 @@ export class EventService {
   }
 
   // Get all published events (public access)
-  async getPublishedEvents(): Promise<EventResponse[]> {
+  async getPublishedEvents(userId?: number): Promise<EventResponse[]> {
     const events = await this.eventRepository.findPublishedEvents();
-    return this.enrichEventsWithCreatorNames(events);
+    const enrichedEvents = await this.enrichEventsWithCreatorNames(events);
+    
+    // Add registration information if available
+    if (this.eventRegistrationRepository) {
+      return this.enrichEventsWithRegistrationInfo(enrichedEvents, userId);
+    }
+    
+    return enrichedEvents;
   }
 
   // Get events with pagination
-  async getEventsPaginated(page: number, limit: number, status?: EventStatus): Promise<{
+  async getEventsPaginated(page: number, limit: number, status?: EventStatus, userId?: number): Promise<{
     events: EventResponse[];
     total: number;
     page: number;
     totalPages: number;
   }> {
     const result = await this.eventRepository.findPaginated(page, limit, status);
-    const enrichedEvents = await this.enrichEventsWithCreatorNames(result.events);
+    let enrichedEvents = await this.enrichEventsWithCreatorNames(result.events);
+    
+    // Add registration information if available
+    if (this.eventRegistrationRepository) {
+      enrichedEvents = await this.enrichEventsWithRegistrationInfo(enrichedEvents, userId);
+    }
     
     return {
       ...result,
@@ -60,7 +75,7 @@ export class EventService {
   }
 
   // Get event by ID
-  async getEventById(id: number): Promise<EventResponse | null> {
+  async getEventById(id: number, userId?: number): Promise<EventResponse | null> {
     const event = await this.eventRepository.findById(id);
     if (!event) {
       return null;
@@ -71,7 +86,14 @@ export class EventService {
       throw new Error('Failed to get creator information');
     }
 
-    return toEventResponse(event, creatorName);
+    const baseResponse = toEventResponse(event, creatorName);
+
+    // Add registration information if registration repository is available
+    if (this.eventRegistrationRepository) {
+      return this.enrichEventWithRegistrationInfo(baseResponse, userId);
+    }
+
+    return baseResponse;
   }
 
   // Get events created by a specific user
@@ -332,5 +354,58 @@ export class EventService {
   // Helper to enrich events with creator names (backward compatibility)
   private async enrichEventsWithCreatorNames(events: Event[]): Promise<EventResponse[]> {
     return this.enrichEventsWithNames(events);
+  }
+
+  // Helper to enrich event with registration information
+  private async enrichEventWithRegistrationInfo(event: EventResponse, userId?: number): Promise<EventResponse> {
+    if (!this.eventRegistrationRepository) {
+      return event;
+    }
+
+    // Get current attendee count
+    const currentAttendees = await this.eventRegistrationRepository.getRegistrationCountByStatus(event.id, RegistrationStatus.REGISTERED);
+    
+    // Check if event is full
+    const isFull = event.maxAttendees ? currentAttendees >= event.maxAttendees : false;
+    
+    // Check if user can register (event is published, not full, not in past)
+    const canRegister = event.status === EventStatus.PUBLISHED && 
+                       !isFull && 
+                       !isEventInPast(event.eventDate, event.eventTime);
+
+    let isUserRegistered = false;
+    let userRegistrationStatus: 'registered' | 'waitlisted' | 'cancelled' | undefined;
+
+    // If user is provided, check their registration status
+    if (userId) {
+      const registration = await this.eventRegistrationRepository.findByEventAndUser(event.id, userId);
+      if (registration) {
+        isUserRegistered = registration.status === RegistrationStatus.REGISTERED || registration.status === RegistrationStatus.WAITLISTED;
+        userRegistrationStatus = registration.status as 'registered' | 'waitlisted' | 'cancelled';
+      }
+    }
+
+    return {
+      ...event,
+      currentAttendees,
+      isUserRegistered,
+      userRegistrationStatus,
+      isFull,
+      canRegister
+    };
+  }
+
+  // Helper to enrich multiple events with registration information
+  private async enrichEventsWithRegistrationInfo(events: EventResponse[], userId?: number): Promise<EventResponse[]> {
+    if (!this.eventRegistrationRepository) {
+      return events;
+    }
+
+    const enrichedEvents: EventResponse[] = [];
+    for (const event of events) {
+      const enrichedEvent = await this.enrichEventWithRegistrationInfo(event, userId);
+      enrichedEvents.push(enrichedEvent);
+    }
+    return enrichedEvents;
   }
 }

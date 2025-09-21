@@ -13,6 +13,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const isActive = (path: string) => location.pathname === path || 
     (path === '/users' && location.pathname.startsWith('/users')) ||
     (path === '/events/my' && location.pathname.startsWith('/events/my')) ||
+    (path === '/events/joined' && location.pathname.startsWith('/events/joined')) ||
     (path === '/events/create' && location.pathname.startsWith('/events/create')) ||
     (path === '/approvals' && location.pathname.startsWith('/approvals'))
 
@@ -118,6 +119,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 >
                   <span className="nav-icon">📋</span>
                   <span className="nav-text">My Created Events</span>
+                </Link>
+                <Link 
+                  to="/events/joined" 
+                  className={`nav-item ${isActive('/events/joined') ? 'nav-item-active' : ''}`}
+                  onClick={handleNavigation}
+                >
+                  <span className="nav-icon">🎫</span>
+                  <span className="nav-text">My Joined Events</span>
                 </Link>
                 <Link 
                   to="/events/create" 

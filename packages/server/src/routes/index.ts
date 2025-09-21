@@ -57,6 +57,7 @@ router.get('/', (req, res) => {
 const userService = container.getUserService();
 const authService = container.getAuthService();
 const eventService = container.getEventService();
+const eventRegistrationService = container.getEventRegistrationService();
 
 // Mount authentication routes
 router.use('/auth', createAuthRouter(authService, userService));
@@ -65,6 +66,6 @@ router.use('/auth', createAuthRouter(authService, userService));
 router.use('/users', createUserRouter(userService, authService));
 
 // Mount event routes
-router.use('/events', createEventRouter(eventService, authService));
+router.use('/events', createEventRouter(eventService, eventRegistrationService, authService));
 
 export default router;

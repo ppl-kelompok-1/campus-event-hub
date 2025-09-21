@@ -83,10 +83,65 @@ const EventsPage = () => {
     }
   }
 
-  const handleJoinEvent = (event: Event) => {
-    // TODO: Implement join event functionality
-    console.log('Join event:', event.title)
-    // This will be implemented when the join feature is added
+  const handleJoinEvent = async (event: Event) => {
+    try {
+      const response = await eventApi.joinEvent(event.id)
+      
+      // Update the event in the local state with new registration info
+      setEvents(prevEvents => 
+        prevEvents.map(e => 
+          e.id === event.id 
+            ? {
+                ...e,
+                isUserRegistered: true,
+                userRegistrationStatus: response.data.status as 'registered' | 'waitlisted' | 'cancelled',
+                currentAttendees: response.data.status === 'registered' 
+                  ? (e.currentAttendees || 0) + 1 
+                  : e.currentAttendees,
+                isFull: e.maxAttendees ? ((e.currentAttendees || 0) + (response.data.status === 'registered' ? 1 : 0)) >= e.maxAttendees : false
+              }
+            : e
+        )
+      )
+
+      // Show success message
+      if (response.data.status === 'registered') {
+        console.log('Successfully joined event:', event.title)
+      } else if (response.data.status === 'waitlisted') {
+        console.log('Added to waitlist for event:', event.title)
+      }
+    } catch (err) {
+      console.error('Failed to join event:', err)
+      setError('Failed to join event. Please try again.')
+    }
+  }
+
+  const handleLeaveEvent = async (event: Event) => {
+    try {
+      await eventApi.leaveEvent(event.id)
+      
+      // Update the event in the local state
+      setEvents(prevEvents => 
+        prevEvents.map(e => 
+          e.id === event.id 
+            ? {
+                ...e,
+                isUserRegistered: false,
+                userRegistrationStatus: undefined,
+                currentAttendees: e.userRegistrationStatus === 'registered' 
+                  ? Math.max((e.currentAttendees || 1) - 1, 0)
+                  : e.currentAttendees,
+                isFull: false // If user left, it's no longer full
+              }
+            : e
+        )
+      )
+
+      console.log('Successfully left event:', event.title)
+    } catch (err) {
+      console.error('Failed to leave event:', err)
+      setError('Failed to leave event. Please try again.')
+    }
   }
 
   const handleFilterChange = (filter: 'upcoming' | 'past') => {
@@ -240,6 +295,7 @@ const EventsPage = () => {
                   event={event}
                   showJoinButton={isAuthenticated}
                   onJoin={handleJoinEvent}
+                  onLeave={handleLeaveEvent}
                 />
               ))}
             </div>

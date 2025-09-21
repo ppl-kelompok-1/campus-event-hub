@@ -10,6 +10,7 @@ import CreateUserPage from './pages/CreateUserPage'
 import EditUserPage from './pages/EditUserPage'
 import EventsPage from './pages/EventsPage'
 import MyEventsPage from './pages/MyEventsPage'
+import JoinedEventsPage from './pages/JoinedEventsPage'
 import CreateEventPage from './pages/CreateEventPage'
 import EditEventPage from './pages/EditEventPage'
 import EventDetailsPage from './pages/EventDetailsPage'
@@ -44,6 +45,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MyEventsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events/joined"
+            element={
+              <ProtectedRoute>
+                <JoinedEventsPage />
               </ProtectedRoute>
             }
           />

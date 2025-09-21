@@ -97,6 +97,12 @@ export interface Event {
   revisionComments?: string
   createdAt: string
   updatedAt: string
+  // Registration information
+  currentAttendees?: number
+  isUserRegistered?: boolean
+  userRegistrationStatus?: 'registered' | 'waitlisted' | 'cancelled'
+  isFull?: boolean
+  canRegister?: boolean
 }
 
 export interface CreateEventDto {
@@ -335,6 +341,76 @@ export const eventApi = {
     return fetchApi<ApiResponse<null>>(`/events/${id}/request-revision`, {
       method: 'POST',
       body: JSON.stringify({ revisionComments }),
+    })
+  },
+
+  // Event Registration APIs
+
+  // Join/register for an event
+  joinEvent: async (id: number) => {
+    return fetchApi<ApiResponse<{
+      id: number
+      eventId: number
+      userId: number
+      userName: string
+      userEmail: string
+      registrationDate: string
+      status: 'registered' | 'waitlisted' | 'cancelled'
+      createdAt: string
+      updatedAt: string
+    }>>(`/events/${id}/register`, {
+      method: 'POST',
+    })
+  },
+
+  // Leave/unregister from an event
+  leaveEvent: async (id: number) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}/register`, {
+      method: 'DELETE',
+    })
+  },
+
+  // Get user's joined events
+  getJoinedEvents: async () => {
+    return fetchApi<ApiResponse<{
+      id: number
+      eventId: number
+      userId: number
+      userName: string
+      userEmail: string
+      registrationDate: string
+      status: 'registered' | 'waitlisted' | 'cancelled'
+      createdAt: string
+      updatedAt: string
+    }[]>>('/events/joined')
+  },
+
+  // Get event registrations (for event creators/admins)
+  getEventRegistrations: async (id: number) => {
+    return fetchApi<ApiResponse<{
+      id: number
+      eventId: number
+      userId: number
+      userName: string
+      userEmail: string
+      registrationDate: string
+      status: 'registered' | 'waitlisted' | 'cancelled'
+      createdAt: string
+      updatedAt: string
+    }[]>>(`/events/${id}/registrations`)
+  },
+
+  // Get event registration statistics
+  getEventStats: async (id: number) => {
+    return fetchApi<ApiResponse<{
+      totalRegistered: number
+      totalWaitlisted: number
+      totalCancelled: number
+      maxAttendees?: number
+      isFull: boolean
+      canRegister: boolean
+    }>>(`/events/${id}/stats`, {
+      requireAuth: false
     })
   },
 }

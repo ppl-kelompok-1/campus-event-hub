@@ -2,11 +2,14 @@ import { IDatabase } from './database/IDatabase';
 import { SQLiteDatabase } from './database/SQLiteDatabase';
 import { IUserRepository } from '../repositories/IUserRepository';
 import { IEventRepository } from '../repositories/IEventRepository';
+import { IEventRegistrationRepository } from '../repositories/IEventRegistrationRepository';
 import { SQLiteUserRepository } from './repositories/SQLiteUserRepository';
 import { SQLiteEventRepository } from './repositories/SQLiteEventRepository';
+import { SQLiteEventRegistrationRepository } from '../repositories/SQLiteEventRegistrationRepository';
 import { UserService } from '../services/UserService';
 import { AuthService } from '../services/AuthService';
 import { EventService } from '../services/EventService';
+import { EventRegistrationService } from '../services/EventRegistrationService';
 import { MigrationRunner } from './database/MigrationRunner';
 import path from 'path';
 
@@ -16,9 +19,11 @@ export class Container {
   private database?: IDatabase;
   private userRepository?: IUserRepository;
   private eventRepository?: IEventRepository;
+  private eventRegistrationRepository?: IEventRegistrationRepository;
   private userService?: UserService;
   private authService?: AuthService;
   private eventService?: EventService;
+  private eventRegistrationService?: EventRegistrationService;
 
   private constructor() {}
 
@@ -59,6 +64,14 @@ export class Container {
     return this.eventRepository;
   }
 
+  // Event registration repository (singleton)
+  getEventRegistrationRepository(): IEventRegistrationRepository {
+    if (!this.eventRegistrationRepository) {
+      this.eventRegistrationRepository = new SQLiteEventRegistrationRepository(this.getDatabase());
+    }
+    return this.eventRegistrationRepository;
+  }
+
   // Auth service (singleton)
   getAuthService(): AuthService {
     if (!this.authService) {
@@ -78,9 +91,24 @@ export class Container {
   // Event service (singleton)
   getEventService(): EventService {
     if (!this.eventService) {
-      this.eventService = new EventService(this.getEventRepository(), this.getUserRepository());
+      this.eventService = new EventService(
+        this.getEventRepository(), 
+        this.getUserRepository(),
+        this.getEventRegistrationRepository()
+      );
     }
     return this.eventService;
+  }
+
+  // Event registration service (singleton)
+  getEventRegistrationService(): EventRegistrationService {
+    if (!this.eventRegistrationService) {
+      this.eventRegistrationService = new EventRegistrationService(
+        this.getEventRegistrationRepository(),
+        this.getEventRepository()
+      );
+    }
+    return this.eventRegistrationService;
   }
 
   // Method to close database connection
@@ -98,9 +126,11 @@ export class Container {
     this.database = undefined;
     this.userRepository = undefined;
     this.eventRepository = undefined;
+    this.eventRegistrationRepository = undefined;
     this.userService = undefined;
     this.authService = undefined;
     this.eventService = undefined;
+    this.eventRegistrationService = undefined;
   }
 }
 
