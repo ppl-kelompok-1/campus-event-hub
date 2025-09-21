@@ -5,13 +5,25 @@ import type { Event } from '../auth/api'
 interface EventTimelineItemProps {
   event: Event
   showJoinButton?: boolean
+  showManagementActions?: boolean
   onJoin?: (event: Event) => void
+  onEdit?: (event: Event) => void
+  onDelete?: (event: Event) => void
+  onPublish?: (event: Event) => void
+  onCancel?: (event: Event) => void
+  onSubmitForApproval?: (event: Event) => void
 }
 
 const EventTimelineItem: React.FC<EventTimelineItemProps> = ({ 
   event, 
   showJoinButton = true,
-  onJoin
+  showManagementActions = false,
+  onJoin,
+  onEdit,
+  onDelete,
+  onPublish,
+  onCancel,
+  onSubmitForApproval
 }) => {
   const [isMobile, setIsMobile] = useState(false)
 
@@ -30,7 +42,7 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
     return {
       day: date.getDate(),
       month: date.toLocaleDateString('en-US', { month: 'short' }),
-      dayName: date.toLocaleDateString('id-ID', { weekday: 'long' })
+      dayName: date.toLocaleDateString('en-US', { weekday: 'long' })
     }
   }
 
@@ -74,6 +86,32 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
     const initials = title.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2)
     
     return { background: colors[index], initials }
+  }
+
+  const getStatusBadge = (status: string) => {
+    const statusStyles: Record<string, React.CSSProperties> = {
+      draft: { backgroundColor: '#6c757d', color: 'white' },
+      pending_approval: { backgroundColor: '#ffc107', color: '#212529' },
+      revision_requested: { backgroundColor: '#fd7e14', color: 'white' },
+      published: { backgroundColor: '#28a745', color: 'white' },
+      cancelled: { backgroundColor: '#dc3545', color: 'white' },
+      completed: { backgroundColor: '#007bff', color: 'white' }
+    }
+
+    return (
+      <span 
+        style={{
+          ...(statusStyles[status] || statusStyles.draft),
+          padding: '4px 12px',
+          borderRadius: '16px',
+          fontSize: '12px',
+          fontWeight: '500',
+          textTransform: 'capitalize'
+        }}
+      >
+        {status.replace('_', ' ')}
+      </span>
+    )
   }
 
   const formatDateTime = formatTime(event.eventTime)
@@ -159,24 +197,33 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
         </div>
 
         {/* Event Title */}
-        <h3 style={{ 
-          margin: '0 0 12px 0',
-          fontSize: '20px',
-          fontWeight: '700',
-          color: '#2c3e50',
-          lineHeight: '1.3'
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'flex-start',
+          marginBottom: '12px'
         }}>
-          <Link 
-            to={`/events/${event.id}`}
-            style={{ 
-              textDecoration: 'none', 
-              color: 'inherit',
-              cursor: 'pointer'
-            }}
-          >
-            {event.title}
-          </Link>
-        </h3>
+          <h3 style={{ 
+            margin: '0',
+            fontSize: '20px',
+            fontWeight: '700',
+            color: '#2c3e50',
+            lineHeight: '1.3',
+            flex: 1
+          }}>
+            <Link 
+              to={`/events/${event.id}`}
+              style={{ 
+                textDecoration: 'none', 
+                color: 'inherit',
+                cursor: 'pointer'
+              }}
+            >
+              {event.title}
+            </Link>
+          </h3>
+          {showManagementActions && getStatusBadge(event.status)}
+        </div>
 
         {/* Organizer */}
         <div style={{ 
@@ -202,7 +249,7 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
             fontSize: '14px',
             color: '#6c757d'
           }}>
-            Oleh {event.creatorName}
+            By {event.creatorName}
           </span>
         </div>
 
@@ -234,6 +281,20 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
           </span>
         </div>
 
+        {/* Revision Comments */}
+        {event.revisionComments && (
+          <div style={{ 
+            margin: '0 0 16px 0',
+            padding: '12px',
+            backgroundColor: '#fff3cd',
+            border: '1px solid #ffeaa7',
+            borderRadius: '6px',
+            fontSize: '14px'
+          }}>
+            <strong>Revision Required:</strong> {event.revisionComments}
+          </div>
+        )}
+
         {/* Description */}
         {event.description && (
           <p style={{ 
@@ -249,31 +310,129 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
           </p>
         )}
 
-        {/* Join Button */}
-        {showJoinButton && (
-          <button
-            onClick={() => onJoin && onJoin(event)}
-            style={{
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '8px 16px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#0056b3'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = '#007bff'
-            }}
-          >
-            Diundang
-          </button>
-        )}
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Join Button for Browse Events */}
+          {showJoinButton && !showManagementActions && (
+            <button
+              onClick={() => onJoin && onJoin(event)}
+              style={{
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = '#0056b3'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = '#007bff'
+              }}
+            >
+              Join Event
+            </button>
+          )}
+
+          {/* Management Actions for My Created Events */}
+          {showManagementActions && (
+            <>
+              {onEdit && (event.status === 'draft' || event.status === 'revision_requested') && (
+                <button
+                  onClick={() => onEdit(event)}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Edit
+                </button>
+              )}
+              
+              {onSubmitForApproval && (event.status === 'draft' || event.status === 'revision_requested') && (
+                <button
+                  onClick={() => onSubmitForApproval(event)}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Submit for Approval
+                </button>
+              )}
+              
+              {onPublish && event.status === 'draft' && (
+                <button
+                  onClick={() => onPublish(event)}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Publish
+                </button>
+              )}
+              
+              {onCancel && event.status === 'published' && (
+                <button
+                  onClick={() => onCancel(event)}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: '#ffc107',
+                    color: '#212529',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
+              
+              {onDelete && (event.status === 'draft' || event.status === 'revision_requested') && (
+                <button
+                  onClick={() => onDelete(event)}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Delete
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Event Thumbnail */}

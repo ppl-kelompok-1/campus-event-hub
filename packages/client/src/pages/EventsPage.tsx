@@ -79,7 +79,7 @@ const EventsPage = () => {
                 fontSize: '32px',
                 fontWeight: '700'
               }}>
-                Acara
+                Events
               </h1>
               <p style={{ 
                 margin: '0', 
@@ -105,7 +105,7 @@ const EventsPage = () => {
                 fontWeight: '500',
                 cursor: 'pointer'
               }}>
-                Mendatang
+                Upcoming
               </button>
               <button style={{
                 backgroundColor: 'transparent',
@@ -117,7 +117,7 @@ const EventsPage = () => {
                 fontWeight: '500',
                 cursor: 'pointer'
               }}>
-                Lampau
+                Past
               </button>
             </div>
           </div>

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { eventApi } from '../auth/api'
 import type { Event } from '../auth/api'
-import EventCard from '../components/EventCard'
+import EventTimelineItem from '../components/EventTimelineItem'
 
 const MyEventsPage = () => {
   const [events, setEvents] = useState<Event[]>([])
@@ -101,108 +101,146 @@ const MyEventsPage = () => {
   }
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+    <div style={{ 
+      minHeight: '100vh',
+      backgroundColor: '#f8f9fa'
+    }}>
+      {/* Header */}
       <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '30px' 
+        backgroundColor: 'white',
+        borderBottom: '1px solid #e9ecef',
+        padding: '24px 0'
       }}>
-        <div>
-          <h1 style={{ margin: '0 0 8px 0', color: '#2c3e50' }}>My Created Events</h1>
-          <p style={{ margin: '0', color: '#6c757d' }}>
-            Manage events you've created and track their status
-          </p>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center' 
+          }}>
+            <div>
+              <h1 style={{ 
+                margin: '0 0 8px 0', 
+                color: '#2c3e50',
+                fontSize: '32px',
+                fontWeight: '700'
+              }}>
+                My Created Events
+              </h1>
+              <p style={{ 
+                margin: '0', 
+                color: '#6c757d',
+                fontSize: '16px'
+              }}>
+                Manage events you've created and track their status
+              </p>
+            </div>
+            
+            {/* Create Event Button */}
+            <Link
+              to="/events/create"
+              style={{
+                backgroundColor: '#28a745',
+                color: 'white',
+                padding: '12px 24px',
+                textDecoration: 'none',
+                borderRadius: '8px',
+                fontWeight: '500',
+                display: 'inline-block',
+                fontSize: '14px'
+              }}
+            >
+              + Create Event
+            </Link>
+          </div>
         </div>
-        
-        <Link
-          to="/events/create"
-          style={{
-            backgroundColor: '#28a745',
-            color: 'white',
-            padding: '12px 24px',
-            textDecoration: 'none',
-            borderRadius: '6px',
-            fontWeight: '500',
-            display: 'inline-block'
-          }}
-        >
-          + Create Event
-        </Link>
       </div>
 
-      {error && (
-        <div style={{
-          backgroundColor: '#f8d7da',
-          color: '#721c24',
-          padding: '12px',
-          borderRadius: '4px',
-          marginBottom: '20px',
-          border: '1px solid #f5c6cb'
-        }}>
-          {error}
-          <button
-            onClick={() => setError('')}
-            style={{
-              float: 'right',
-              background: 'none',
-              border: 'none',
-              fontSize: '16px',
-              cursor: 'pointer',
-              color: '#721c24'
-            }}
-          >
-            ×
-          </button>
-        </div>
-      )}
+      {/* Main Content */}
+      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '32px 20px' }}>
+        {error && (
+          <div style={{
+            backgroundColor: '#f8d7da',
+            color: '#721c24',
+            padding: '16px',
+            borderRadius: '8px',
+            marginBottom: '24px',
+            border: '1px solid #f5c6cb'
+          }}>
+            {error}
+            <button
+              onClick={() => setError('')}
+              style={{
+                float: 'right',
+                background: 'none',
+                border: 'none',
+                fontSize: '18px',
+                cursor: 'pointer',
+                color: '#721c24'
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
 
-      {events.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 20px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          color: '#6c757d'
-        }}>
-          <h3 style={{ margin: '0 0 12px 0' }}>No Created Events Yet</h3>
-          <p style={{ margin: '0 0 20px 0' }}>
-            You haven't created any events yet. Start by creating your first event!
-          </p>
-          <Link
-            to="/events/create"
-            style={{
-              backgroundColor: '#007bff',
-              color: 'white',
-              padding: '10px 20px',
-              textDecoration: 'none',
-              borderRadius: '4px',
-              display: 'inline-block'
-            }}
-          >
-            Create Your First Event
-          </Link>
-        </div>
-      ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
-          gap: '20px'
-        }}>
-          {events.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              showActions={true}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onPublish={user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'approver' ? handlePublish : undefined}
-              onSubmitForApproval={user?.role === 'user' ? handleSubmitForApproval : undefined}
-              onCancel={handleCancel}
-            />
-          ))}
-        </div>
-      )}
+        {events.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            padding: '80px 20px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            color: '#6c757d',
+            border: '1px solid #e9ecef'
+          }}>
+            <h3 style={{ 
+              margin: '0 0 16px 0',
+              fontSize: '24px',
+              color: '#495057'
+            }}>
+              No Created Events Yet
+            </h3>
+            <p style={{ 
+              margin: '0 0 24px 0',
+              fontSize: '16px'
+            }}>
+              You haven't created any events yet. Start by creating your first event!
+            </p>
+            <Link
+              to="/events/create"
+              style={{
+                backgroundColor: '#007bff',
+                color: 'white',
+                padding: '12px 24px',
+                textDecoration: 'none',
+                borderRadius: '6px',
+                display: 'inline-block',
+                fontWeight: '500'
+              }}
+            >
+              Create Your First Event
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* Events Timeline */}
+            <div style={{ marginBottom: '40px' }}>
+              {events.map((event) => (
+                <EventTimelineItem
+                  key={event.id}
+                  event={event}
+                  showJoinButton={false}
+                  showManagementActions={true}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onPublish={user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'approver' ? handlePublish : undefined}
+                  onSubmitForApproval={user?.role === 'user' ? handleSubmitForApproval : undefined}
+                  onCancel={handleCancel}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }
