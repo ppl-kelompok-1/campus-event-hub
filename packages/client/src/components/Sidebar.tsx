@@ -117,7 +117,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                   onClick={handleNavigation}
                 >
                   <span className="nav-icon">📋</span>
-                  <span className="nav-text">My Events</span>
+                  <span className="nav-text">My Created Events</span>
                 </Link>
                 <Link 
                   to="/events/create" 

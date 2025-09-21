@@ -27,7 +27,7 @@ const MyEventsPage = () => {
       const response = await eventApi.getMyEvents()
       setEvents(response.data)
     } catch (err) {
-      setError('Failed to load your events. Please try again later.')
+      setError('Failed to load your created events. Please try again later.')
       console.error('Error fetching my events:', err)
     } finally {
       setLoading(false)
@@ -95,7 +95,7 @@ const MyEventsPage = () => {
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '40px' }}>
-        <div>Loading your events...</div>
+        <div>Loading your created events...</div>
       </div>
     )
   }
@@ -109,9 +109,9 @@ const MyEventsPage = () => {
         marginBottom: '30px' 
       }}>
         <div>
-          <h1 style={{ margin: '0 0 8px 0', color: '#2c3e50' }}>My Events</h1>
+          <h1 style={{ margin: '0 0 8px 0', color: '#2c3e50' }}>My Created Events</h1>
           <p style={{ margin: '0', color: '#6c757d' }}>
-            Manage your events and track their status
+            Manage events you've created and track their status
           </p>
         </div>
         
@@ -165,7 +165,7 @@ const MyEventsPage = () => {
           borderRadius: '8px',
           color: '#6c757d'
         }}>
-          <h3 style={{ margin: '0 0 12px 0' }}>No Events Yet</h3>
+          <h3 style={{ margin: '0 0 12px 0' }}>No Created Events Yet</h3>
           <p style={{ margin: '0 0 20px 0' }}>
             You haven't created any events yet. Start by creating your first event!
           </p>
