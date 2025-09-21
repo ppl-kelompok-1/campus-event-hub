@@ -4,6 +4,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/
 
 interface FetchOptions extends RequestInit {
   requireAuth?: boolean
+  includeAuth?: boolean
 }
 
 export class ApiError extends Error {
@@ -21,7 +22,7 @@ export async function fetchApi<T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const { requireAuth = true, ...fetchOptions } = options
+  const { requireAuth = true, includeAuth = false, ...fetchOptions } = options
   
   const url = `${API_BASE_URL}${endpoint}`
   
@@ -29,8 +30,8 @@ export async function fetchApi<T>(
     'Content-Type': 'application/json',
   }
   
-  // Add auth token if required
-  if (requireAuth) {
+  // Add auth token if required or if includeAuth is true
+  if (requireAuth || includeAuth) {
     const token = getToken()
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
@@ -259,11 +260,11 @@ export const userApi = {
 
 // Event API calls
 export const eventApi = {
-  // Get all published events (public access)
-  getEvents: async (page = 1, limit = 10) => {
+  // Get all published events (public access, but include auth if available)
+  getEvents: async (page = 1, limit = 10, includeAuth = true) => {
     return fetchApi<PaginatedResponse<Event>>(
       `/events?page=${page}&limit=${limit}`,
-      { requireAuth: false }
+      { requireAuth: false, includeAuth }
     )
   },
 

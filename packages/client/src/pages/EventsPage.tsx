@@ -53,7 +53,8 @@ const EventsPage = () => {
       setLoading(true)
       setError('')
       // Fetch more events to ensure we have enough after filtering
-      const response = await eventApi.getEvents(1, 50)
+      // Include auth if user is authenticated to get registration status
+      const response = await eventApi.getEvents(1, 50, isAuthenticated)
       const filteredEvents = filterAndSortEventsByDate(response.data)
       
       // Simple client-side pagination

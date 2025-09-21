@@ -138,7 +138,7 @@ export class SQLiteEventRegistrationRepository implements IEventRegistrationRepo
       throw new Error('No update data provided');
     }
     
-    setParts.push('updated_at = datetime("now")');
+    setParts.push('updated_at = datetime(\'now\')');
     values.push(id);
     
     const query = `
