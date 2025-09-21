@@ -221,7 +221,22 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
             fontSize: '14px',
             color: '#6c757d'
           }}>
-            By {event.creatorName}
+            By{' '}
+            <Link 
+              to={`/users/${event.createdBy}/profile`}
+              style={{
+                color: '#007bff',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.textDecoration = 'underline'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.textDecoration = 'none'
+              }}
+            >
+              {event.creatorName}
+            </Link>
           </span>
         </div>
 

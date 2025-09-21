@@ -5,6 +5,7 @@ import type { Event } from '../auth/api'
 
 interface Attendee {
   id: number
+  userId: number
   userName: string
   registrationDate: string
 }
@@ -237,7 +238,21 @@ const EventDetailsPage = () => {
               👤 Organizer
             </div>
             <div style={{ fontWeight: '500' }}>
-              {event.creatorName}
+              <Link 
+                to={`/users/${event.createdBy}/profile`}
+                style={{
+                  color: '#007bff',
+                  textDecoration: 'none'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.textDecoration = 'underline'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.textDecoration = 'none'
+                }}
+              >
+                {event.creatorName}
+              </Link>
             </div>
           </div>
 
@@ -346,16 +361,32 @@ const EventDetailsPage = () => {
                       {attendee.userName.charAt(0).toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontWeight: '500',
-                        color: '#2c3e50',
-                        fontSize: '14px',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}>
-                        {attendee.userName}
-                      </div>
+                      <Link
+                        to={`/users/${attendee.userId}/profile`}
+                        style={{
+                          textDecoration: 'none',
+                          color: 'inherit'
+                        }}
+                      >
+                        <div style={{
+                          fontWeight: '500',
+                          color: '#007bff',
+                          fontSize: '14px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          cursor: 'pointer'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.textDecoration = 'underline'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.textDecoration = 'none'
+                        }}
+                        >
+                          {attendee.userName}
+                        </div>
+                      </Link>
                       <div style={{
                         fontSize: '12px',
                         color: '#6c757d'

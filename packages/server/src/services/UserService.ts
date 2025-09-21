@@ -1,5 +1,5 @@
 import { IUserRepository } from '../repositories/IUserRepository';
-import { User, CreateUserDto, UpdateUserDto, UpdateSelfDto, UserRole, UserResponse, toUserResponse } from '../models/User';
+import { User, CreateUserDto, UpdateUserDto, UpdateSelfDto, UserRole, UserResponse, PublicUserProfile, toUserResponse, toPublicUserProfile } from '../models/User';
 import { AppError } from '../middleware/error';
 import { AuthService } from './AuthService';
 
@@ -217,6 +217,16 @@ export class UserService {
       page,
       totalPages
     };
+  }
+
+  // Get public user profile (no authentication required)
+  async getPublicUserProfile(id: number): Promise<PublicUserProfile> {
+    const user = await this.userRepository.findById(id);
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+
+    return toPublicUserProfile(user);
   }
 
   // Helper method to check if current user can access target user

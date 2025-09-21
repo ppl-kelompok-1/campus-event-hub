@@ -161,6 +161,7 @@ export class EventRegistrationService {
   // Get public attendee list for an event (only shows names)
   async getEventAttendees(eventId: number): Promise<{
     id: number;
+    userId: number;
     userName: string;
     registrationDate: string;
   }[]> {
@@ -188,6 +189,7 @@ export class EventRegistrationService {
 
       return {
         id: reg.id,
+        userId: reg.userId,
         userName,
         registrationDate: reg.registrationDate.toISOString()
       };

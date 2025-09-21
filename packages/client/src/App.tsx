@@ -5,6 +5,7 @@ import Layout from './components/Layout'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Profile from './pages/Profile'
+import PublicUserProfilePage from './pages/PublicUserProfilePage'
 import UsersPage from './pages/UsersPage'
 import CreateUserPage from './pages/CreateUserPage'
 import EditUserPage from './pages/EditUserPage'
@@ -26,6 +27,9 @@ function App() {
           {/* Event routes - public */}
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:id" element={<EventDetailsPage />} />
+          
+          {/* Public user profile routes */}
+          <Route path="/users/:id/profile" element={<PublicUserProfilePage />} />
           
           {/* Protected routes */}
           <Route

@@ -1,12 +1,112 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/UserService';
+import { EventService } from '../services/EventService';
+import { EventRegistrationService } from '../services/EventRegistrationService';
 import { AuthService } from '../services/AuthService';
 import { asyncHandler } from '../middleware/error';
 import { authenticate, authorize, canManageUser, canAssignRole, selfAccessOnly } from '../middleware/auth';
 import { CreateUserDto, UpdateUserDto, UpdateSelfDto, UserRole } from '../models/User';
+import { EventStatus } from '../models/Event';
 
-export const createUserRouter = (userService: UserService, authService: AuthService): Router => {
+export const createUserRouter = (userService: UserService, authService: AuthService, eventService?: EventService, eventRegistrationService?: EventRegistrationService): Router => {
   const router = Router();
+
+  // GET /api/v1/users/:id/profile - Get public user profile (no auth required)
+  router.get('/:id/profile', 
+    asyncHandler(async (req: Request, res: Response) => {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid user ID'
+        });
+      }
+
+      const profile = await userService.getPublicUserProfile(id);
+      
+      res.json({
+        success: true,
+        data: profile
+      });
+    })
+  );
+
+  // GET /api/v1/users/:id/events/created - Get user's published events (no auth required)
+  router.get('/:id/events/created', 
+    asyncHandler(async (req: Request, res: Response) => {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid user ID'
+        });
+      }
+
+      if (!eventService) {
+        return res.status(503).json({
+          success: false,
+          error: 'Event service not available'
+        });
+      }
+
+      // Verify user exists first
+      await userService.getPublicUserProfile(id);
+
+      // Get user's events and filter to only published ones for public view
+      const allUserEvents = await eventService.getUserEvents(id);
+      const publishedEvents = allUserEvents.filter(event => event.status === EventStatus.PUBLISHED);
+      
+      res.json({
+        success: true,
+        data: publishedEvents
+      });
+    })
+  );
+
+  // GET /api/v1/users/:id/events/joined - Get user's joined events (no auth required)
+  router.get('/:id/events/joined', 
+    asyncHandler(async (req: Request, res: Response) => {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid user ID'
+        });
+      }
+
+      if (!eventRegistrationService || !eventService) {
+        return res.status(503).json({
+          success: false,
+          error: 'Event services not available'
+        });
+      }
+
+      // Verify user exists first
+      await userService.getPublicUserProfile(id);
+
+      // Get user's joined events
+      const joinedRegistrations = await eventRegistrationService.getUserJoinedEvents(id);
+      
+      // Get full event details for each registration and filter to only published events
+      const eventPromises = joinedRegistrations.map(async (reg) => {
+        const event = await eventService.getEventById(reg.eventId);
+        return event;
+      });
+      
+      const events = await Promise.all(eventPromises);
+      const publishedJoinedEvents = events
+        .filter(event => event !== null && event.status === EventStatus.PUBLISHED)
+        .map(event => event!);
+      
+      res.json({
+        success: true,
+        data: publishedJoinedEvents
+      });
+    })
+  );
 
   // GET /api/v1/users - Get all users with pagination (Superadmin/Admin only)
   router.get('/', 

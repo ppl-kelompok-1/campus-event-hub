@@ -79,6 +79,13 @@ export interface User {
   updatedAt?: string
 }
 
+export interface PublicUserProfile {
+  id: number
+  name: string
+  role: UserRole
+  createdAt: string
+}
+
 export type EventStatus = 'draft' | 'pending_approval' | 'revision_requested' | 'published' | 'cancelled' | 'completed'
 
 export interface Event {
@@ -256,6 +263,34 @@ export const userApi = {
       method: 'DELETE',
     })
   },
+
+  // Public user profile methods (no auth required)
+  getPublicProfile: async (userId: number) => {
+    return fetchApi<{
+      success: boolean
+      data: PublicUserProfile
+    }>(`/users/${userId}/profile`, {
+      requireAuth: false
+    })
+  },
+
+  getUserCreatedEvents: async (userId: number) => {
+    return fetchApi<{
+      success: boolean
+      data: Event[]
+    }>(`/users/${userId}/events/created`, {
+      requireAuth: false
+    })
+  },
+
+  getUserJoinedEvents: async (userId: number) => {
+    return fetchApi<{
+      success: boolean
+      data: Event[]
+    }>(`/users/${userId}/events/joined`, {
+      requireAuth: false
+    })
+  },
 }
 
 // Event API calls
@@ -419,6 +454,7 @@ export const eventApi = {
   getEventAttendees: async (id: number) => {
     return fetchApi<ApiResponse<{
       id: number
+      userId: number
       userName: string
       registrationDate: string
     }[]>>(`/events/${id}/attendees`, {
