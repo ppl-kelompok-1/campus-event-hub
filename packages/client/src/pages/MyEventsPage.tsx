@@ -25,7 +25,21 @@ const MyEventsPage = () => {
       setLoading(true)
       setError('')
       const response = await eventApi.getMyEvents()
-      setEvents(response.data)
+      
+      // Sort events by date - nearest date first
+      const sortedEvents = response.data.sort((a, b) => {
+        const dateA = new Date(a.eventDate)
+        const dateB = new Date(b.eventDate)
+        const now = new Date()
+        
+        // Calculate absolute difference from current date
+        const diffA = Math.abs(dateA.getTime() - now.getTime())
+        const diffB = Math.abs(dateB.getTime() - now.getTime())
+        
+        return diffA - diffB // Nearest date first
+      })
+      
+      setEvents(sortedEvents)
     } catch (err) {
       setError('Failed to load your created events. Please try again later.')
       console.error('Error fetching my events:', err)

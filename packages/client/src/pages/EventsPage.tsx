@@ -17,11 +17,12 @@ const EventsPage = () => {
     fetchEvents()
   }, [currentPage, activeFilter])
 
-  const filterEventsByDate = (events: Event[]) => {
+  const filterAndSortEventsByDate = (events: Event[]) => {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     
-    return events.filter(event => {
+    // Filter events based on active filter
+    const filteredEvents = events.filter(event => {
       const eventDate = new Date(event.eventDate)
       const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate())
       
@@ -29,6 +30,20 @@ const EventsPage = () => {
         return eventDateOnly >= today
       } else {
         return eventDateOnly < today
+      }
+    })
+    
+    // Sort events by date - nearest date first
+    return filteredEvents.sort((a, b) => {
+      const dateA = new Date(a.eventDate)
+      const dateB = new Date(b.eventDate)
+      
+      if (activeFilter === 'upcoming') {
+        // For upcoming events: sort ascending (nearest future date first)
+        return dateA.getTime() - dateB.getTime()
+      } else {
+        // For past events: sort descending (most recent past date first)
+        return dateB.getTime() - dateA.getTime()
       }
     })
   }
@@ -39,7 +54,7 @@ const EventsPage = () => {
       setError('')
       // Fetch more events to ensure we have enough after filtering
       const response = await eventApi.getEvents(1, 50)
-      const filteredEvents = filterEventsByDate(response.data)
+      const filteredEvents = filterAndSortEventsByDate(response.data)
       
       // Simple client-side pagination
       const startIndex = (currentPage - 1) * 10
