@@ -199,6 +199,47 @@ export class SQLiteEventRepository implements IEventRepository {
     return result?.name || null;
   }
 
+  async getApproverName(eventId: number): Promise<string | null> {
+    const query = `
+      SELECT u.name 
+      FROM events e 
+      JOIN users u ON e.approved_by = u.id 
+      WHERE e.id = ? AND e.approved_by IS NOT NULL
+    `;
+    const result = await this.database.get(query, [eventId]) as any;
+    return result?.name || null;
+  }
+
+  async approveEvent(eventId: number, approverId: number): Promise<boolean> {
+    const query = `
+      UPDATE events 
+      SET status = ?, approved_by = ?, approval_date = datetime('now'), updated_at = datetime('now') 
+      WHERE id = ?
+    `;
+    const result = await this.database.run(query, [EventStatus.PUBLISHED, approverId, eventId]);
+    return result.changes > 0;
+  }
+
+  async requestRevision(eventId: number, approverId: number, comments: string): Promise<boolean> {
+    const query = `
+      UPDATE events 
+      SET status = ?, revision_comments = ?, approved_by = ?, approval_date = datetime('now'), updated_at = datetime('now') 
+      WHERE id = ?
+    `;
+    const result = await this.database.run(query, [EventStatus.REVISION_REQUESTED, comments, approverId, eventId]);
+    return result.changes > 0;
+  }
+
+  async submitForApproval(eventId: number): Promise<boolean> {
+    const query = `
+      UPDATE events 
+      SET status = ?, revision_comments = NULL, updated_at = datetime('now') 
+      WHERE id = ?
+    `;
+    const result = await this.database.run(query, [EventStatus.PENDING_APPROVAL, eventId]);
+    return result.changes > 0;
+  }
+
   private mapRowToEvent(row: any): Event {
     return {
       id: row.id,
@@ -210,6 +251,9 @@ export class SQLiteEventRepository implements IEventRepository {
       maxAttendees: row.max_attendees,
       createdBy: row.created_by,
       status: row.status as EventStatus,
+      approvedBy: row.approved_by,
+      approvalDate: row.approval_date ? new Date(row.approval_date) : undefined,
+      revisionComments: row.revision_comments,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     };

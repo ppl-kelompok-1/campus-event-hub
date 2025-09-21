@@ -1,6 +1,8 @@
 // Event status enum
 export enum EventStatus {
   DRAFT = 'draft',
+  PENDING_APPROVAL = 'pending_approval',
+  REVISION_REQUESTED = 'revision_requested',
   PUBLISHED = 'published',
   CANCELLED = 'cancelled',
   COMPLETED = 'completed'
@@ -17,6 +19,9 @@ export interface Event {
   maxAttendees?: number;
   createdBy: number; // User ID
   status: EventStatus;
+  approvedBy?: number; // User ID of the approver
+  approvalDate?: Date; // When the event was approved
+  revisionComments?: string; // Comments from approver when requesting revision
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +38,10 @@ export interface EventResponse {
   createdBy: number;
   creatorName: string; // Added for convenience
   status: EventStatus;
+  approvedBy?: number;
+  approverName?: string; // Added for convenience
+  approvalDate?: Date;
+  revisionComments?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,11 +69,17 @@ export interface UpdateEventDto {
 }
 
 // Helper function to convert Event to EventResponse
-export function toEventResponse(event: Event, creatorName: string): EventResponse {
+export function toEventResponse(event: Event, creatorName: string, approverName?: string): EventResponse {
   return {
     ...event,
-    creatorName
+    creatorName,
+    approverName
   };
+}
+
+// DTO for approval actions
+export interface ApprovalDto {
+  revisionComments?: string; // Required for revision requests, optional for approvals
 }
 
 // Validation helpers

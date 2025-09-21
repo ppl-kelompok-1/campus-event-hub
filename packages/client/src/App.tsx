@@ -13,6 +13,7 @@ import MyEventsPage from './pages/MyEventsPage'
 import CreateEventPage from './pages/CreateEventPage'
 import EditEventPage from './pages/EditEventPage'
 import EventDetailsPage from './pages/EventDetailsPage'
+import PendingApprovalsPage from './pages/PendingApprovalsPage'
 import './App.css'
 
 function App() {
@@ -59,6 +60,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <EditEventPage />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Approver routes */}
+          <Route
+            path="/approvals"
+            element={
+              <ProtectedRoute>
+                <PendingApprovalsPage />
               </ProtectedRoute>
             }
           />

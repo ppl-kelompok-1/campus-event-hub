@@ -3,7 +3,7 @@ import { EventService } from '../services/EventService';
 import { AuthService } from '../services/AuthService';
 import { asyncHandler } from '../middleware/error';
 import { authenticate, authorize } from '../middleware/auth';
-import { CreateEventDto, UpdateEventDto, EventStatus } from '../models/Event';
+import { CreateEventDto, UpdateEventDto, EventStatus, ApprovalDto } from '../models/Event';
 import { UserRole } from '../models/User';
 
 export const createEventRouter = (eventService: EventService, authService: AuthService): Router => {
@@ -97,7 +97,7 @@ export const createEventRouter = (eventService: EventService, authService: AuthS
       };
 
       try {
-        const event = await eventService.createEvent(eventData, req.user.userId);
+        const event = await eventService.createEvent(eventData, req.user.userId, req.user.role);
         
         res.status(201).json({
           success: true,
@@ -108,6 +108,27 @@ export const createEventRouter = (eventService: EventService, authService: AuthS
         res.status(400).json({
           success: false,
           error: error instanceof Error ? error.message : 'Failed to create event'
+        });
+      }
+    })
+  );
+
+  // GET /api/v1/events/pending - Get events pending approval (approver, admin, superadmin)
+  router.get('/pending',
+    authenticate(authService),
+    authorize(UserRole.APPROVER, UserRole.ADMIN, UserRole.SUPERADMIN),
+    asyncHandler(async (req: Request, res: Response) => {
+      try {
+        const events = await eventService.getPendingApprovalEvents();
+        
+        res.json({
+          success: true,
+          data: events
+        });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to get pending approval events'
         });
       }
     })
@@ -331,6 +352,150 @@ export const createEventRouter = (eventService: EventService, authService: AuthS
         res.status(statusCode).json({
           success: false,
           error: error instanceof Error ? error.message : 'Failed to cancel event'
+        });
+      }
+    })
+  );
+
+  // POST /api/v1/events/:id/submit-for-approval - Submit event for approval (user only)
+  router.post('/:id/submit-for-approval',
+    authenticate(authService),
+    asyncHandler(async (req: Request, res: Response) => {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+
+      const eventId = parseInt(req.params.id);
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid event ID'
+        });
+      }
+
+      try {
+        const submitted = await eventService.submitForApproval(eventId, req.user.userId, req.user.role);
+        
+        if (!submitted) {
+          return res.status(400).json({
+            success: false,
+            error: 'Failed to submit event for approval'
+          });
+        }
+
+        res.json({
+          success: true,
+          message: 'Event submitted for approval successfully'
+        });
+      } catch (error) {
+        const statusCode = error instanceof Error && error.message.includes('not found') ? 404 :
+                          error instanceof Error && error.message.includes('permissions') ? 403 : 400;
+        
+        res.status(statusCode).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to submit event for approval'
+        });
+      }
+    })
+  );
+
+  // POST /api/v1/events/:id/approve - Approve event (approver, admin, superadmin)
+  router.post('/:id/approve',
+    authenticate(authService),
+    authorize(UserRole.APPROVER, UserRole.ADMIN, UserRole.SUPERADMIN),
+    asyncHandler(async (req: Request, res: Response) => {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+
+      const eventId = parseInt(req.params.id);
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid event ID'
+        });
+      }
+
+      try {
+        const approved = await eventService.approveEvent(eventId, req.user.userId, req.user.role);
+        
+        if (!approved) {
+          return res.status(400).json({
+            success: false,
+            error: 'Failed to approve event'
+          });
+        }
+
+        res.json({
+          success: true,
+          message: 'Event approved successfully'
+        });
+      } catch (error) {
+        const statusCode = error instanceof Error && error.message.includes('not found') ? 404 :
+                          error instanceof Error && error.message.includes('permissions') ? 403 : 400;
+        
+        res.status(statusCode).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to approve event'
+        });
+      }
+    })
+  );
+
+  // POST /api/v1/events/:id/request-revision - Request revision (approver, admin, superadmin)
+  router.post('/:id/request-revision',
+    authenticate(authService),
+    authorize(UserRole.APPROVER, UserRole.ADMIN, UserRole.SUPERADMIN),
+    asyncHandler(async (req: Request, res: Response) => {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+
+      const eventId = parseInt(req.params.id);
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid event ID'
+        });
+      }
+
+      const approvalData: ApprovalDto = {
+        revisionComments: req.body.revisionComments
+      };
+
+      try {
+        const requested = await eventService.requestRevision(eventId, req.user.userId, req.user.role, approvalData);
+        
+        if (!requested) {
+          return res.status(400).json({
+            success: false,
+            error: 'Failed to request revision'
+          });
+        }
+
+        res.json({
+          success: true,
+          message: 'Revision requested successfully'
+        });
+      } catch (error) {
+        const statusCode = error instanceof Error && error.message.includes('not found') ? 404 :
+                          error instanceof Error && error.message.includes('permissions') ? 403 : 400;
+        
+        res.status(statusCode).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to request revision'
         });
       }
     })

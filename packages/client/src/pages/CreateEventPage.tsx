@@ -16,7 +16,7 @@ const CreateEventPage = () => {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
 
   // Redirect if not authenticated
@@ -257,8 +257,21 @@ const CreateEventPage = () => {
             }}
           >
             <option value="draft">Draft (save for later)</option>
-            <option value="published">Published (visible to everyone)</option>
+            {/* Only admin, superadmin, and approver can publish directly */}
+            {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'approver') && (
+              <option value="published">Published (visible to everyone)</option>
+            )}
           </select>
+          {user?.role === 'user' && (
+            <div style={{ 
+              marginTop: '8px', 
+              fontSize: '14px', 
+              color: '#6c757d',
+              fontStyle: 'italic' 
+            }}>
+              Note: Regular users must submit events for approval before they can be published.
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>

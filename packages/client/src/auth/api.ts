@@ -67,14 +67,18 @@ export async function fetchApi<T>(
 }
 
 // Types
+export type UserRole = 'superadmin' | 'admin' | 'approver' | 'user'
+
 export interface User {
   id: number
   name: string
   email: string
-  role: string
+  role: UserRole
   createdAt?: string
   updatedAt?: string
 }
+
+export type EventStatus = 'draft' | 'pending_approval' | 'revision_requested' | 'published' | 'cancelled' | 'completed'
 
 export interface Event {
   id: number
@@ -86,7 +90,11 @@ export interface Event {
   maxAttendees?: number
   createdBy: number
   creatorName: string
-  status: 'draft' | 'published' | 'cancelled' | 'completed'
+  status: EventStatus
+  approvedBy?: number
+  approverName?: string
+  approvalDate?: string
+  revisionComments?: string
   createdAt: string
   updatedAt: string
 }
@@ -98,7 +106,7 @@ export interface CreateEventDto {
   eventTime: string
   location: string
   maxAttendees?: number
-  status?: 'draft' | 'published'
+  status?: EventStatus
 }
 
 export interface UpdateEventDto {
@@ -108,7 +116,11 @@ export interface UpdateEventDto {
   eventTime?: string
   location?: string
   maxAttendees?: number
-  status?: 'draft' | 'published' | 'cancelled' | 'completed'
+  status?: EventStatus
+}
+
+export interface ApprovalDto {
+  revisionComments?: string
 }
 
 export interface PaginatedResponse<T> {
@@ -138,7 +150,7 @@ export const authApi = {
           id: number
           name: string
           email: string
-          role: string
+          role: UserRole
         }
         token: string
       }
@@ -157,7 +169,7 @@ export const authApi = {
         id: number
         name: string
         email: string
-        role: string
+        role: UserRole
       }
     }>('/auth/profile')
   },
@@ -169,7 +181,7 @@ export const authApi = {
         id: number
         name: string
         email: string
-        role: string
+        role: UserRole
       }
       message: string
     }>('/auth/profile', {
@@ -198,7 +210,7 @@ export const userApi = {
     name: string
     email: string
     password: string
-    role: string
+    role: UserRole
   }) => {
     return fetchApi<{
       success: boolean
@@ -296,6 +308,33 @@ export const eventApi = {
   cancelEvent: async (id: number) => {
     return fetchApi<ApiResponse<null>>(`/events/${id}/cancel`, {
       method: 'POST',
+    })
+  },
+
+  // Get events pending approval
+  getPendingApprovalEvents: async () => {
+    return fetchApi<ApiResponse<Event[]>>('/events/pending')
+  },
+
+  // Submit event for approval
+  submitForApproval: async (id: number) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}/submit-for-approval`, {
+      method: 'POST',
+    })
+  },
+
+  // Approve event
+  approveEvent: async (id: number) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}/approve`, {
+      method: 'POST',
+    })
+  },
+
+  // Request revision
+  requestRevision: async (id: number, revisionComments: string) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}/request-revision`, {
+      method: 'POST',
+      body: JSON.stringify({ revisionComments }),
     })
   },
 }

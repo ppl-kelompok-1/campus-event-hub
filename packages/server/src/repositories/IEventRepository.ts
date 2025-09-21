@@ -28,4 +28,10 @@ export interface IEventRepository {
   exists(id: number): Promise<boolean>;
   isCreator(eventId: number, userId: number): Promise<boolean>;
   getCreatorName(eventId: number): Promise<string | null>;
+  getApproverName(eventId: number): Promise<string | null>;
+
+  // Approval operations
+  approveEvent(eventId: number, approverId: number): Promise<boolean>;
+  requestRevision(eventId: number, approverId: number, comments: string): Promise<boolean>;
+  submitForApproval(eventId: number): Promise<boolean>;
 }

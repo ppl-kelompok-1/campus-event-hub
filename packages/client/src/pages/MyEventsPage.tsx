@@ -9,7 +9,7 @@ const MyEventsPage = () => {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -61,6 +61,18 @@ const MyEventsPage = () => {
     } catch (err) {
       setError('Failed to publish event. Please try again.')
       console.error('Error publishing event:', err)
+    }
+  }
+
+  const handleSubmitForApproval = async (event: Event) => {
+    try {
+      await eventApi.submitForApproval(event.id)
+      setEvents(events.map(e => 
+        e.id === event.id ? { ...e, status: 'pending_approval' as const } : e
+      ))
+    } catch (err) {
+      setError('Failed to submit event for approval. Please try again.')
+      console.error('Error submitting event for approval:', err)
     }
   }
 
@@ -184,7 +196,8 @@ const MyEventsPage = () => {
               showActions={true}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              onPublish={handlePublish}
+              onPublish={user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'approver' ? handlePublish : undefined}
+              onSubmitForApproval={user?.role === 'user' ? handleSubmitForApproval : undefined}
               onCancel={handleCancel}
             />
           ))}

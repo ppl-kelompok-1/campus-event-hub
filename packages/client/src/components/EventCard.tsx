@@ -8,6 +8,7 @@ interface EventCardProps {
   onDelete?: (event: Event) => void
   onPublish?: (event: Event) => void
   onCancel?: (event: Event) => void
+  onSubmitForApproval?: (event: Event) => void
 }
 
 const EventCard: React.FC<EventCardProps> = ({ 
@@ -16,7 +17,8 @@ const EventCard: React.FC<EventCardProps> = ({
   onEdit, 
   onDelete, 
   onPublish, 
-  onCancel 
+  onCancel,
+  onSubmitForApproval
 }) => {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
@@ -41,6 +43,8 @@ const EventCard: React.FC<EventCardProps> = ({
   const getStatusBadge = (status: string) => {
     const statusStyles: Record<string, React.CSSProperties> = {
       draft: { backgroundColor: '#6c757d', color: 'white' },
+      pending_approval: { backgroundColor: '#ffc107', color: '#212529' },
+      revision_requested: { backgroundColor: '#fd7e14', color: 'white' },
       published: { backgroundColor: '#28a745', color: 'white' },
       cancelled: { backgroundColor: '#dc3545', color: 'white' },
       completed: { backgroundColor: '#007bff', color: 'white' }
@@ -57,7 +61,7 @@ const EventCard: React.FC<EventCardProps> = ({
           textTransform: 'capitalize'
         }}
       >
-        {status}
+        {status.replace('_', ' ')}
       </span>
     )
   }
@@ -98,7 +102,25 @@ const EventCard: React.FC<EventCardProps> = ({
             👥 Max {event.maxAttendees} attendees
           </div>
         )}
+        {event.approverName && (
+          <div style={{ marginBottom: '4px' }}>
+            ✅ Approved by {event.approverName}
+          </div>
+        )}
       </div>
+
+      {event.revisionComments && (
+        <div style={{ 
+          margin: '0 0 16px 0',
+          padding: '12px',
+          backgroundColor: '#fff3cd',
+          border: '1px solid #ffeaa7',
+          borderRadius: '4px',
+          fontSize: '0.9rem'
+        }}>
+          <strong>Revision Required:</strong> {event.revisionComments}
+        </div>
+      )}
 
       {event.description && (
         <p style={{ 
@@ -117,7 +139,7 @@ const EventCard: React.FC<EventCardProps> = ({
 
       {showActions && (
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {onEdit && (
+          {onEdit && (event.status === 'draft' || event.status === 'revision_requested') && (
             <button
               onClick={() => onEdit(event)}
               style={{
@@ -131,6 +153,23 @@ const EventCard: React.FC<EventCardProps> = ({
               }}
             >
               Edit
+            </button>
+          )}
+          
+          {onSubmitForApproval && (event.status === 'draft' || event.status === 'revision_requested') && (
+            <button
+              onClick={() => onSubmitForApproval(event)}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.875rem'
+              }}
+            >
+              Submit for Approval
             </button>
           )}
           
@@ -168,7 +207,7 @@ const EventCard: React.FC<EventCardProps> = ({
             </button>
           )}
           
-          {onDelete && (
+          {onDelete && (event.status === 'draft' || event.status === 'revision_requested') && (
             <button
               onClick={() => onDelete(event)}
               style={{
