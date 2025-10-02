@@ -23,7 +23,10 @@ router.get('/', (req, res) => {
         'GET /api/v1/users/:id',
         'POST /api/v1/users',
         'PUT /api/v1/users/:id',
-        'DELETE /api/v1/users/:id'
+        'DELETE /api/v1/users/:id',
+        'GET /api/v1/users/:id/profile (public)',
+        'GET /api/v1/users/:id/events/created (public)',
+        'GET /api/v1/users/:id/events/joined (public)'
       ],
       events: [
         'GET /api/v1/events',
@@ -57,14 +60,15 @@ router.get('/', (req, res) => {
 const userService = container.getUserService();
 const authService = container.getAuthService();
 const eventService = container.getEventService();
+const eventRegistrationService = container.getEventRegistrationService();
 
 // Mount authentication routes
 router.use('/auth', createAuthRouter(authService, userService));
 
 // Mount user routes
-router.use('/users', createUserRouter(userService, authService));
+router.use('/users', createUserRouter(userService, authService, eventService, eventRegistrationService));
 
 // Mount event routes
-router.use('/events', createEventRouter(eventService, authService));
+router.use('/events', createEventRouter(eventService, eventRegistrationService, authService));
 
 export default router;

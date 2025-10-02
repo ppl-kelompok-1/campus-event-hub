@@ -74,7 +74,7 @@ const CreateEventPage = () => {
       }
       
       await eventApi.createEvent(eventData)
-      navigate('/events/my')
+      navigate('/profile?tab=created')
     } catch (err) {
       setError('Failed to create event. Please try again.')
       console.error('Error creating event:', err)

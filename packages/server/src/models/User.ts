@@ -49,8 +49,26 @@ export interface UpdateSelfDto {
   password?: string;
 }
 
+// Public user profile (excludes email for privacy)
+export interface PublicUserProfile {
+  id: number;
+  name: string;
+  role: UserRole;
+  createdAt: Date;
+}
+
 // Helper function to convert User to UserResponse
 export function toUserResponse(user: User): UserResponse {
   const { password, ...userResponse } = user;
   return userResponse;
+}
+
+// Helper function to convert User to PublicUserProfile
+export function toPublicUserProfile(user: User): PublicUserProfile {
+  return {
+    id: user.id,
+    name: user.name,
+    role: user.role,
+    createdAt: user.createdAt
+  };
 }

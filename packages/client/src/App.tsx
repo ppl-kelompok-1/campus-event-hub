@@ -5,11 +5,11 @@ import Layout from './components/Layout'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Profile from './pages/Profile'
+import PublicUserProfilePage from './pages/PublicUserProfilePage'
 import UsersPage from './pages/UsersPage'
 import CreateUserPage from './pages/CreateUserPage'
 import EditUserPage from './pages/EditUserPage'
 import EventsPage from './pages/EventsPage'
-import MyEventsPage from './pages/MyEventsPage'
 import CreateEventPage from './pages/CreateEventPage'
 import EditEventPage from './pages/EditEventPage'
 import EventDetailsPage from './pages/EventDetailsPage'
@@ -28,6 +28,9 @@ function App() {
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:id" element={<EventDetailsPage />} />
           
+          {/* Public user profile routes */}
+          <Route path="/users/:id/profile" element={<PublicUserProfilePage />} />
+          
           {/* Protected routes */}
           <Route
             path="/profile"
@@ -39,14 +42,6 @@ function App() {
           />
           
           {/* Event routes - protected */}
-          <Route
-            path="/events/my"
-            element={
-              <ProtectedRoute>
-                <MyEventsPage />
-              </ProtectedRoute>
-            }
-          />
           <Route
             path="/events/create"
             element={

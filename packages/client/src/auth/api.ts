@@ -4,6 +4,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/
 
 interface FetchOptions extends RequestInit {
   requireAuth?: boolean
+  includeAuth?: boolean
 }
 
 export class ApiError extends Error {
@@ -21,7 +22,7 @@ export async function fetchApi<T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const { requireAuth = true, ...fetchOptions } = options
+  const { requireAuth = true, includeAuth = false, ...fetchOptions } = options
   
   const url = `${API_BASE_URL}${endpoint}`
   
@@ -29,8 +30,8 @@ export async function fetchApi<T>(
     'Content-Type': 'application/json',
   }
   
-  // Add auth token if required
-  if (requireAuth) {
+  // Add auth token if required or if includeAuth is true
+  if (requireAuth || includeAuth) {
     const token = getToken()
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
@@ -78,6 +79,13 @@ export interface User {
   updatedAt?: string
 }
 
+export interface PublicUserProfile {
+  id: number
+  name: string
+  role: UserRole
+  createdAt: string
+}
+
 export type EventStatus = 'draft' | 'pending_approval' | 'revision_requested' | 'published' | 'cancelled' | 'completed'
 
 export interface Event {
@@ -97,6 +105,12 @@ export interface Event {
   revisionComments?: string
   createdAt: string
   updatedAt: string
+  // Registration information
+  currentAttendees?: number
+  isUserRegistered?: boolean
+  userRegistrationStatus?: 'registered' | 'waitlisted' | 'cancelled'
+  isFull?: boolean
+  canRegister?: boolean
 }
 
 export interface CreateEventDto {
@@ -249,15 +263,43 @@ export const userApi = {
       method: 'DELETE',
     })
   },
+
+  // Public user profile methods (no auth required)
+  getPublicProfile: async (userId: number) => {
+    return fetchApi<{
+      success: boolean
+      data: PublicUserProfile
+    }>(`/users/${userId}/profile`, {
+      requireAuth: false
+    })
+  },
+
+  getUserCreatedEvents: async (userId: number) => {
+    return fetchApi<{
+      success: boolean
+      data: Event[]
+    }>(`/users/${userId}/events/created`, {
+      requireAuth: false
+    })
+  },
+
+  getUserJoinedEvents: async (userId: number) => {
+    return fetchApi<{
+      success: boolean
+      data: Event[]
+    }>(`/users/${userId}/events/joined`, {
+      requireAuth: false
+    })
+  },
 }
 
 // Event API calls
 export const eventApi = {
-  // Get all published events (public access)
-  getEvents: async (page = 1, limit = 10) => {
+  // Get all published events (public access, but include auth if available)
+  getEvents: async (page = 1, limit = 10, includeAuth = true) => {
     return fetchApi<PaginatedResponse<Event>>(
       `/events?page=${page}&limit=${limit}`,
-      { requireAuth: false }
+      { requireAuth: false, includeAuth }
     )
   },
 
@@ -335,6 +377,88 @@ export const eventApi = {
     return fetchApi<ApiResponse<null>>(`/events/${id}/request-revision`, {
       method: 'POST',
       body: JSON.stringify({ revisionComments }),
+    })
+  },
+
+  // Event Registration APIs
+
+  // Join/register for an event
+  joinEvent: async (id: number) => {
+    return fetchApi<ApiResponse<{
+      id: number
+      eventId: number
+      userId: number
+      userName: string
+      userEmail: string
+      registrationDate: string
+      status: 'registered' | 'waitlisted' | 'cancelled'
+      createdAt: string
+      updatedAt: string
+    }>>(`/events/${id}/register`, {
+      method: 'POST',
+    })
+  },
+
+  // Leave/unregister from an event
+  leaveEvent: async (id: number) => {
+    return fetchApi<ApiResponse<null>>(`/events/${id}/register`, {
+      method: 'DELETE',
+    })
+  },
+
+  // Get user's joined events
+  getJoinedEvents: async () => {
+    return fetchApi<ApiResponse<{
+      id: number
+      eventId: number
+      userId: number
+      userName: string
+      userEmail: string
+      registrationDate: string
+      status: 'registered' | 'waitlisted' | 'cancelled'
+      createdAt: string
+      updatedAt: string
+    }[]>>('/events/joined')
+  },
+
+  // Get event registrations (for event creators/admins)
+  getEventRegistrations: async (id: number) => {
+    return fetchApi<ApiResponse<{
+      id: number
+      eventId: number
+      userId: number
+      userName: string
+      userEmail: string
+      registrationDate: string
+      status: 'registered' | 'waitlisted' | 'cancelled'
+      createdAt: string
+      updatedAt: string
+    }[]>>(`/events/${id}/registrations`)
+  },
+
+  // Get event registration statistics
+  getEventStats: async (id: number) => {
+    return fetchApi<ApiResponse<{
+      totalRegistered: number
+      totalWaitlisted: number
+      totalCancelled: number
+      maxAttendees?: number
+      isFull: boolean
+      canRegister: boolean
+    }>>(`/events/${id}/stats`, {
+      requireAuth: false
+    })
+  },
+
+  // Get public attendee list for an event (names only)
+  getEventAttendees: async (id: number) => {
+    return fetchApi<ApiResponse<{
+      id: number
+      userId: number
+      userName: string
+      registrationDate: string
+    }[]>>(`/events/${id}/attendees`, {
+      requireAuth: false
     })
   },
 }

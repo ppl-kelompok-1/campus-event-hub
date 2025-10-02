@@ -36,6 +36,28 @@ const DUMMY_ACCOUNTS = {
   }
 };
 
+// Additional users to create
+const ADDITIONAL_USERS = [
+  {
+    email: 'user1@campus-event-hub.local',
+    password: 'User123!',
+    name: 'Regular User 1',
+    role: UserRole.USER
+  },
+  {
+    email: 'user2@campus-event-hub.local',
+    password: 'User123!',
+    name: 'Regular User 2',
+    role: UserRole.USER
+  },
+  {
+    email: 'user3@campus-event-hub.local',
+    password: 'User123!',
+    name: 'Regular User 3',
+    role: UserRole.USER
+  }
+];
+
 async function createDummyUsers(): Promise<void> {
   console.log('🚀 Campus Event Hub - User Initialization Script\n');
 
@@ -92,18 +114,51 @@ async function createDummyUsers(): Promise<void> {
       console.log('');
     }
 
+    // Create additional users
+    console.log('👥 Creating additional regular users...\n');
+    
+    for (const userConfig of ADDITIONAL_USERS) {
+      console.log(`🔍 Checking ${userConfig.name}...`);
+      
+      // Check if email is already in use
+      const existingUser = await userRepository.findByEmail(userConfig.email);
+      if (existingUser) {
+        console.log(`   ✅ User already exists: ${existingUser.name} (${existingUser.email})`);
+        createdUsers.push({role: userConfig.role, user: existingUser, isNew: false});
+      } else {
+        console.log(`   ✨ Creating ${userConfig.name}...`);
+        
+        // Hash the password
+        const hashedPassword = await authService.hashPassword(userConfig.password);
+
+        // Create the user
+        const newUser = await userRepository.create({
+          name: userConfig.name,
+          email: userConfig.email,
+          password: hashedPassword,
+          role: userConfig.role
+        });
+
+        console.log(`   🎉 ${userConfig.name} created successfully!`);
+        createdUsers.push({role: userConfig.role, user: newUser, isNew: true});
+      }
+      console.log('');
+    }
+
     // Display summary
     console.log('📝 LOGIN CREDENTIALS SUMMARY');
     console.log('=' .repeat(60));
     
     createdUsers.forEach(({role, user, isNew}) => {
       const config = DUMMY_ACCOUNTS[role];
+      const additionalUser = ADDITIONAL_USERS.find(u => u.email === user.email);
+      const password = config ? config.password : additionalUser?.password || 'User123!';
       const status = isNew ? '🆕 CREATED' : '✅ EXISTS';
       
       console.log(`\n${status} - ${role.toUpperCase()}`);
       console.log(`   Name:     ${user.name}`);
       console.log(`   Email:    ${user.email}`);
-      console.log(`   Password: ${config.password}`);
+      console.log(`   Password: ${password}`);
       console.log(`   User ID:  ${user.id}`);
       console.log(`   Created:  ${user.createdAt}`);
     });

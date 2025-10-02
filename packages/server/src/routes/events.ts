@@ -1,12 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { EventService } from '../services/EventService';
+import { EventRegistrationService } from '../services/EventRegistrationService';
 import { AuthService } from '../services/AuthService';
 import { asyncHandler } from '../middleware/error';
 import { authenticate, authorize } from '../middleware/auth';
 import { CreateEventDto, UpdateEventDto, EventStatus, ApprovalDto } from '../models/Event';
 import { UserRole } from '../models/User';
 
-export const createEventRouter = (eventService: EventService, authService: AuthService): Router => {
+export const createEventRouter = (eventService: EventService, eventRegistrationService: EventRegistrationService, authService: AuthService): Router => {
   const router = Router();
 
   // GET /api/v1/events - Get all published events (public access)
@@ -15,8 +16,21 @@ export const createEventRouter = (eventService: EventService, authService: AuthS
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       
+      // Try to get user ID if authenticated (optional)
+      let userId: number | undefined;
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+          const token = authHeader.substring(7);
+          const decoded = await authService.verifyToken(token);
+          userId = decoded.userId;
+        } catch {
+          // Ignore auth errors for public endpoint
+        }
+      }
+      
       // For public access, only show published events
-      const result = await eventService.getEventsPaginated(page, limit, EventStatus.PUBLISHED);
+      const result = await eventService.getEventsPaginated(page, limit, EventStatus.PUBLISHED, userId);
       
       res.json({
         success: true,
@@ -134,6 +148,33 @@ export const createEventRouter = (eventService: EventService, authService: AuthS
     })
   );
 
+  // GET /api/v1/events/joined - Get user's joined events
+  router.get('/joined',
+    authenticate(authService),
+    asyncHandler(async (req: Request, res: Response) => {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+
+      try {
+        const joinedEvents = await eventRegistrationService.getUserJoinedEvents(req.user.userId);
+        
+        res.json({
+          success: true,
+          data: joinedEvents
+        });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to get joined events'
+        });
+      }
+    })
+  );
+
   // GET /api/v1/events/:id - Get event by ID
   router.get('/:id',
     asyncHandler(async (req: Request, res: Response) => {
@@ -146,7 +187,20 @@ export const createEventRouter = (eventService: EventService, authService: AuthS
         });
       }
 
-      const event = await eventService.getEventById(eventId);
+      // Try to get user ID if authenticated (optional)
+      let userId: number | undefined;
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+          const token = authHeader.substring(7);
+          const decoded = await authService.verifyToken(token);
+          userId = decoded.userId;
+        } catch {
+          // Ignore auth errors for public endpoint
+        }
+      }
+
+      const event = await eventService.getEventById(eventId, userId);
       
       if (!event) {
         return res.status(404).json({
@@ -496,6 +550,196 @@ export const createEventRouter = (eventService: EventService, authService: AuthS
         res.status(statusCode).json({
           success: false,
           error: error instanceof Error ? error.message : 'Failed to request revision'
+        });
+      }
+    })
+  );
+
+  // Event Registration Endpoints
+
+  // POST /api/v1/events/:id/register - Join/register for an event
+  router.post('/:id/register',
+    authenticate(authService),
+    asyncHandler(async (req: Request, res: Response) => {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+
+      const eventId = parseInt(req.params.id);
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid event ID'
+        });
+      }
+
+      try {
+        const registration = await eventRegistrationService.registerForEvent(eventId, req.user.userId, req.user.role);
+        
+        res.status(201).json({
+          success: true,
+          data: registration,
+          message: registration.status === 'registered' 
+            ? 'Successfully registered for event' 
+            : 'Added to event waitlist'
+        });
+      } catch (error) {
+        const statusCode = error instanceof Error && error.message.includes('not found') ? 404 :
+                          error instanceof Error && error.message.includes('already registered') ? 409 : 400;
+        
+        res.status(statusCode).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to register for event'
+        });
+      }
+    })
+  );
+
+  // DELETE /api/v1/events/:id/register - Leave/unregister from an event
+  router.delete('/:id/register',
+    authenticate(authService),
+    asyncHandler(async (req: Request, res: Response) => {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+
+      const eventId = parseInt(req.params.id);
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid event ID'
+        });
+      }
+
+      try {
+        const success = await eventRegistrationService.unregisterFromEvent(eventId, req.user.userId, req.user.role);
+        
+        if (!success) {
+          return res.status(400).json({
+            success: false,
+            error: 'Failed to unregister from event'
+          });
+        }
+
+        res.json({
+          success: true,
+          message: 'Successfully unregistered from event'
+        });
+      } catch (error) {
+        const statusCode = error instanceof Error && error.message.includes('not found') ? 404 :
+                          error instanceof Error && error.message.includes('not registered') ? 409 : 400;
+        
+        res.status(statusCode).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to unregister from event'
+        });
+      }
+    })
+  );
+
+  // GET /api/v1/events/:id/registrations - Get event registrations (creator/admin only)
+  router.get('/:id/registrations',
+    authenticate(authService),
+    asyncHandler(async (req: Request, res: Response) => {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+
+      const eventId = parseInt(req.params.id);
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid event ID'
+        });
+      }
+
+      try {
+        const registrations = await eventRegistrationService.getEventRegistrations(eventId, req.user.userId, req.user.role);
+        
+        res.json({
+          success: true,
+          data: registrations
+        });
+      } catch (error) {
+        const statusCode = error instanceof Error && error.message.includes('not found') ? 404 :
+                          error instanceof Error && error.message.includes('permissions') ? 403 : 400;
+        
+        res.status(statusCode).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to get event registrations'
+        });
+      }
+    })
+  );
+
+
+  // GET /api/v1/events/:id/stats - Get event registration statistics
+  router.get('/:id/stats',
+    asyncHandler(async (req: Request, res: Response) => {
+      const eventId = parseInt(req.params.id);
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid event ID'
+        });
+      }
+
+      try {
+        const stats = await eventRegistrationService.getEventRegistrationStats(eventId);
+        
+        res.json({
+          success: true,
+          data: stats
+        });
+      } catch (error) {
+        const statusCode = error instanceof Error && error.message.includes('not found') ? 404 : 500;
+        
+        res.status(statusCode).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to get event statistics'
+        });
+      }
+    })
+  );
+
+  // GET /api/v1/events/:id/attendees - Get public attendee list (names only)
+  router.get('/:id/attendees',
+    asyncHandler(async (req: Request, res: Response) => {
+      const eventId = parseInt(req.params.id);
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid event ID'
+        });
+      }
+
+      try {
+        const attendees = await eventRegistrationService.getEventAttendees(eventId);
+        
+        res.json({
+          success: true,
+          data: attendees
+        });
+      } catch (error) {
+        const statusCode = error instanceof Error && error.message.includes('not found') ? 404 : 500;
+        
+        res.status(statusCode).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to get event attendees'
         });
       }
     })

@@ -1,0 +1,151 @@
+@startuml Campus Event Hub - Enhanced ER Diagram
+
+' Style definitions
+!define ENTITY class
+!define ATTRIBUTE(x) circle x
+!define PRIMARY_KEY(x) circle x #palegreen
+!define SUPERTYPE rectangle
+!define SUBTYPE rectangle
+
+skinparam class {
+    BackgroundColor #E6E6FA
+    BorderColor #4B0082
+    FontSize 14
+}
+
+skinparam circle {
+    BackgroundColor #FFDAB9
+    BorderColor #8B4513
+}
+
+skinparam rectangle {
+    BackgroundColor #E6E6FA
+    BorderColor #4B0082
+}
+
+' Attributes for Users
+PRIMARY_KEY(user_id) #palegreen
+ATTRIBUTE(name) #FFDAB9
+ATTRIBUTE(email) #FFDAB9
+ATTRIBUTE(password) #FFDAB9
+
+' Main USERS entity (Supertype)
+SUPERTYPE Users {
+}
+
+' ISA relationship node for Users
+storage "Is a" as UserISA #F0E68C
+
+' User subtypes
+SUBTYPE Regular_User {
+}
+
+SUBTYPE Approver { 
+}
+
+SUBTYPE Admin {
+}
+
+SUBTYPE Superadmin {
+}
+
+' Connect attributes to Users
+user_id --> Users
+name --> Users
+email --> Users  
+password --> Users
+
+' ISA relationships for Users
+Users --|> UserISA
+UserISA --|> Regular_User
+UserISA --|> Approver
+UserISA --|> Admin
+UserISA --|> Superadmin
+
+' Attributes for Events
+PRIMARY_KEY(event_id) #palegreen
+ATTRIBUTE(title) #FFDAB9
+ATTRIBUTE(description) #FFDAB9
+ATTRIBUTE(location) #FFDAB9
+ATTRIBUTE(event_date) #FFDAB9
+ATTRIBUTE(event_time) #FFDAB9
+
+' Main EVENTS entity (Supertype)
+SUPERTYPE Events {
+}
+
+' ISA relationship node for Events
+storage "Is a" as EventISA #F0E68C
+
+' Event subtypes
+SUBTYPE Draft_Event {
+}
+ATTRIBUTE(revision_comments) #FFDAB9
+
+SUBTYPE Pending_Event {
+}
+
+SUBTYPE Published_Event {
+}
+ATTRIBUTE(max_attendees) #FFDAB9
+ATTRIBUTE(approved_by) #FFDAB9
+ATTRIBUTE(approval_date) #FFDAB9
+
+' Connect attributes to Events
+event_id --> Events
+title --> Events
+description --> Events
+location --> Events
+event_date --> Events
+event_time --> Events
+
+' ISA relationships for Events  
+Events --|> EventISA
+EventISA --|> Draft_Event
+EventISA --|> Pending_Event
+EventISA --|> Published_Event
+
+' Event subtype attributes
+revision_comments --> Draft_Event
+max_attendees --> Published_Event
+approved_by --> Published_Event
+approval_date --> Published_Event
+
+' Registration entity
+ENTITY Registrations {
+}
+PRIMARY_KEY(registration_id) #palegreen
+ATTRIBUTE(registration_date) #FFDAB9
+ATTRIBUTE(status) #FFDAB9
+
+registration_id --> Registrations
+registration_date --> Registrations
+status --> Registrations
+
+' Relationships
+Users "1" -- "*" Events : creates >
+Approver "1" -- "*" Pending_Event : approves >
+Users "M" -- "N" Published_Event : registers
+(Users, Published_Event) .. Registrations
+
+' Notes
+note bottom of UserISA
+  **Total, Disjoint Specialization**
+  Every user must be exactly one type:
+  Regular, Approver, Admin, or Superadmin
+end note
+
+note bottom of EventISA
+  **Partial, Disjoint Specialization**
+  Events progress through statuses:
+  Draft → Pending → Published
+end note
+
+note right of Registrations
+  **Junction Entity**
+  Handles M:N relationship
+  between Users and Published Events
+  with additional attributes
+end note
+
+@enduml

@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
-import { useState, useEffect } from 'react'
-import type { Event } from '../auth/api'
+import type { Event, UserRole } from '../auth/api'
 
 interface EventTimelineItemProps {
   event: Event
   showJoinButton?: boolean
   showManagementActions?: boolean
+  userRole?: UserRole
   onJoin?: (event: Event) => void
+  onLeave?: (event: Event) => void
   onEdit?: (event: Event) => void
   onDelete?: (event: Event) => void
   onPublish?: (event: Event) => void
@@ -18,25 +19,16 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
   event, 
   showJoinButton = true,
   showManagementActions = false,
+  userRole,
   onJoin,
+  onLeave,
   onEdit,
   onDelete,
   onPublish,
   onCancel,
   onSubmitForApproval
 }) => {
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth <= 768)
-    }
-    
-    checkScreenSize()
-    window.addEventListener('resize', checkScreenSize)
-    
-    return () => window.removeEventListener('resize', checkScreenSize)
-  }, [])
+  // Remove unused mobile detection since we're no longer using thumbnails
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
     return {
@@ -231,7 +223,22 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
             fontSize: '14px',
             color: '#6c757d'
           }}>
-            By {event.creatorName}
+            By{' '}
+            <Link 
+              to={`/users/${event.createdBy}/profile`}
+              style={{
+                color: '#007bff',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.textDecoration = 'underline'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.textDecoration = 'none'
+              }}
+            >
+              {event.creatorName}
+            </Link>
           </span>
         </div>
 
@@ -292,37 +299,113 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
           </p>
         )}
 
+        {/* Attendee Count */}
+        {event.currentAttendees !== undefined && (
+          <div style={{ 
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '16px',
+            fontSize: '14px',
+            color: '#6c757d'
+          }}>
+            <div style={{
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              backgroundColor: '#f8f9fa',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '10px',
+              color: '#6c757d'
+            }}>
+              👥
+            </div>
+            <span>
+              {event.currentAttendees}
+              {event.maxAttendees && ` / ${event.maxAttendees}`} attendees
+              {event.isFull && <span style={{ color: '#dc3545', marginLeft: '8px' }}>(Full)</span>}
+            </span>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div style={{ 
           display: 'flex', 
           gap: '8px', 
           flexWrap: 'wrap'
         }}>
-          {/* Join Button for Browse Events */}
-          {showJoinButton && !showManagementActions && (
-            <button
-              onClick={() => onJoin && onJoin(event)}
-              style={{
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = '#0056b3'
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = '#007bff'
-              }}
-            >
-              Join Event
-            </button>
-          )}
+          {/* Smart Join/Leave Button for Browse Events */}
+          {showJoinButton && !showManagementActions && (() => {
+            // Determine button state and text
+            let buttonText = 'Join Event';
+            let buttonColor = '#007bff';
+            let buttonHoverColor = '#0056b3';
+            let isDisabled = false;
+            let clickHandler = () => onJoin && onJoin(event);
+
+            if (event.isUserRegistered) {
+              if (event.userRegistrationStatus === 'registered') {
+                buttonText = 'Joined ✓';
+                buttonColor = '#28a745';
+                buttonHoverColor = '#dc3545';
+                clickHandler = () => onLeave && onLeave(event);
+              } else if (event.userRegistrationStatus === 'waitlisted') {
+                buttonText = 'On Waitlist';
+                buttonColor = '#ffc107';
+                buttonHoverColor = '#dc3545';
+                clickHandler = () => onLeave && onLeave(event);
+              }
+            } else if (event.isFull) {
+              buttonText = 'Event Full';
+              buttonColor = '#6c757d';
+              buttonHoverColor = '#6c757d';
+              isDisabled = true;
+              clickHandler = () => {};
+            } else if (!event.canRegister) {
+              buttonText = 'Registration Closed';
+              buttonColor = '#6c757d';
+              buttonHoverColor = '#6c757d';
+              isDisabled = true;
+              clickHandler = () => {};
+            }
+
+            return (
+              <button
+                onClick={clickHandler}
+                disabled={isDisabled}
+                style={{
+                  backgroundColor: buttonColor,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: isDisabled ? 'not-allowed' : 'pointer',
+                  opacity: isDisabled ? 0.6 : 1,
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  if (!isDisabled) {
+                    e.currentTarget.style.backgroundColor = buttonHoverColor;
+                    if (event.isUserRegistered) {
+                      e.currentTarget.textContent = 'Leave Event';
+                    }
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!isDisabled) {
+                    e.currentTarget.style.backgroundColor = buttonColor;
+                    e.currentTarget.textContent = buttonText;
+                  }
+                }}
+              >
+                {buttonText}
+              </button>
+            );
+          })()}
 
           {/* Management Actions for My Created Events */}
           {showManagementActions && (
@@ -345,7 +428,7 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
                 </button>
               )}
               
-              {onSubmitForApproval && (event.status === 'draft' || event.status === 'revision_requested') && (
+              {onSubmitForApproval && (event.status === 'draft' || event.status === 'revision_requested') && userRole === 'user' && (
                 <button
                   onClick={() => onSubmitForApproval(event)}
                   style={{
@@ -363,7 +446,7 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
                 </button>
               )}
               
-              {onPublish && event.status === 'draft' && (
+              {onPublish && event.status === 'draft' && userRole && ['approver', 'admin', 'superadmin'].includes(userRole) && (
                 <button
                   onClick={() => onPublish(event)}
                   style={{
