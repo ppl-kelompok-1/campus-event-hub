@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Event Hub - Enhanced ER Diagram</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .diagram-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+            min-height: 1200px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        
+        svg {
+            width: 100%;
+            height: 1200px;
+        }
+        
+        /* Entity boxes */
+        .entity {
+            fill: #E6E6FA;
+            stroke: #4B0082;
+            stroke-width: 2;
+        }
+        
+        /* Attribute circles */
+        .attribute {
+            fill: #FFDAB9;
+            stroke: #8B4513;
+            stroke-width: 2;
+        }
+        
+        .primary-key {
+            fill: #90EE90;
+            stroke: #228B22;
+            stroke-width: 2;
+        }
+        
+        /* ISA triangles */
+        .isa-triangle {
+            fill: #F0E68C;
+            stroke: #DAA520;
+            stroke-width: 2;
+        }
+        
+        /* Relationship lines */
+        .relationship {
+            stroke: #333;
+            stroke-width: 2;
+            fill: none;
+        }
+        
+        /* Text styling */
+        text {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            text-anchor: middle;
+        }
+        
+        .entity-text {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .cardinality {
+            font-weight: bold;
+            fill: #333;
+        }
+        
+        .relationship-label {
+            font-style: italic;
+            fill: #666;
+        }
+        
+        /* Legend */
+        .legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        
+        .legend-item {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .legend-symbol {
+            width: 30px;
+            height: 20px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="diagram-container">
+        <h1>Campus Event Hub - Enhanced Entity Relationship Diagram</h1>
+        
+        <svg viewBox="0 0 1400 1200">
+            <!-- Define markers for arrows -->
+            <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                    <path d="M0,0 L0,6 L9,3 z" fill="#333" />
+                </marker>
+            </defs>
+            
+            <!-- USERS Hierarchy -->
+            <!-- User Attributes -->
+            <ellipse cx="100" cy="100" rx="50" ry="25" class="primary-key"/>
+            <text x="100" y="105">user_id</text>
+            
+            <ellipse cx="250" cy="100" rx="40" ry="25" class="attribute"/>
+            <text x="250" y="105">name</text>
+            
+            <ellipse cx="380" cy="100" rx="40" ry="25" class="attribute"/>
+            <text x="380" y="105">email</text>
+            
+            <ellipse cx="510" cy="100" rx="50" ry="25" class="attribute"/>
+            <text x="510" y="105">password</text>
+            
+            <!-- Lines from attributes to Users entity -->
+            <line x1="100" y1="125" x2="300" y2="180" class="relationship"/>
+            <line x1="250" y1="125" x2="300" y2="180" class="relationship"/>
+            <line x1="380" y1="125" x2="300" y2="180" class="relationship"/>
+            <line x1="510" y1="125" x2="300" y2="180" class="relationship"/>
+            
+            <!-- Users Supertype -->
+            <rect x="250" y="180" width="100" height="50" rx="5" class="entity"/>
+            <text x="300" y="210" class="entity-text">Users</text>
+            
+            <!-- ISA Triangle for Users -->
+            <polygon points="300,260 270,310 330,310" class="isa-triangle"/>
+            <text x="300" y="290">Is a</text>
+            
+            <!-- Line from Users to ISA -->
+            <line x1="300" y1="230" x2="300" y2="260" class="relationship"/>
+            
+            <!-- User Subtypes -->
+            <rect x="50" y="350" width="120" height="50" rx="5" class="entity"/>
+            <text x="110" y="380" class="entity-text">Regular_User</text>
+            
+            <rect x="200" y="350" width="100" height="50" rx="5" class="entity"/>
+            <text x="250" y="380" class="entity-text">Approver</text>
+            
+            <rect x="330" y="350" width="80" height="50" rx="5" class="entity"/>
+            <text x="370" y="380" class="entity-text">Admin</text>
+            
+            <rect x="440" y="350" width="120" height="50" rx="5" class="entity"/>
+            <text x="500" y="380" class="entity-text">Superadmin</text>
+            
+            <!-- Lines from ISA to subtypes -->
+            <line x1="270" y1="310" x2="110" y2="350" class="relationship"/>
+            <line x1="290" y1="310" x2="250" y2="350" class="relationship"/>
+            <line x1="310" y1="310" x2="370" y2="350" class="relationship"/>
+            <line x1="330" y1="310" x2="500" y2="350" class="relationship"/>
+            
+            <!-- EVENTS Hierarchy -->
+            <!-- Event Attributes -->
+            <ellipse cx="750" cy="100" rx="50" ry="25" class="primary-key"/>
+            <text x="750" y="105">event_id</text>
+            
+            <ellipse cx="900" cy="100" rx="35" ry="25" class="attribute"/>
+            <text x="900" y="105">title</text>
+            
+            <ellipse cx="1020" cy="100" rx="55" ry="25" class="attribute"/>
+            <text x="1020" y="105">description</text>
+            
+            <ellipse cx="1160" cy="100" rx="50" ry="25" class="attribute"/>
+            <text x="1160" y="105">location</text>
+            
+            <ellipse cx="820" cy="50" rx="55" ry="25" class="attribute"/>
+            <text x="820" y="55">event_date</text>
+            
+            <ellipse cx="960" cy="50" rx="55" ry="25" class="attribute"/>
+            <text x="960" y="55">event_time</text>
+            
+            <!-- Lines from attributes to Events entity -->
+            <line x1="750" y1="125" x2="950" y2="180" class="relationship"/>
+            <line x1="900" y1="125" x2="950" y2="180" class="relationship"/>
+            <line x1="1020" y1="125" x2="950" y2="180" class="relationship"/>
+            <line x1="1160" y1="125" x2="950" y2="180" class="relationship"/>
+            <line x1="820" y1="75" x2="950" y2="180" class="relationship"/>
+            <line x1="960" y1="75" x2="950" y2="180" class="relationship"/>
+            
+            <!-- Events Supertype -->
+            <rect x="900" y="180" width="100" height="50" rx="5" class="entity"/>
+            <text x="950" y="210" class="entity-text">Events</text>
+            
+            <!-- ISA Triangle for Events -->
+            <polygon points="950,260 920,310 980,310" class="isa-triangle"/>
+            <text x="950" y="290">Is a</text>
+            
+            <!-- Line from Events to ISA -->
+            <line x1="950" y1="230" x2="950" y2="260" class="relationship"/>
+            
+            <!-- Event Subtypes -->
+            <rect x="750" y="350" width="120" height="50" rx="5" class="entity"/>
+            <text x="810" y="380" class="entity-text">Draft_Event</text>
+            
+            <rect x="900" y="350" width="130" height="50" rx="5" class="entity"/>
+            <text x="965" y="380" class="entity-text">Pending_Event</text>
+            
+            <rect x="1060" y="350" width="140" height="50" rx="5" class="entity"/>
+            <text x="1130" y="380" class="entity-text">Published_Event</text>
+            
+            <!-- Lines from ISA to subtypes -->
+            <line x1="920" y1="310" x2="810" y2="350" class="relationship"/>
+            <line x1="950" y1="310" x2="965" y2="350" class="relationship"/>
+            <line x1="980" y1="310" x2="1130" y2="350" class="relationship"/>
+            
+            <!-- Draft Event specific attributes -->
+            <ellipse cx="810" cy="450" rx="80" ry="25" class="attribute"/>
+            <text x="810" y="455">revision_comments</text>
+            <line x1="810" y1="400" x2="810" y2="425" class="relationship"/>
+            
+            <!-- Published Event specific attributes -->
+            <ellipse cx="1050" cy="450" rx="70" ry="25" class="attribute"/>
+            <text x="1050" y="455">max_attendees</text>
+            
+            <ellipse cx="1200" cy="450" rx="60" ry="25" class="attribute"/>
+            <text x="1200" y="455">approved_by</text>
+            
+            <ellipse cx="1130" cy="500" rx="70" ry="25" class="attribute"/>
+            <text x="1130" y="505">approval_date</text>
+            
+            <line x1="1100" y1="400" x2="1050" y2="425" class="relationship"/>
+            <line x1="1150" y1="400" x2="1200" y2="425" class="relationship"/>
+            <line x1="1130" y1="400" x2="1130" y2="475" class="relationship"/>
+            
+            <!-- REGISTRATIONS Entity -->
+            <rect x="450" y="650" width="130" height="50" rx="5" class="entity"/>
+            <text x="515" y="680" class="entity-text">Registrations</text>
+            
+            <!-- Registration Attributes -->
+            <ellipse cx="350" cy="750" rx="70" ry="25" class="primary-key"/>
+            <text x="350" y="755">registration_id</text>
+            
+            <ellipse cx="500" cy="750" rx="80" ry="25" class="attribute"/>
+            <text x="500" y="755">registration_date</text>
+            
+            <ellipse cx="650" cy="750" rx="45" ry="25" class="attribute"/>
+            <text x="650" y="755">status</text>
+            
+            <!-- Lines from Registrations to attributes -->
+            <line x1="350" y1="725" x2="450" y2="700" class="relationship"/>
+            <line x1="500" y1="725" x2="515" y2="700" class="relationship"/>
+            <line x1="650" y1="725" x2="580" y2="700" class="relationship"/>
+            
+            <!-- RELATIONSHIPS -->
+            <!-- Users creates Events -->
+            <line x1="350" y1="205" x2="900" y2="205" class="relationship" marker-end="url(#arrow)"/>
+            <text x="625" y="195" class="relationship-label">creates</text>
+            <text x="380" y="195" class="cardinality">1</text>
+            <text x="870" y="195" class="cardinality">*</text>
+            
+            <!-- Approver approves Pending_Event -->
+            <line x1="250" y1="400" x2="965" y2="400" class="relationship" marker-end="url(#arrow)"/>
+            <text x="600" y="415" class="relationship-label">approves</text>
+            <text x="280" y="415" class="cardinality">1</text>
+            <text x="935" y="415" class="cardinality">*</text>
+            
+            <!-- Users M:N Published_Event through Registrations -->
+            <line x1="300" y1="400" x2="300" y2="675" class="relationship"/>
+            <line x1="300" y1="675" x2="450" y2="675" class="relationship"/>
+            <text x="200" y="500" class="cardinality">M</text>
+            <text x="350" y="665" class="relationship-label">registers</text>
+            
+            <line x1="1130" y1="400" x2="1130" y2="675" class="relationship"/>
+            <line x1="1130" y1="675" x2="580" y2="675" class="relationship"/>
+            <text x="1150" y="500" class="cardinality">N</text>
+            
+            <!-- Notes -->
+            <text x="300" y="470" style="font-size: 12px; text-anchor: middle;">
+                <tspan x="300" dy="0">Total, Disjoint Specialization</tspan>
+                <tspan x="300" dy="15">Every user must be exactly one type</tspan>
+            </text>
+            
+            <text x="950" y="550" style="font-size: 12px; text-anchor: middle;">
+                <tspan x="950" dy="0">Partial, Disjoint Specialization</tspan>
+                <tspan x="950" dy="15">Events progress through statuses</tspan>
+            </text>
+            
+            <text x="515" y="820" style="font-size: 12px; text-anchor: middle;">
+                <tspan x="515" dy="0">Junction Entity for M:N relationship</tspan>
+                <tspan x="515" dy="15">between Users and Published Events</tspan>
+            </text>
+        </svg>
+        
+        <!-- Legend -->
+        <div class="legend">
+            <h3 style="margin-top: 0;">Legend</h3>
+            <div class="legend-item">
+                <svg class="legend-symbol" viewBox="0 0 30 20">
+                    <ellipse cx="15" cy="10" rx="14" ry="8" class="primary-key"/>
+                </svg>
+                <span>Primary Key</span>
+            </div>
+            <div class="legend-item">
+                <svg class="legend-symbol" viewBox="0 0 30 20">
+                    <ellipse cx="15" cy="10" rx="14" ry="8" class="attribute"/>
+                </svg>
+                <span>Attribute</span>
+            </div>
+            <div class="legend-item">
+                <svg class="legend-symbol" viewBox="0 0 30 20">
+                    <rect x="2" y="2" width="26" height="16" class="entity"/>
+                </svg>
+                <span>Entity</span>
+            </div>
+            <div class="legend-item">
+                <svg class="legend-symbol" viewBox="0 0 30 20">
+                    <polygon points="15,2 5,18 25,18" class="isa-triangle"/>
+                </svg>
+                <span>ISA (Is-a)</span>
+            </div>
+            <div class="legend-item">
+                <span><strong>1</strong> = One, <strong>M/N/*</strong> = Many</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
