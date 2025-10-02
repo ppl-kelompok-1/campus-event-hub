@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthContext'
 import { authApi, eventApi } from '../auth/api'
 import type { Event } from '../auth/api'
 import EventTimelineItem from '../components/EventTimelineItem'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 interface JoinedEventRegistration {
   id: number
@@ -21,6 +21,7 @@ interface JoinedEventRegistration {
 const Profile = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   
   // Profile editing state
   const [isEditing, setIsEditing] = useState(false)
@@ -31,8 +32,10 @@ const Profile = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   
-  // Tab state
-  const [activeTab, setActiveTab] = useState<'created' | 'joined'>('created')
+  // Tab state - check URL parameters for initial tab
+  const searchParams = new URLSearchParams(location.search)
+  const urlTab = searchParams.get('tab') as 'created' | 'joined' | null
+  const [activeTab, setActiveTab] = useState<'created' | 'joined'>(urlTab || 'created')
   
   // Events state
   const [createdEvents, setCreatedEvents] = useState<Event[]>([])
@@ -44,6 +47,15 @@ const Profile = () => {
   useEffect(() => {
     fetchEvents()
   }, [])
+
+  // Update tab when URL changes
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const urlTab = searchParams.get('tab') as 'created' | 'joined' | null
+    if (urlTab && (urlTab === 'created' || urlTab === 'joined')) {
+      setActiveTab(urlTab)
+    }
+  }, [location.search])
 
   const fetchEvents = async () => {
     try {
@@ -605,6 +617,7 @@ const Profile = () => {
                         event={event}
                         showJoinButton={false}
                         showManagementActions={true}
+                        userRole={user?.role}
                         onEdit={handleEditEvent}
                         onDelete={handleDeleteEvent}
                         onPublish={handlePublishEvent}
@@ -697,6 +710,7 @@ const Profile = () => {
                             event={event}
                             showJoinButton={true}
                             showManagementActions={false}
+                            userRole={user?.role}
                             onJoin={() => {}} // Not used since users are already joined
                             onLeave={handleLeaveEvent}
                           />

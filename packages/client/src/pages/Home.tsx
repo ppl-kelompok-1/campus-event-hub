@@ -11,7 +11,7 @@ const Home = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'past'>('upcoming')
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
 
   useEffect(() => {
     fetchEvents()
@@ -295,6 +295,7 @@ const Home = () => {
                   key={event.id} 
                   event={event}
                   showJoinButton={isAuthenticated}
+                  userRole={user?.role}
                   onJoin={handleJoinEvent}
                   onLeave={handleLeaveEvent}
                 />

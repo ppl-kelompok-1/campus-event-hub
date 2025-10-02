@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
-import type { Event } from '../auth/api'
+import type { Event, UserRole } from '../auth/api'
 
 interface EventTimelineItemProps {
   event: Event
   showJoinButton?: boolean
   showManagementActions?: boolean
+  userRole?: UserRole
   onJoin?: (event: Event) => void
   onLeave?: (event: Event) => void
   onEdit?: (event: Event) => void
@@ -18,6 +19,7 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
   event, 
   showJoinButton = true,
   showManagementActions = false,
+  userRole,
   onJoin,
   onLeave,
   onEdit,
@@ -426,7 +428,7 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
                 </button>
               )}
               
-              {onSubmitForApproval && (event.status === 'draft' || event.status === 'revision_requested') && (
+              {onSubmitForApproval && (event.status === 'draft' || event.status === 'revision_requested') && userRole === 'user' && (
                 <button
                   onClick={() => onSubmitForApproval(event)}
                   style={{
@@ -444,7 +446,7 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
                 </button>
               )}
               
-              {onPublish && event.status === 'draft' && (
+              {onPublish && event.status === 'draft' && userRole && ['approver', 'admin', 'superadmin'].includes(userRole) && (
                 <button
                   onClick={() => onPublish(event)}
                   style={{

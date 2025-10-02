@@ -342,6 +342,7 @@ const PublicUserProfilePage = () => {
                       event={event}
                       showJoinButton={isAuthenticated}
                       showManagementActions={false}
+                      userRole={undefined}
                     />
                   ))}
                 </div>
@@ -382,6 +383,7 @@ const PublicUserProfilePage = () => {
                       event={event}
                       showJoinButton={isAuthenticated}
                       showManagementActions={false}
+                      userRole={undefined}
                     />
                   ))}
                 </div>

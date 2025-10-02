@@ -107,7 +107,7 @@ const EditEventPage = () => {
       setError('')
       
       await eventApi.updateEvent(Number(id), formData)
-      navigate('/events/my')
+      navigate('/profile?tab=created')
     } catch (err) {
       setError('Failed to update event. Please try again.')
       console.error('Error updating event:', err)
