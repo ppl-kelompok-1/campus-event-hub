@@ -19,8 +19,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
-  color: #333;
-  background-color: #fff;
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
 }
 
 #root {
@@ -31,7 +31,7 @@ body {
 
 /* Buttons */
 button {
-  background-color: #007bff;
+  background-color: var(--color-primary);
   color: white;
   border: none;
   padding: 8px 16px;
@@ -42,7 +42,8 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background-color: #0056b3;
+  background-color: var(--color-primary);
+  filter: brightness(0.9);
 }
 
 button:disabled {
@@ -77,7 +78,7 @@ label {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 input, select, textarea {
@@ -91,8 +92,9 @@ input, select, textarea {
 
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
 input:disabled {
@@ -166,7 +168,7 @@ tr:hover {
 }
 
 .pagination span {
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
 }
 
@@ -304,7 +306,7 @@ tr:hover {
   cursor: pointer;
   padding: 8px;
   border-radius: 4px;
-  color: #333;
+  color: var(--color-text-primary);
   transition: background-color 0.2s ease;
 }
 
@@ -314,7 +316,7 @@ tr:hover {
 
 .topbar-logo {
   text-decoration: none;
-  color: #333;
+  color: var(--color-text-primary);
   font-size: 1.25rem;
   font-weight: bold;
 }
@@ -324,7 +326,7 @@ tr:hover {
   align-items: center;
   gap: 12px;
   text-decoration: none;
-  color: #333;
+  color: var(--color-text-primary);
   padding: 8px 12px;
   border-radius: 8px;
   transition: background-color 0.2s ease;
@@ -338,7 +340,7 @@ tr:hover {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: #007bff;
+  background-color: var(--color-primary);
   color: white;
   display: flex;
   align-items: center;
@@ -361,12 +363,12 @@ tr:hover {
 
 .topbar-user-role {
   font-size: 0.75rem;
-  color: #666;
+  color: var(--color-text-secondary);
   text-transform: capitalize;
 }
 
 .topbar-login {
-  background-color: #007bff;
+  background-color: var(--color-primary);
   color: white;
   text-decoration: none;
   padding: 8px 20px;
@@ -376,7 +378,8 @@ tr:hover {
 }
 
 .topbar-login:hover {
-  background-color: #0056b3;
+  background-color: var(--color-primary);
+  filter: brightness(0.9);
 }
 
 /* Sidebar Styles */
@@ -420,7 +423,7 @@ tr:hover {
 
 .sidebar-logo h3 {
   margin: 0;
-  color: #333;
+  color: var(--color-text-primary);
   font-size: 1.1rem;
 }
 
@@ -431,7 +434,7 @@ tr:hover {
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 4px;
-  color: #666;
+  color: var(--color-text-secondary);
   transition: background-color 0.2s ease;
 }
 
@@ -452,7 +455,7 @@ tr:hover {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background-color: #007bff;
+  background-color: var(--color-primary);
   color: white;
   display: flex;
   align-items: center;
@@ -468,13 +471,13 @@ tr:hover {
 .user-name {
   font-weight: 600;
   font-size: 1rem;
-  color: #333;
+  color: var(--color-text-primary);
   margin-bottom: 2px;
 }
 
 .user-role {
   font-size: 0.85rem;
-  color: #666;
+  color: var(--color-text-secondary);
   text-transform: capitalize;
 }
 
@@ -489,7 +492,7 @@ tr:hover {
 .nav-section-title {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #666;
+  color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 16px 20px 8px 20px;
@@ -502,7 +505,7 @@ tr:hover {
   gap: 12px;
   padding: 12px 20px;
   text-decoration: none;
-  color: #333;
+  color: var(--color-text-primary);
   transition: all 0.2s ease;
   border: none;
   background: none;
@@ -514,14 +517,14 @@ tr:hover {
 
 .nav-item:hover {
   background-color: #f8f9fa;
-  color: #007bff;
+  color: var(--color-primary);
 }
 
 .nav-item-active {
-  background-color: #e3f2fd;
-  color: #007bff;
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
   font-weight: 500;
-  border-right: 3px solid #007bff;
+  border-right: 3px solid var(--color-primary);
 }
 
 .nav-button {

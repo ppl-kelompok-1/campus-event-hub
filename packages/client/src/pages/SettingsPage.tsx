@@ -23,7 +23,10 @@ const SettingsPage = () => {
         secondaryColor: settings.secondaryColor,
         backgroundColor: settings.backgroundColor,
         cardBackgroundColor: settings.cardBackgroundColor,
-        textColorAuto: settings.textColorAuto,
+        textColorAuto: false, // Always set to false - no auto-calculation
+        textColorPrimary: settings.textColorPrimary,
+        textColorSecondary: settings.textColorSecondary,
+        textColorMuted: settings.textColorMuted,
         footerText: settings.footerText,
         contactEmail: settings.contactEmail || '',
         contactPhone: settings.contactPhone || '',
@@ -354,18 +357,51 @@ const SettingsPage = () => {
               </div>
             </div>
 
-            <div style={{ marginTop: '20px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <div style={{ marginTop: '20px', marginBottom: '12px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#2c3e50', marginBottom: '16px' }}>
+                Text Colors
+              </h3>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#2c3e50' }}>
+                  Primary Text Color
+                </label>
                 <input
-                  type="checkbox"
-                  checked={formData.textColorAuto ?? false}
-                  onChange={(e) => handleInputChange('textColorAuto', e.target.checked)}
-                  style={{ marginRight: '8px' }}
+                  type="color"
+                  value={formData.textColorPrimary || '#2c3e50'}
+                  onChange={(e) => handleInputChange('textColorPrimary', e.target.value)}
+                  style={{ width: '100%', height: '40px', border: '1px solid #ddd', borderRadius: '6px' }}
                 />
-                <span style={{ fontWeight: '500', color: '#2c3e50' }}>
-                  Auto-calculate text colors based on background
-                </span>
-              </label>
+                <span style={{ fontSize: '12px', color: '#6c757d' }}>{formData.textColorPrimary || '#2c3e50'}</span>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#2c3e50' }}>
+                  Secondary Text Color
+                </label>
+                <input
+                  type="color"
+                  value={formData.textColorSecondary || '#6c757d'}
+                  onChange={(e) => handleInputChange('textColorSecondary', e.target.value)}
+                  style={{ width: '100%', height: '40px', border: '1px solid #ddd', borderRadius: '6px' }}
+                />
+                <span style={{ fontSize: '12px', color: '#6c757d' }}>{formData.textColorSecondary || '#6c757d'}</span>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#2c3e50' }}>
+                  Muted Text Color
+                </label>
+                <input
+                  type="color"
+                  value={formData.textColorMuted || '#999999'}
+                  onChange={(e) => handleInputChange('textColorMuted', e.target.value)}
+                  style={{ width: '100%', height: '40px', border: '1px solid #ddd', borderRadius: '6px' }}
+                />
+                <span style={{ fontSize: '12px', color: '#6c757d' }}>{formData.textColorMuted || '#999999'}</span>
+              </div>
             </div>
           </div>
 
