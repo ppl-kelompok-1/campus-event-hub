@@ -11,7 +11,7 @@ const CreateEventPage = () => {
     description: '',
     eventDate: '',
     eventTime: '',
-    location: '',
+    locationId: 0,
     maxAttendees: undefined,
     status: 'draft'
   })
@@ -30,7 +30,7 @@ const CreateEventPage = () => {
     if (!formData.title.trim()) {
       return 'Event title is required'
     }
-    if (!formData.location.trim()) {
+    if (!formData.locationId || formData.locationId === 0) {
       return 'Location is required'
     }
     if (!formData.eventDate) {
@@ -200,11 +200,11 @@ const CreateEventPage = () => {
         </div>
 
         <LocationDropdown
-          value={formData.location}
-          onChange={(_locationId, locationName) => {
+          value={formData.locationId}
+          onChange={(locationId) => {
             setFormData(prev => ({
               ...prev,
-              location: locationName
+              locationId
             }))
           }}
           label="Location"

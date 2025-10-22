@@ -105,8 +105,9 @@ export class Container {
   getEventService(): EventService {
     if (!this.eventService) {
       this.eventService = new EventService(
-        this.getEventRepository(), 
+        this.getEventRepository(),
         this.getUserRepository(),
+        this.getLocationRepository(),
         this.getEventRegistrationRepository()
       );
     }

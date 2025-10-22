@@ -92,7 +92,7 @@ const EventCard: React.FC<EventCardProps> = ({
           📅 {formatDate(event.eventDate)} at {formatTime(event.eventTime)}
         </div>
         <div style={{ marginBottom: '4px' }}>
-          📍 {event.location}
+          📍 {event.locationName}
         </div>
         <div style={{ marginBottom: '4px' }}>
           👤 By {event.creatorName}

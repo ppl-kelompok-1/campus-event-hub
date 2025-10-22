@@ -94,7 +94,8 @@ export interface Event {
   description?: string
   eventDate: string
   eventTime: string
-  location: string
+  locationId: number
+  locationName: string
   maxAttendees?: number
   createdBy: number
   creatorName: string
@@ -118,7 +119,7 @@ export interface CreateEventDto {
   description?: string
   eventDate: string
   eventTime: string
-  location: string
+  locationId: number
   maxAttendees?: number
   status?: EventStatus
 }
@@ -128,7 +129,7 @@ export interface UpdateEventDto {
   description?: string
   eventDate?: string
   eventTime?: string
-  location?: string
+  locationId?: number
   maxAttendees?: number
   status?: EventStatus
 }

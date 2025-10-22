@@ -1,6 +1,7 @@
 import { IEventRepository } from '../repositories/IEventRepository';
 import { IUserRepository } from '../repositories/IUserRepository';
 import { IEventRegistrationRepository } from '../repositories/IEventRegistrationRepository';
+import { ILocationRepository } from '../repositories/ILocationRepository';
 import { Event, CreateEventDto, UpdateEventDto, EventResponse, EventStatus, ApprovalDto, toEventResponse, isValidEventDate, isValidEventTime, isEventInPast } from '../models/Event';
 import { UserRole } from '../models/User';
 import { RegistrationStatus } from '../models/EventRegistration';
@@ -9,13 +10,14 @@ export class EventService {
   constructor(
     private eventRepository: IEventRepository,
     private userRepository: IUserRepository,
+    private locationRepository: ILocationRepository,
     private eventRegistrationRepository?: IEventRegistrationRepository
   ) {}
 
   // Create a new event
   async createEvent(eventData: CreateEventDto, createdBy: number, userRole: UserRole): Promise<EventResponse> {
     // Validate input
-    this.validateEventData(eventData);
+    await this.validateEventData(eventData);
 
     // Role-based status validation: only admin, superadmin, and approver can create published events
     if (eventData.status === EventStatus.PUBLISHED && userRole === UserRole.USER) {
@@ -30,14 +32,19 @@ export class EventService {
 
     // Create the event
     const event = await this.eventRepository.create(finalEventData, createdBy);
-    
-    // Get creator name for response
+
+    // Get creator name and location name for response
     const creatorName = await this.eventRepository.getCreatorName(event.id);
     if (!creatorName) {
       throw new Error('Failed to get creator information');
     }
 
-    return toEventResponse(event, creatorName);
+    const locationName = await this.eventRepository.getLocationName(event.id);
+    if (!locationName) {
+      throw new Error('Failed to get location information');
+    }
+
+    return toEventResponse(event, creatorName, locationName);
   }
 
   // Get all published events (public access)
@@ -86,7 +93,12 @@ export class EventService {
       throw new Error('Failed to get creator information');
     }
 
-    const baseResponse = toEventResponse(event, creatorName);
+    const locationName = await this.eventRepository.getLocationName(id);
+    if (!locationName) {
+      throw new Error('Failed to get location information');
+    }
+
+    const baseResponse = toEventResponse(event, creatorName, locationName);
 
     // Add registration information if registration repository is available
     if (this.eventRegistrationRepository) {
@@ -116,11 +128,19 @@ export class EventService {
       throw new Error('Insufficient permissions to modify this event');
     }
 
+    // Validate locationId if being updated
+    if (eventData.locationId !== undefined) {
+      const locationExists = await this.locationRepository.exists(eventData.locationId);
+      if (!locationExists) {
+        throw new Error('Invalid location selected');
+      }
+    }
+
     // Validate update data
     if (eventData.eventDate !== undefined || eventData.eventTime !== undefined) {
       const newDate = eventData.eventDate || existingEvent.eventDate;
       const newTime = eventData.eventTime || existingEvent.eventTime;
-      
+
       if (!isValidEventDate(newDate)) {
         throw new Error('Invalid event date format. Use YYYY-MM-DD');
       }
@@ -140,7 +160,12 @@ export class EventService {
       throw new Error('Failed to get creator information');
     }
 
-    return toEventResponse(updatedEvent, creatorName);
+    const locationName = await this.eventRepository.getLocationName(id);
+    if (!locationName) {
+      throw new Error('Failed to get location information');
+    }
+
+    return toEventResponse(updatedEvent, creatorName, locationName);
   }
 
   // Delete event (only by creator or admin)
@@ -180,13 +205,19 @@ export class EventService {
 
 
   // Validate event data
-  private validateEventData(eventData: CreateEventDto): void {
+  private async validateEventData(eventData: CreateEventDto): Promise<void> {
     if (!eventData.title || eventData.title.trim().length === 0) {
       throw new Error('Event title is required');
     }
 
-    if (!eventData.location || eventData.location.trim().length === 0) {
+    if (!eventData.locationId) {
       throw new Error('Event location is required');
+    }
+
+    // Validate locationId exists
+    const locationExists = await this.locationRepository.exists(eventData.locationId);
+    if (!locationExists) {
+      throw new Error('Invalid location selected');
     }
 
     if (!isValidEventDate(eventData.eventDate)) {
@@ -338,16 +369,17 @@ export class EventService {
   // Helper to enrich events with creator and approver names
   private async enrichEventsWithNames(events: Event[]): Promise<EventResponse[]> {
     const enrichedEvents: EventResponse[] = [];
-    
+
     for (const event of events) {
       const creatorName = await this.eventRepository.getCreatorName(event.id);
+      const locationName = await this.eventRepository.getLocationName(event.id);
       const approverName = event.approvedBy ? (await this.eventRepository.getApproverName(event.id)) || undefined : undefined;
-      
-      if (creatorName) {
-        enrichedEvents.push(toEventResponse(event, creatorName, approverName));
+
+      if (creatorName && locationName) {
+        enrichedEvents.push(toEventResponse(event, creatorName, locationName, approverName));
       }
     }
-    
+
     return enrichedEvents;
   }
 

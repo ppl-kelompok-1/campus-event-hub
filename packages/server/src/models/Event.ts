@@ -15,7 +15,7 @@ export interface Event {
   description?: string;
   eventDate: string; // ISO 8601 date string (YYYY-MM-DD)
   eventTime: string; // Time in HH:MM format
-  location: string;
+  locationId: number; // Foreign key to locations table
   maxAttendees?: number;
   createdBy: number; // User ID
   status: EventStatus;
@@ -33,7 +33,8 @@ export interface EventResponse {
   description?: string;
   eventDate: string;
   eventTime: string;
-  location: string;
+  locationId: number;
+  locationName: string; // Added for convenience
   maxAttendees?: number;
   createdBy: number;
   creatorName: string; // Added for convenience
@@ -58,7 +59,7 @@ export interface CreateEventDto {
   description?: string;
   eventDate: string; // ISO 8601 date string
   eventTime: string; // HH:MM format
-  location: string;
+  locationId: number; // Foreign key to locations table
   maxAttendees?: number;
   status?: EventStatus; // Optional, defaults to DRAFT
 }
@@ -69,16 +70,17 @@ export interface UpdateEventDto {
   description?: string;
   eventDate?: string;
   eventTime?: string;
-  location?: string;
+  locationId?: number; // Foreign key to locations table
   maxAttendees?: number;
   status?: EventStatus;
 }
 
 // Helper function to convert Event to EventResponse
-export function toEventResponse(event: Event, creatorName: string, approverName?: string): EventResponse {
+export function toEventResponse(event: Event, creatorName: string, locationName: string, approverName?: string): EventResponse {
   return {
     ...event,
     creatorName,
+    locationName,
     approverName
   };
 }

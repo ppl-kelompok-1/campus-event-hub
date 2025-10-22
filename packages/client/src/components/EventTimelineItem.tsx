@@ -262,11 +262,11 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
           }}>
             📍
           </div>
-          <span style={{ 
+          <span style={{
             fontSize: '14px',
             color: '#6c757d'
           }}>
-            {event.location}
+            {event.locationName}
           </span>
         </div>
 

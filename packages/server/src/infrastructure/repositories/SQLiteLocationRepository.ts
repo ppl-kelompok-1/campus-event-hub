@@ -113,7 +113,7 @@ export class SQLiteLocationRepository implements ILocationRepository {
       return this.findById(id);
     }
 
-    fields.push('updated_at = datetime("now")');
+    fields.push('updated_at = datetime(\'now\')');
     values.push(id);
 
     const query = `

@@ -229,7 +229,7 @@ const EventDetailsPage = () => {
               📍 Location
             </div>
             <div style={{ fontWeight: '500' }}>
-              {event.location}
+              {event.locationName}
             </div>
           </div>
 
