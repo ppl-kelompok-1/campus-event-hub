@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import TopBar from './TopBar'
 import Sidebar from './Sidebar'
+import { useSettings } from '../contexts/SettingsContext'
 
 interface LayoutProps {
   children: ReactNode
@@ -9,6 +10,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { settings } = useSettings()
 
   const handleMenuToggle = () => {
     setSidebarOpen(!sidebarOpen)
@@ -38,7 +40,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
 
       {/* Footer */}
-      <footer style={{ 
+      <footer style={{
         backgroundColor: '#f8f9fa',
         borderTop: '1px solid #dee2e6',
         padding: '20px',
@@ -46,7 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         color: '#666',
         fontSize: '0.9rem'
       }}>
-        <p>&copy; 2025 Campus Event Hub. All rights reserved.</p>
+        <p>{settings?.footerText || '© 2025 Campus Event Hub. All rights reserved.'}</p>
       </footer>
     </div>
   )

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { useSettings } from '../contexts/SettingsContext'
 
 interface TopBarProps {
   onMenuToggle: () => void
@@ -7,6 +8,7 @@ interface TopBarProps {
 
 const TopBar: React.FC<TopBarProps> = ({ onMenuToggle }) => {
   const { isAuthenticated } = useAuth()
+  const { settings } = useSettings()
 
   return (
     <header className="topbar">
@@ -25,7 +27,7 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuToggle }) => {
         {/* Center Section - Logo/Brand */}
         <div className="topbar-center">
           <Link to="/" className="topbar-logo">
-            Campus Event Hub
+            {settings?.siteTitle || 'Campus Event Hub'}
           </Link>
         </div>
 

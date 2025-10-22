@@ -1,21 +1,25 @@
 import { IEventRepository } from '../repositories/IEventRepository';
 import { IUserRepository } from '../repositories/IUserRepository';
 import { IEventRegistrationRepository } from '../repositories/IEventRegistrationRepository';
-import { Event, CreateEventDto, UpdateEventDto, EventResponse, EventStatus, ApprovalDto, toEventResponse, isValidEventDate, isValidEventTime, isEventInPast } from '../models/Event';
+import { ILocationRepository } from '../repositories/ILocationRepository';
+import { Event, CreateEventDto, UpdateEventDto, EventResponse, EventStatus, ApprovalDto, toEventResponse, isValidEventDate, isValidEventTime, isEventInPast, isValidRegistrationPeriod, isRegistrationOpen, hasRegistrationStarted, hasRegistrationEnded } from '../models/Event';
 import { UserRole } from '../models/User';
 import { RegistrationStatus } from '../models/EventRegistration';
+import { EventApprovalHistoryService } from './EventApprovalHistoryService';
 
 export class EventService {
   constructor(
     private eventRepository: IEventRepository,
     private userRepository: IUserRepository,
-    private eventRegistrationRepository?: IEventRegistrationRepository
+    private locationRepository: ILocationRepository,
+    private eventRegistrationRepository?: IEventRegistrationRepository,
+    private approvalHistoryService?: EventApprovalHistoryService
   ) {}
 
   // Create a new event
   async createEvent(eventData: CreateEventDto, createdBy: number, userRole: UserRole): Promise<EventResponse> {
     // Validate input
-    this.validateEventData(eventData);
+    await this.validateEventData(eventData);
 
     // Role-based status validation: only admin, superadmin, and approver can create published events
     if (eventData.status === EventStatus.PUBLISHED && userRole === UserRole.USER) {
@@ -30,14 +34,19 @@ export class EventService {
 
     // Create the event
     const event = await this.eventRepository.create(finalEventData, createdBy);
-    
-    // Get creator name for response
+
+    // Get creator name and location name for response
     const creatorName = await this.eventRepository.getCreatorName(event.id);
     if (!creatorName) {
       throw new Error('Failed to get creator information');
     }
 
-    return toEventResponse(event, creatorName);
+    const locationName = await this.eventRepository.getLocationName(event.id);
+    if (!locationName) {
+      throw new Error('Failed to get location information');
+    }
+
+    return toEventResponse(event, creatorName, locationName);
   }
 
   // Get all published events (public access)
@@ -86,7 +95,12 @@ export class EventService {
       throw new Error('Failed to get creator information');
     }
 
-    const baseResponse = toEventResponse(event, creatorName);
+    const locationName = await this.eventRepository.getLocationName(id);
+    if (!locationName) {
+      throw new Error('Failed to get location information');
+    }
+
+    const baseResponse = toEventResponse(event, creatorName, locationName);
 
     // Add registration information if registration repository is available
     if (this.eventRegistrationRepository) {
@@ -116,16 +130,33 @@ export class EventService {
       throw new Error('Insufficient permissions to modify this event');
     }
 
+    // Validate locationId if being updated
+    if (eventData.locationId !== undefined) {
+      const locationExists = await this.locationRepository.exists(eventData.locationId);
+      if (!locationExists) {
+        throw new Error('Invalid location selected');
+      }
+    }
+
     // Validate update data
-    if (eventData.eventDate !== undefined || eventData.eventTime !== undefined) {
-      const newDate = eventData.eventDate || existingEvent.eventDate;
-      const newTime = eventData.eventTime || existingEvent.eventTime;
-      
-      if (!isValidEventDate(newDate)) {
+    if (eventData.eventDate !== undefined || eventData.eventTime !== undefined ||
+        eventData.registrationStartDate !== undefined || eventData.registrationStartTime !== undefined ||
+        eventData.registrationEndDate !== undefined || eventData.registrationEndTime !== undefined) {
+      const newEventDate = eventData.eventDate || existingEvent.eventDate;
+      const newEventTime = eventData.eventTime || existingEvent.eventTime;
+      const newRegStartDate = eventData.registrationStartDate || existingEvent.registrationStartDate;
+      const newRegStartTime = eventData.registrationStartTime || existingEvent.registrationStartTime;
+      const newRegEndDate = eventData.registrationEndDate || existingEvent.registrationEndDate;
+      const newRegEndTime = eventData.registrationEndTime || existingEvent.registrationEndTime;
+
+      if (!isValidEventDate(newEventDate)) {
         throw new Error('Invalid event date format. Use YYYY-MM-DD');
       }
-      if (!isValidEventTime(newTime)) {
+      if (!isValidEventTime(newEventTime)) {
         throw new Error('Invalid event time format. Use HH:MM');
+      }
+      if (!isValidRegistrationPeriod(newRegStartDate, newRegStartTime, newRegEndDate, newRegEndTime, newEventDate, newEventTime)) {
+        throw new Error('Invalid registration period. Registration must start before it ends, and end before or at event start time');
       }
     }
 
@@ -140,7 +171,12 @@ export class EventService {
       throw new Error('Failed to get creator information');
     }
 
-    return toEventResponse(updatedEvent, creatorName);
+    const locationName = await this.eventRepository.getLocationName(id);
+    if (!locationName) {
+      throw new Error('Failed to get location information');
+    }
+
+    return toEventResponse(updatedEvent, creatorName, locationName);
   }
 
   // Delete event (only by creator or admin)
@@ -180,13 +216,19 @@ export class EventService {
 
 
   // Validate event data
-  private validateEventData(eventData: CreateEventDto): void {
+  private async validateEventData(eventData: CreateEventDto): Promise<void> {
     if (!eventData.title || eventData.title.trim().length === 0) {
       throw new Error('Event title is required');
     }
 
-    if (!eventData.location || eventData.location.trim().length === 0) {
+    if (!eventData.locationId) {
       throw new Error('Event location is required');
+    }
+
+    // Validate locationId exists
+    const locationExists = await this.locationRepository.exists(eventData.locationId);
+    if (!locationExists) {
+      throw new Error('Invalid location selected');
     }
 
     if (!isValidEventDate(eventData.eventDate)) {
@@ -197,6 +239,18 @@ export class EventService {
       throw new Error('Invalid event time format. Use HH:MM');
     }
 
+    // Validate registration period
+    if (!isValidRegistrationPeriod(
+      eventData.registrationStartDate,
+      eventData.registrationStartTime,
+      eventData.registrationEndDate,
+      eventData.registrationEndTime,
+      eventData.eventDate,
+      eventData.eventTime
+    )) {
+      throw new Error('Invalid registration period. Registration must start before it ends, and end before or at event start time');
+    }
+
     if (eventData.maxAttendees !== undefined && eventData.maxAttendees < 1) {
       throw new Error('Maximum attendees must be at least 1');
     }
@@ -204,6 +258,11 @@ export class EventService {
     // Check if event is in the past (only for published events)
     if (eventData.status === EventStatus.PUBLISHED && isEventInPast(eventData.eventDate, eventData.eventTime)) {
       throw new Error('Cannot create published events in the past');
+    }
+
+    // Check if registration end is in the past (only for published events)
+    if (eventData.status === EventStatus.PUBLISHED && hasRegistrationEnded(eventData.registrationEndDate, eventData.registrationEndTime)) {
+      throw new Error('Cannot publish events where registration has already ended');
     }
   }
 
@@ -231,7 +290,24 @@ export class EventService {
       throw new Error('Only draft or revision requested events can be submitted for approval');
     }
 
-    return this.eventRepository.submitForApproval(eventId);
+    const statusBefore = event.status;
+    const result = await this.eventRepository.submitForApproval(eventId);
+
+    // Record approval history
+    if (result && this.approvalHistoryService) {
+      const user = await this.userRepository.findById(userId);
+      if (user) {
+        this.approvalHistoryService.recordSubmission(
+          eventId,
+          userId,
+          user.name,
+          statusBefore,
+          EventStatus.PENDING_APPROVAL
+        );
+      }
+    }
+
+    return result;
   }
 
   // Approve event (approver only)
@@ -257,7 +333,24 @@ export class EventService {
       throw new Error('Cannot approve events that are in the past');
     }
 
-    return this.eventRepository.approveEvent(eventId, approverId);
+    const statusBefore = event.status;
+    const result = await this.eventRepository.approveEvent(eventId, approverId);
+
+    // Record approval history
+    if (result && this.approvalHistoryService) {
+      const approver = await this.userRepository.findById(approverId);
+      if (approver) {
+        this.approvalHistoryService.recordApproval(
+          eventId,
+          approverId,
+          approver.name,
+          statusBefore,
+          EventStatus.PUBLISHED
+        );
+      }
+    }
+
+    return result;
   }
 
   // Request revision (approver only)
@@ -283,13 +376,42 @@ export class EventService {
       throw new Error('Revision comments are required when requesting revision');
     }
 
-    return this.eventRepository.requestRevision(eventId, approverId, approvalData.revisionComments);
+    const statusBefore = event.status;
+    const result = await this.eventRepository.requestRevision(eventId, approverId, approvalData.revisionComments);
+
+    // Record approval history
+    if (result && this.approvalHistoryService) {
+      const approver = await this.userRepository.findById(approverId);
+      if (approver) {
+        this.approvalHistoryService.recordRevisionRequest(
+          eventId,
+          approverId,
+          approver.name,
+          approvalData.revisionComments,
+          statusBefore,
+          EventStatus.REVISION_REQUESTED
+        );
+      }
+    }
+
+    return result;
   }
 
-  // Get events pending approval (approver only)
+  // Get all events in approval workflow (pending, revision, and approved) - for approvers to see complete history
   async getPendingApprovalEvents(): Promise<EventResponse[]> {
-    const events = await this.eventRepository.findByStatus(EventStatus.PENDING_APPROVAL);
-    return this.enrichEventsWithNames(events);
+    // Get events with all approval workflow statuses
+    const pendingEvents = await this.eventRepository.findByStatus(EventStatus.PENDING_APPROVAL);
+    const revisionEvents = await this.eventRepository.findByStatus(EventStatus.REVISION_REQUESTED);
+    const publishedEvents = await this.eventRepository.findByStatus(EventStatus.PUBLISHED);
+
+    // Filter published events to only show those that went through approval (have approvedBy)
+    const approvedEvents = publishedEvents.filter(event => event.approvedBy !== undefined && event.approvedBy !== null);
+
+    // Combine all and sort by updated_at (most recent first)
+    const allEvents = [...pendingEvents, ...revisionEvents, ...approvedEvents];
+    allEvents.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+    return this.enrichEventsWithNames(allEvents);
   }
 
   // Updated publish event method for new approval workflow
@@ -338,16 +460,17 @@ export class EventService {
   // Helper to enrich events with creator and approver names
   private async enrichEventsWithNames(events: Event[]): Promise<EventResponse[]> {
     const enrichedEvents: EventResponse[] = [];
-    
+
     for (const event of events) {
       const creatorName = await this.eventRepository.getCreatorName(event.id);
+      const locationName = await this.eventRepository.getLocationName(event.id);
       const approverName = event.approvedBy ? (await this.eventRepository.getApproverName(event.id)) || undefined : undefined;
-      
-      if (creatorName) {
-        enrichedEvents.push(toEventResponse(event, creatorName, approverName));
+
+      if (creatorName && locationName) {
+        enrichedEvents.push(toEventResponse(event, creatorName, locationName, approverName));
       }
     }
-    
+
     return enrichedEvents;
   }
 
@@ -364,13 +487,24 @@ export class EventService {
 
     // Get current attendee count
     const currentAttendees = await this.eventRegistrationRepository.getRegistrationCountByStatus(event.id, RegistrationStatus.REGISTERED);
-    
+
     // Check if event is full
     const isFull = event.maxAttendees ? currentAttendees >= event.maxAttendees : false;
-    
-    // Check if user can register (event is published, not full, not in past)
-    const canRegister = event.status === EventStatus.PUBLISHED && 
-                       !isFull && 
+
+    // Check registration period status
+    const registrationOpen = isRegistrationOpen(
+      event.registrationStartDate,
+      event.registrationStartTime,
+      event.registrationEndDate,
+      event.registrationEndTime
+    );
+    const registrationStarted = hasRegistrationStarted(event.registrationStartDate, event.registrationStartTime);
+    const registrationEnded = hasRegistrationEnded(event.registrationEndDate, event.registrationEndTime);
+
+    // Check if user can register (event is published, registration is open, not full, not in past)
+    const canRegister = event.status === EventStatus.PUBLISHED &&
+                       registrationOpen &&
+                       !isFull &&
                        !isEventInPast(event.eventDate, event.eventTime);
 
     let isUserRegistered = false;
@@ -391,7 +525,10 @@ export class EventService {
       isUserRegistered,
       userRegistrationStatus,
       isFull,
-      canRegister
+      canRegister,
+      isRegistrationOpen: registrationOpen,
+      hasRegistrationStarted: registrationStarted,
+      hasRegistrationEnded: registrationEnded
     };
   }
 

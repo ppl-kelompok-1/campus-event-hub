@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { useSettings } from '../contexts/SettingsContext'
 
 interface SidebarProps {
   isOpen: boolean
@@ -8,12 +9,14 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user, logout, isAuthenticated } = useAuth()
+  const { settings } = useSettings()
   const location = useLocation()
   
-  const isActive = (path: string) => location.pathname === path || 
+  const isActive = (path: string) => location.pathname === path ||
     (path === '/users' && location.pathname.startsWith('/users')) ||
     (path === '/events/create' && location.pathname.startsWith('/events/create')) ||
-    (path === '/approvals' && location.pathname.startsWith('/approvals'))
+    (path === '/approvals' && location.pathname.startsWith('/approvals')) ||
+    (path === '/locations' && location.pathname.startsWith('/locations'))
 
   const handleNavigation = () => {
     // Auto-close sidebar on mobile after navigation
@@ -42,7 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         {/* Sidebar Header */}
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <h3>Campus Event Hub</h3>
+            <h3>{settings?.siteTitle || 'Campus Event Hub'}</h3>
           </div>
           <button className="sidebar-close" onClick={onClose}>
             ×
@@ -131,14 +134,32 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           {isAuthenticated && (user?.role === 'admin' || user?.role === 'superadmin') && (
             <div className="nav-section">
               <div className="nav-section-title">Administration</div>
-              <Link 
-                to="/users" 
+              <Link
+                to="/users"
                 className={`nav-item ${isActive('/users') ? 'nav-item-active' : ''}`}
                 onClick={handleNavigation}
               >
                 <span className="nav-icon">👥</span>
                 <span className="nav-text">Manage Users</span>
               </Link>
+              <Link
+                to="/locations"
+                className={`nav-item ${isActive('/locations') ? 'nav-item-active' : ''}`}
+                onClick={handleNavigation}
+              >
+                <span className="nav-icon">📍</span>
+                <span className="nav-text">Manage Locations</span>
+              </Link>
+              {user?.role === 'superadmin' && (
+                <Link
+                  to="/settings"
+                  className={`nav-item ${isActive('/settings') ? 'nav-item-active' : ''}`}
+                  onClick={handleNavigation}
+                >
+                  <span className="nav-icon">⚙️</span>
+                  <span className="nav-text">Site Settings</span>
+                </Link>
+              )}
             </div>
           )}
 

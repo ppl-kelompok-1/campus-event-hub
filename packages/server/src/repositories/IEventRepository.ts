@@ -29,6 +29,7 @@ export interface IEventRepository {
   isCreator(eventId: number, userId: number): Promise<boolean>;
   getCreatorName(eventId: number): Promise<string | null>;
   getApproverName(eventId: number): Promise<string | null>;
+  getLocationName(eventId: number): Promise<string | null>;
 
   // Approval operations
   approveEvent(eventId: number, approverId: number): Promise<boolean>;

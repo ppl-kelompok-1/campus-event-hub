@@ -40,6 +40,7 @@ const EventCard: React.FC<EventCardProps> = ({
     })
   }
 
+
   const getStatusBadge = (status: string) => {
     const statusStyles: Record<string, React.CSSProperties> = {
       draft: { backgroundColor: '#6c757d', color: 'white' },
@@ -89,10 +90,13 @@ const EventCard: React.FC<EventCardProps> = ({
 
       <div style={{ marginBottom: '12px', color: '#6c757d', fontSize: '0.9rem' }}>
         <div style={{ marginBottom: '4px' }}>
-          📅 {formatDate(event.eventDate)} at {formatTime(event.eventTime)}
+          📅 {formatDate(event.eventDate)}
         </div>
         <div style={{ marginBottom: '4px' }}>
-          📍 {event.location}
+          ⏰ {formatTime(event.eventTime)}
+        </div>
+        <div style={{ marginBottom: '4px' }}>
+          📍 {event.locationName}
         </div>
         <div style={{ marginBottom: '4px' }}>
           👤 By {event.creatorName}

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { eventApi } from '../auth/api'
 import type { Event, UpdateEventDto } from '../auth/api'
+import { LocationDropdown } from '../components/LocationDropdown'
 
 const EditEventPage = () => {
   const [event, setEvent] = useState<Event | null>(null)
@@ -11,7 +12,11 @@ const EditEventPage = () => {
     description: '',
     eventDate: '',
     eventTime: '',
-    location: '',
+    registrationStartDate: '',
+    registrationStartTime: '',
+    registrationEndDate: '',
+    registrationEndTime: '',
+    locationId: 0,
     maxAttendees: undefined,
     status: 'draft'
   })
@@ -51,7 +56,11 @@ const EditEventPage = () => {
         description: eventData.description,
         eventDate: eventData.eventDate,
         eventTime: eventData.eventTime,
-        location: eventData.location,
+        registrationStartDate: eventData.registrationStartDate,
+        registrationStartTime: eventData.registrationStartTime,
+        registrationEndDate: eventData.registrationEndDate,
+        registrationEndTime: eventData.registrationEndTime,
+        locationId: eventData.locationId,
         maxAttendees: eventData.maxAttendees,
         status: eventData.status
       })
@@ -67,7 +76,7 @@ const EditEventPage = () => {
     if (!formData.title?.trim()) {
       return 'Event title is required'
     }
-    if (!formData.location?.trim()) {
+    if (!formData.locationId || formData.locationId === 0) {
       return 'Location is required'
     }
     if (!formData.eventDate) {
@@ -76,13 +85,40 @@ const EditEventPage = () => {
     if (!formData.eventTime) {
       return 'Event time is required'
     }
+    if (!formData.registrationStartDate) {
+      return 'Registration start date is required'
+    }
+    if (!formData.registrationStartTime) {
+      return 'Registration start time is required'
+    }
+    if (!formData.registrationEndDate) {
+      return 'Registration end date is required'
+    }
+    if (!formData.registrationEndTime) {
+      return 'Registration end time is required'
+    }
 
-    // Check if date is in the future (for published events)
+    // Validate registration period
+    const regStartDateTime = new Date(`${formData.registrationStartDate}T${formData.registrationStartTime}`)
+    const regEndDateTime = new Date(`${formData.registrationEndDate}T${formData.registrationEndTime}`)
+    const eventStartDateTime = new Date(`${formData.eventDate}T${formData.eventTime}`)
+
+    if (regStartDateTime >= regEndDateTime) {
+      return 'Registration end must be after registration start'
+    }
+
+    if (regEndDateTime > eventStartDateTime) {
+      return 'Registration must close before or at event start time'
+    }
+
+    // Check if event is in the future (for published events)
     if (formData.status === 'published') {
-      const eventDateTime = new Date(`${formData.eventDate}T${formData.eventTime}`)
       const now = new Date()
-      if (eventDateTime <= now) {
+      if (eventStartDateTime <= now) {
         return 'Published events cannot be scheduled in the past'
+      }
+      if (regEndDateTime <= now) {
+        return 'Cannot publish events where registration has already ended'
       }
     }
 
@@ -228,68 +264,151 @@ const EditEventPage = () => {
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-              Date *
-            </label>
-            <input
-              type="date"
-              name="eventDate"
-              value={formData.eventDate || ''}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '16px'
-              }}
-            />
-          </div>
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>
+            Event Date & Time *
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
+                Event Date
+              </label>
+              <input
+                type="date"
+                name="eventDate"
+                value={formData.eventDate || ''}
+                onChange={handleChange}
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-              Time *
-            </label>
-            <input
-              type="time"
-              name="eventTime"
-              value={formData.eventTime || ''}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '16px'
-              }}
-            />
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
+                Event Time
+              </label>
+              <input
+                type="time"
+                name="eventTime"
+                value={formData.eventTime || ''}
+                onChange={handleChange}
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
           </div>
         </div>
 
         <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-            Location *
-          </label>
-          <input
-            type="text"
-            name="location"
-            value={formData.location || ''}
-            onChange={handleChange}
-            required
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '16px'
-            }}
-            placeholder="Enter event location"
-          />
+          <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>
+            Registration Period *
+          </h3>
+          <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#6c757d' }}>
+            Users can only join this event during the registration period
+          </p>
+          <div style={{ marginBottom: '16px' }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '500' }}>
+              Registration Opens
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <input
+                  type="date"
+                  name="registrationStartDate"
+                  value={formData.registrationStartDate || ''}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
+              <div>
+                <input
+                  type="time"
+                  name="registrationStartTime"
+                  value={formData.registrationStartTime || ''}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+          <div>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '500' }}>
+              Registration Closes
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <input
+                  type="date"
+                  name="registrationEndDate"
+                  value={formData.registrationEndDate || ''}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
+              <div>
+                <input
+                  type="time"
+                  name="registrationEndTime"
+                  value={formData.registrationEndTime || ''}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
+
+        <LocationDropdown
+          value={formData.locationId || 0}
+          onChange={(locationId) => {
+            setFormData(prev => ({
+              ...prev,
+              locationId
+            }))
+          }}
+          label="Location"
+          required={true}
+        />
 
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>

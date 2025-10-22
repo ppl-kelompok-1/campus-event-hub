@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { eventApi } from '../auth/api'
-import type { Event } from '../auth/api'
+import type { Event, EventAttachment, EventApprovalHistory } from '../auth/api'
+import { FileUpload } from '../components/FileUpload'
+import { AttachmentList } from '../components/AttachmentList'
+import EventApprovalHistoryComponent from '../components/EventApprovalHistory'
+import { useAuth } from '../auth/AuthContext'
 
 interface Attendee {
   id: number
@@ -13,10 +17,15 @@ interface Attendee {
 const EventDetailsPage = () => {
   const [event, setEvent] = useState<Event | null>(null)
   const [attendees, setAttendees] = useState<Attendee[]>([])
+  const [attachments, setAttachments] = useState<EventAttachment[]>([])
+  const [approvalHistory, setApprovalHistory] = useState<EventApprovalHistory[]>([])
   const [loading, setLoading] = useState(true)
   const [attendeesLoading, setAttendeesLoading] = useState(false)
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false)
+  const [approvalHistoryLoading, setApprovalHistoryLoading] = useState(false)
   const [error, setError] = useState('')
   const { id } = useParams<{ id: string }>()
+  const { user } = useAuth()
 
   useEffect(() => {
     if (!id || isNaN(Number(id))) {
@@ -34,9 +43,11 @@ const EventDetailsPage = () => {
       setError('')
       const response = await eventApi.getEventById(Number(id))
       setEvent(response.data)
-      
-      // Also fetch attendees
+
+      // Also fetch attendees, attachments, and approval history
       fetchAttendees()
+      fetchAttachments()
+      fetchApprovalHistory()
     } catch (err) {
       setError('Failed to load event details.')
       console.error('Error fetching event:', err)
@@ -55,6 +66,33 @@ const EventDetailsPage = () => {
       console.error('Error fetching attendees:', err)
     } finally {
       setAttendeesLoading(false)
+    }
+  }
+
+  const fetchAttachments = async () => {
+    try {
+      setAttachmentsLoading(true)
+      const response = await eventApi.getEventAttachments(Number(id))
+      setAttachments(response.data)
+    } catch (err) {
+      // Don't set error for attachments - just log it
+      console.error('Error fetching attachments:', err)
+    } finally {
+      setAttachmentsLoading(false)
+    }
+  }
+
+  const fetchApprovalHistory = async () => {
+    try {
+      setApprovalHistoryLoading(true)
+      const response = await eventApi.getApprovalHistory(Number(id))
+      setApprovalHistory(response.data)
+    } catch (err) {
+      // Don't set error for approval history - just log it
+      // User might not have permission to view it
+      console.error('Error fetching approval history:', err)
+    } finally {
+      setApprovalHistoryLoading(false)
     }
   }
 
@@ -88,7 +126,7 @@ const EventDetailsPage = () => {
     }
 
     return (
-      <span 
+      <span
         style={{
           ...(statusStyles[status] || statusStyles.draft),
           padding: '6px 12px',
@@ -213,8 +251,8 @@ const EventDetailsPage = () => {
               {formatTime(event.eventTime)}
             </div>
             {isEventInPast(event.eventDate, event.eventTime) && (
-              <div style={{ 
-                color: '#dc3545', 
+              <div style={{
+                color: '#dc3545',
                 fontSize: '0.875rem',
                 fontStyle: 'italic',
                 marginTop: '4px'
@@ -229,7 +267,7 @@ const EventDetailsPage = () => {
               📍 Location
             </div>
             <div style={{ fontWeight: '500' }}>
-              {event.location}
+              {event.locationName}
             </div>
           </div>
 
@@ -403,6 +441,66 @@ const EventDetailsPage = () => {
             </>
           )}
         </div>
+
+        {/* Attachments Section */}
+        <div style={{ marginTop: '30px' }}>
+          <h3 style={{
+            margin: '0 0 16px 0',
+            color: '#2c3e50',
+            fontSize: '1.25rem'
+          }}>
+            Event Attachments
+          </h3>
+
+          {user && user.id === event.createdBy && (
+            <FileUpload
+              eventId={event.id}
+              onUploadSuccess={(attachment) => {
+                setAttachments(prev => [attachment, ...prev])
+              }}
+            />
+          )}
+
+          {attachmentsLoading ? (
+            <div style={{
+              padding: '20px',
+              textAlign: 'center',
+              color: '#6c757d'
+            }}>
+              Loading attachments...
+            </div>
+          ) : (
+            <AttachmentList
+              attachments={attachments}
+              eventCreatorId={event.createdBy}
+              onDeleteSuccess={(attachmentId) => {
+                setAttachments(prev => prev.filter(a => a.id !== attachmentId))
+              }}
+            />
+          )}
+        </div>
+
+        {/* Approval History Section - Only visible to event creator, approvers, and admins */}
+        {user && (
+          user.id === event.createdBy ||
+          user.role === 'approver' ||
+          user.role === 'admin' ||
+          user.role === 'superadmin'
+        ) && approvalHistory.length > 0 && (
+          <div style={{ marginTop: '30px' }}>
+            {approvalHistoryLoading ? (
+              <div style={{
+                textAlign: 'center',
+                color: '#6c757d',
+                padding: '20px'
+              }}>
+                Loading approval history...
+              </div>
+            ) : (
+              <EventApprovalHistoryComponent history={approvalHistory} />
+            )}
+          </div>
+        )}
 
         {/* Event status notice */}
         {event.status === 'cancelled' && (

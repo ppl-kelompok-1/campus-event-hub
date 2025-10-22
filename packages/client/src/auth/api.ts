@@ -94,7 +94,12 @@ export interface Event {
   description?: string
   eventDate: string
   eventTime: string
-  location: string
+  registrationStartDate: string
+  registrationStartTime: string
+  registrationEndDate: string
+  registrationEndTime: string
+  locationId: number
+  locationName: string
   maxAttendees?: number
   createdBy: number
   creatorName: string
@@ -111,6 +116,9 @@ export interface Event {
   userRegistrationStatus?: 'registered' | 'waitlisted' | 'cancelled'
   isFull?: boolean
   canRegister?: boolean
+  isRegistrationOpen?: boolean
+  hasRegistrationStarted?: boolean
+  hasRegistrationEnded?: boolean
 }
 
 export interface CreateEventDto {
@@ -118,7 +126,11 @@ export interface CreateEventDto {
   description?: string
   eventDate: string
   eventTime: string
-  location: string
+  registrationStartDate: string
+  registrationStartTime: string
+  registrationEndDate: string
+  registrationEndTime: string
+  locationId: number
   maxAttendees?: number
   status?: EventStatus
 }
@@ -128,9 +140,41 @@ export interface UpdateEventDto {
   description?: string
   eventDate?: string
   eventTime?: string
-  location?: string
+  registrationStartDate?: string
+  registrationStartTime?: string
+  registrationEndDate?: string
+  registrationEndTime?: string
+  locationId?: number
   maxAttendees?: number
   status?: EventStatus
+}
+
+// Event Attachment types
+export interface EventAttachment {
+  id: number
+  eventId: number
+  fileName: string
+  originalName: string
+  fileSize: number
+  mimeType: string
+  uploadedBy: number
+  uploaderName: string
+  uploadedAt: string
+  downloadUrl: string
+}
+
+export type ApprovalAction = 'submitted' | 'approved' | 'revision_requested'
+
+export interface EventApprovalHistory {
+  id: number
+  eventId: number
+  action: ApprovalAction
+  performedBy: number
+  performerName: string
+  comments?: string
+  statusBefore: string
+  statusAfter: string
+  createdAt: string
 }
 
 export interface ApprovalDto {
@@ -461,4 +505,238 @@ export const eventApi = {
       requireAuth: false
     })
   },
+
+  // Upload attachment to event
+  uploadAttachment: async (eventId: number, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const token = getToken()
+    const url = `${API_BASE_URL}/events/${eventId}/attachments`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : ''
+      },
+      body: formData
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new ApiError(
+        response.status,
+        data.error || data.message || 'Upload failed'
+      )
+    }
+
+    return data as ApiResponse<EventAttachment>
+  },
+
+  // Get all attachments for an event
+  getEventAttachments: async (eventId: number) => {
+    return fetchApi<ApiResponse<EventAttachment[]>>(
+      `/events/${eventId}/attachments`,
+      { requireAuth: false }
+    )
+  },
+
+  // Get single attachment info
+  getAttachment: async (eventId: number, attachmentId: number) => {
+    return fetchApi<ApiResponse<EventAttachment>>(
+      `/events/${eventId}/attachments/${attachmentId}`,
+      { requireAuth: false }
+    )
+  },
+
+  // Delete an attachment
+  deleteAttachment: async (eventId: number, attachmentId: number) => {
+    return fetchApi<{ success: boolean; message: string }>(
+      `/events/${eventId}/attachments/${attachmentId}`,
+      { method: 'DELETE' }
+    )
+  },
+
+  // Get approval history for an event
+  getApprovalHistory: async (eventId: number) => {
+    return fetchApi<ApiResponse<EventApprovalHistory[]>>(
+      `/events/${eventId}/approval-history`
+    )
+  },
+}
+
+// Location types
+export interface Location {
+  id: number
+  name: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+// Location API calls
+export const locationApi = {
+  // Get all locations
+  getAll: async () => {
+    return fetchApi<ApiResponse<Location[]>>('/locations', {
+      requireAuth: false
+    })
+  },
+
+  // Get only active locations (for dropdown)
+  getActive: async () => {
+    return fetchApi<ApiResponse<Location[]>>('/locations/active', {
+      requireAuth: false
+    })
+  },
+
+  // Get a specific location
+  getById: async (id: number) => {
+    return fetchApi<ApiResponse<Location>>(`/locations/${id}`, {
+      requireAuth: false
+    })
+  },
+
+  // Create a new location (admin only)
+  create: async (data: { name: string }) => {
+    return fetchApi<ApiResponse<Location>>('/locations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      requireAuth: true,
+      includeAuth: true
+    })
+  },
+
+  // Update a location (admin only)
+  update: async (id: number, data: { name?: string; isActive?: boolean }) => {
+    return fetchApi<ApiResponse<Location>>(`/locations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      requireAuth: true,
+      includeAuth: true
+    })
+  },
+
+  // Toggle location status (admin only)
+  toggleStatus: async (id: number) => {
+    return fetchApi<ApiResponse<Location>>(`/locations/${id}/toggle`, {
+      method: 'PATCH',
+      requireAuth: true,
+      includeAuth: true
+    })
+  },
+
+  // Delete a location (admin only)
+  delete: async (id: number) => {
+    return fetchApi<{ success: boolean; message: string }>(`/locations/${id}`, {
+      method: 'DELETE',
+      requireAuth: true,
+      includeAuth: true
+    })
+  }
+}
+
+// Settings Types
+export interface SiteSettings {
+  id: number
+  siteTitle: string
+  siteLogoUrl: string | null
+  primaryColor: string
+  secondaryColor: string
+  backgroundColor: string
+  cardBackgroundColor: string
+  textColorAuto: boolean
+  textColorPrimary: string
+  textColorSecondary: string
+  textColorMuted: string
+  footerText: string
+  contactEmail: string | null
+  contactPhone: string | null
+  contactAddress: string | null
+  socialFacebook: string | null
+  socialTwitter: string | null
+  socialInstagram: string | null
+  socialLinkedin: string | null
+  updatedAt: string
+  updatedBy: number | null
+}
+
+export interface UpdateSettingsDto {
+  siteTitle?: string
+  siteLogoUrl?: string | null
+  primaryColor?: string
+  secondaryColor?: string
+  backgroundColor?: string
+  cardBackgroundColor?: string
+  textColorAuto?: boolean
+  textColorPrimary?: string
+  textColorSecondary?: string
+  textColorMuted?: string
+  footerText?: string
+  contactEmail?: string | null
+  contactPhone?: string | null
+  contactAddress?: string | null
+  socialFacebook?: string | null
+  socialTwitter?: string | null
+  socialInstagram?: string | null
+  socialLinkedin?: string | null
+}
+
+// Settings API
+export const settingsApi = {
+  // Get current site settings (public)
+  getSettings: async () => {
+    return fetchApi<ApiResponse<SiteSettings>>('/settings', {
+      method: 'GET',
+      requireAuth: false
+    })
+  },
+
+  // Update site settings (superadmin only)
+  updateSettings: async (data: UpdateSettingsDto) => {
+    return fetchApi<ApiResponse<SiteSettings>>('/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      requireAuth: true,
+      includeAuth: true
+    })
+  },
+
+  // Upload site logo (superadmin only)
+  uploadLogo: async (file: File) => {
+    const formData = new FormData()
+    formData.append('logo', file)
+
+    const token = getToken()
+    const url = `${API_BASE_URL}/settings/logo`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new ApiError(
+        response.status,
+        data.error || data.message || 'Failed to upload logo'
+      )
+    }
+
+    return data as ApiResponse<SiteSettings>
+  },
+
+  // Delete site logo (superadmin only)
+  deleteLogo: async () => {
+    return fetchApi<{ success: boolean; message: string }>('/settings/logo', {
+      method: 'DELETE',
+      requireAuth: true,
+      includeAuth: true
+    })
+  }
 }

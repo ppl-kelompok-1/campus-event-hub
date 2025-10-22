@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { authApi, eventApi } from '../auth/api'
 import type { Event } from '../auth/api'
-import EventTimelineItem from '../components/EventTimelineItem'
+import EventsTable from '../components/EventsTable'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 interface JoinedEventRegistration {
@@ -557,171 +557,165 @@ const Profile = () => {
         )}
 
         {/* Tab Content */}
-        {eventsLoading ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '40px',
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            border: '1px solid #e9ecef'
-          }}>
-            <div>Loading events...</div>
-          </div>
-        ) : (
-          <div>
-            {activeTab === 'created' && (
-              <div>
-                {createdEvents.length === 0 ? (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '80px 20px',
-                    backgroundColor: 'white',
-                    borderRadius: '12px',
-                    color: '#6c757d',
-                    border: '1px solid #e9ecef'
-                  }}>
-                    <h3 style={{ 
-                      margin: '0 0 16px 0',
-                      fontSize: '24px',
-                      color: '#495057'
-                    }}>
-                      No Created Events Yet
-                    </h3>
-                    <p style={{ 
-                      margin: '0 0 24px 0',
-                      fontSize: '16px'
-                    }}>
-                      You haven't created any events yet. Start by creating your first event!
-                    </p>
-                    <button
-                      onClick={() => navigate('/events/create')}
-                      style={{
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        padding: '12px 24px',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontWeight: '500',
-                        fontSize: '14px'
-                      }}
-                    >
-                      Create Event
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ marginBottom: '40px' }}>
-                    {createdEvents.map((event) => (
-                      <EventTimelineItem 
-                        key={event.id} 
-                        event={event}
-                        showJoinButton={false}
-                        showManagementActions={true}
-                        userRole={user?.role}
-                        onEdit={handleEditEvent}
-                        onDelete={handleDeleteEvent}
-                        onPublish={handlePublishEvent}
-                        onCancel={handleCancelEvent}
-                        onSubmitForApproval={handleSubmitForApproval}
-                      />
-                    ))}
-                  </div>
-                )}
+        {activeTab === 'created' && (
+          <>
+            {createdEvents.length === 0 && !eventsLoading ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '80px 20px',
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                color: '#6c757d',
+                border: '1px solid #e9ecef'
+              }}>
+                <h3 style={{
+                  margin: '0 0 16px 0',
+                  fontSize: '24px',
+                  color: '#495057'
+                }}>
+                  No Created Events Yet
+                </h3>
+                <p style={{
+                  margin: '0 0 24px 0',
+                  fontSize: '16px'
+                }}>
+                  You haven't created any events yet. Start by creating your first event!
+                </p>
+                <button
+                  onClick={() => navigate('/events/create')}
+                  style={{
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    padding: '12px 24px',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    fontSize: '14px'
+                  }}
+                >
+                  Create Event
+                </button>
               </div>
+            ) : (
+              <EventsTable
+                events={createdEvents}
+                loading={eventsLoading}
+                error={eventsError}
+                showStatusFilters={true}
+                statusFilterOptions={['all', 'draft', 'pending_approval', 'revision_requested', 'published', 'cancelled', 'completed']}
+                showDateFilters={true}
+                showSearch={true}
+                actions={[
+                  {
+                    type: 'edit',
+                    label: 'Edit',
+                    color: '#007bff',
+                    condition: (event) => event.status === 'draft' || event.status === 'revision_requested',
+                    handler: handleEditEvent
+                  },
+                  {
+                    type: 'submit',
+                    label: 'Submit for Approval',
+                    color: '#28a745',
+                    condition: (event) =>
+                      (event.status === 'draft' || event.status === 'revision_requested') &&
+                      (user?.role === 'user' || false),
+                    handler: handleSubmitForApproval
+                  },
+                  {
+                    type: 'publish',
+                    label: 'Publish',
+                    color: '#28a745',
+                    condition: (event) =>
+                      event.status === 'draft' &&
+                      !!user?.role &&
+                      ['approver', 'admin', 'superadmin'].includes(user.role),
+                    handler: handlePublishEvent
+                  },
+                  {
+                    type: 'cancel',
+                    label: 'Cancel',
+                    color: '#ffc107',
+                    condition: (event) => event.status === 'published',
+                    handler: handleCancelEvent
+                  },
+                  {
+                    type: 'delete',
+                    label: 'Delete',
+                    color: '#dc3545',
+                    condition: (event) => event.status === 'draft' || event.status === 'revision_requested',
+                    handler: handleDeleteEvent
+                  }
+                ]}
+                emptyMessage="No Created Events Yet"
+                emptyDescription="You haven't created any events yet. Start by creating your first event!"
+              />
             )}
+          </>
+        )}
 
-            {activeTab === 'joined' && (
-              <div>
-                {joinedEvents.length === 0 ? (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '80px 20px',
-                    backgroundColor: 'white',
-                    borderRadius: '12px',
-                    color: '#6c757d',
-                    border: '1px solid #e9ecef'
-                  }}>
-                    <h3 style={{ 
-                      margin: '0 0 16px 0',
-                      fontSize: '24px',
-                      color: '#495057'
-                    }}>
-                      No Joined Events Yet
-                    </h3>
-                    <p style={{ 
-                      margin: '0 0 24px 0',
-                      fontSize: '16px'
-                    }}>
-                      You haven't joined any events yet. Explore events and join ones that interest you!
-                    </p>
-                    <button
-                      onClick={() => navigate('/')}
-                      style={{
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        padding: '12px 24px',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontWeight: '500',
-                        fontSize: '14px'
-                      }}
-                    >
-                      Browse Events
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ marginBottom: '40px' }}>
-                    {joinedEvents.map((event) => {
-                      // Find the registration info for this event
-                      const registration = joinedRegistrations.find(reg => reg.eventId === event.id)
-                      
-                      return (
-                        <div key={event.id} style={{ position: 'relative' }}>
-                          {/* Registration Status Badge */}
-                          {registration && (
-                            <div style={{
-                              position: 'absolute',
-                              top: '16px',
-                              right: '20px',
-                              zIndex: 10,
-                              padding: '4px 8px',
-                              borderRadius: '12px',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              backgroundColor: registration.status === 'registered' 
-                                ? '#d4edda' 
-                                : registration.status === 'waitlisted'
-                                ? '#fff3cd'
-                                : '#f8d7da',
-                              color: registration.status === 'registered' 
-                                ? '#155724' 
-                                : registration.status === 'waitlisted'
-                                ? '#856404'
-                                : '#721c24'
-                            }}>
-                              {registration.status === 'registered' && '✓ Registered'}
-                              {registration.status === 'waitlisted' && '⏳ Waitlisted'}
-                              {registration.status === 'cancelled' && '❌ Cancelled'}
-                            </div>
-                          )}
-                          
-                          <EventTimelineItem 
-                            event={event}
-                            showJoinButton={true}
-                            showManagementActions={false}
-                            userRole={user?.role}
-                            onJoin={() => {}} // Not used since users are already joined
-                            onLeave={handleLeaveEvent}
-                          />
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
+        {activeTab === 'joined' && (
+          <>
+            {joinedEvents.length === 0 && !eventsLoading ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '80px 20px',
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                color: '#6c757d',
+                border: '1px solid #e9ecef'
+              }}>
+                <h3 style={{
+                  margin: '0 0 16px 0',
+                  fontSize: '24px',
+                  color: '#495057'
+                }}>
+                  No Joined Events Yet
+                </h3>
+                <p style={{
+                  margin: '0 0 24px 0',
+                  fontSize: '16px'
+                }}>
+                  You haven't joined any events yet. Explore events and join ones that interest you!
+                </p>
+                <button
+                  onClick={() => navigate('/')}
+                  style={{
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    padding: '12px 24px',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    fontSize: '14px'
+                  }}
+                >
+                  Browse Events
+                </button>
               </div>
+            ) : (
+              <EventsTable
+                events={joinedEvents}
+                loading={eventsLoading}
+                error={eventsError}
+                showStatusFilters={false}
+                showDateFilters={true}
+                showSearch={true}
+                actions={[
+                  {
+                    type: 'leave',
+                    label: 'Leave Event',
+                    color: '#dc3545',
+                    handler: handleLeaveEvent
+                  }
+                ]}
+                emptyMessage="No Joined Events Yet"
+                emptyDescription="You haven't joined any events yet. Explore events and join ones that interest you!"
+              />
             )}
-          </div>
+          </>
         )}
       </div>
     </div>

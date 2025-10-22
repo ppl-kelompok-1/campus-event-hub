@@ -2,12 +2,13 @@ import { Router, Request, Response } from 'express';
 import { EventService } from '../services/EventService';
 import { EventRegistrationService } from '../services/EventRegistrationService';
 import { AuthService } from '../services/AuthService';
+import { EventApprovalHistoryService } from '../services/EventApprovalHistoryService';
 import { asyncHandler } from '../middleware/error';
 import { authenticate, authorize } from '../middleware/auth';
 import { CreateEventDto, UpdateEventDto, EventStatus, ApprovalDto } from '../models/Event';
 import { UserRole } from '../models/User';
 
-export const createEventRouter = (eventService: EventService, eventRegistrationService: EventRegistrationService, authService: AuthService): Router => {
+export const createEventRouter = (eventService: EventService, eventRegistrationService: EventRegistrationService, authService: AuthService, approvalHistoryService: EventApprovalHistoryService): Router => {
   const router = Router();
 
   // GET /api/v1/events - Get all published events (public access)
@@ -105,7 +106,11 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
         description: req.body.description,
         eventDate: req.body.eventDate,
         eventTime: req.body.eventTime,
-        location: req.body.location,
+        registrationStartDate: req.body.registrationStartDate,
+        registrationStartTime: req.body.registrationStartTime,
+        registrationEndDate: req.body.registrationEndDate,
+        registrationEndTime: req.body.registrationEndTime,
+        locationId: req.body.locationId,
         maxAttendees: req.body.maxAttendees,
         status: req.body.status || EventStatus.DRAFT
       };
@@ -216,6 +221,66 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
     })
   );
 
+  // GET /api/v1/events/:id/approval-history - Get approval history for an event
+  router.get('/:id/approval-history',
+    authenticate(authService),
+    asyncHandler(async (req: Request, res: Response) => {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+
+      const eventId = parseInt(req.params.id);
+
+      if (isNaN(eventId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid event ID'
+        });
+      }
+
+      try {
+        // Get the event to check permissions
+        const event = await eventService.getEventById(eventId, req.user.userId);
+
+        if (!event) {
+          return res.status(404).json({
+            success: false,
+            error: 'Event not found'
+          });
+        }
+
+        // Only allow event creator, approvers, and admins to view approval history
+        const canViewHistory =
+          event.createdBy === req.user.userId ||
+          req.user.role === UserRole.APPROVER ||
+          req.user.role === UserRole.ADMIN ||
+          req.user.role === UserRole.SUPERADMIN;
+
+        if (!canViewHistory) {
+          return res.status(403).json({
+            success: false,
+            error: 'You do not have permission to view this event\'s approval history'
+          });
+        }
+
+        const history = await approvalHistoryService.getEventHistory(eventId);
+
+        res.json({
+          success: true,
+          data: history
+        });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to get approval history'
+        });
+      }
+    })
+  );
+
   // PUT /api/v1/events/:id - Update event (creator or admin)
   router.put('/:id',
     authenticate(authService),
@@ -241,7 +306,11 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
         description: req.body.description,
         eventDate: req.body.eventDate,
         eventTime: req.body.eventTime,
-        location: req.body.location,
+        registrationStartDate: req.body.registrationStartDate,
+        registrationStartTime: req.body.registrationStartTime,
+        registrationEndDate: req.body.registrationEndDate,
+        registrationEndTime: req.body.registrationEndTime,
+        locationId: req.body.locationId,
         maxAttendees: req.body.maxAttendees,
         status: req.body.status
       };

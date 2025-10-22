@@ -7,17 +7,26 @@ export class SQLiteEventRepository implements IEventRepository {
 
   async create(eventData: CreateEventDto, createdBy: number): Promise<Event> {
     const query = `
-      INSERT INTO events (title, description, event_date, event_time, location, max_attendees, created_by, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO events (
+        title, description, event_date, event_time,
+        registration_start_date, registration_start_time,
+        registration_end_date, registration_end_time,
+        location_id, max_attendees, created_by, status
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    
+
     const status = eventData.status || EventStatus.DRAFT;
     const params = [
       eventData.title,
       eventData.description || null,
       eventData.eventDate,
       eventData.eventTime,
-      eventData.location,
+      eventData.registrationStartDate,
+      eventData.registrationStartTime,
+      eventData.registrationEndDate,
+      eventData.registrationEndTime,
+      eventData.locationId,
       eventData.maxAttendees || null,
       createdBy,
       status
@@ -134,9 +143,25 @@ export class SQLiteEventRepository implements IEventRepository {
       updates.push('event_time = ?');
       params.push(eventData.eventTime);
     }
-    if (eventData.location !== undefined) {
-      updates.push('location = ?');
-      params.push(eventData.location);
+    if (eventData.registrationStartDate !== undefined) {
+      updates.push('registration_start_date = ?');
+      params.push(eventData.registrationStartDate);
+    }
+    if (eventData.registrationStartTime !== undefined) {
+      updates.push('registration_start_time = ?');
+      params.push(eventData.registrationStartTime);
+    }
+    if (eventData.registrationEndDate !== undefined) {
+      updates.push('registration_end_date = ?');
+      params.push(eventData.registrationEndDate);
+    }
+    if (eventData.registrationEndTime !== undefined) {
+      updates.push('registration_end_time = ?');
+      params.push(eventData.registrationEndTime);
+    }
+    if (eventData.locationId !== undefined) {
+      updates.push('location_id = ?');
+      params.push(eventData.locationId);
     }
     if (eventData.maxAttendees !== undefined) {
       updates.push('max_attendees = ?');
@@ -201,10 +226,21 @@ export class SQLiteEventRepository implements IEventRepository {
 
   async getApproverName(eventId: number): Promise<string | null> {
     const query = `
-      SELECT u.name 
-      FROM events e 
-      JOIN users u ON e.approved_by = u.id 
+      SELECT u.name
+      FROM events e
+      JOIN users u ON e.approved_by = u.id
       WHERE e.id = ? AND e.approved_by IS NOT NULL
+    `;
+    const result = await this.database.get(query, [eventId]) as any;
+    return result?.name || null;
+  }
+
+  async getLocationName(eventId: number): Promise<string | null> {
+    const query = `
+      SELECT l.name
+      FROM events e
+      JOIN locations l ON e.location_id = l.id
+      WHERE e.id = ?
     `;
     const result = await this.database.get(query, [eventId]) as any;
     return result?.name || null;
@@ -247,7 +283,11 @@ export class SQLiteEventRepository implements IEventRepository {
       description: row.description,
       eventDate: row.event_date,
       eventTime: row.event_time,
-      location: row.location,
+      registrationStartDate: row.registration_start_date,
+      registrationStartTime: row.registration_start_time,
+      registrationEndDate: row.registration_end_date,
+      registrationEndTime: row.registration_end_time,
+      locationId: row.location_id,
       maxAttendees: row.max_attendees,
       createdBy: row.created_by,
       status: row.status as EventStatus,

@@ -13,9 +13,13 @@ export interface Event {
   id: number;
   title: string;
   description?: string;
-  eventDate: string; // ISO 8601 date string (YYYY-MM-DD)
-  eventTime: string; // Time in HH:MM format
-  location: string;
+  eventDate: string; // ISO 8601 date string (YYYY-MM-DD) - when event happens
+  eventTime: string; // Time in HH:MM format - when event starts
+  registrationStartDate: string; // ISO 8601 date string - when registration opens
+  registrationStartTime: string; // Time in HH:MM format - registration open time
+  registrationEndDate: string; // ISO 8601 date string - when registration closes
+  registrationEndTime: string; // Time in HH:MM format - registration close time
+  locationId: number; // Foreign key to locations table
   maxAttendees?: number;
   createdBy: number; // User ID
   status: EventStatus;
@@ -33,7 +37,12 @@ export interface EventResponse {
   description?: string;
   eventDate: string;
   eventTime: string;
-  location: string;
+  registrationStartDate: string;
+  registrationStartTime: string;
+  registrationEndDate: string;
+  registrationEndTime: string;
+  locationId: number;
+  locationName: string; // Added for convenience
   maxAttendees?: number;
   createdBy: number;
   creatorName: string; // Added for convenience
@@ -50,15 +59,22 @@ export interface EventResponse {
   userRegistrationStatus?: 'registered' | 'waitlisted' | 'cancelled';
   isFull?: boolean;
   canRegister?: boolean;
+  isRegistrationOpen?: boolean;
+  hasRegistrationStarted?: boolean;
+  hasRegistrationEnded?: boolean;
 }
 
 // DTO for creating a new event
 export interface CreateEventDto {
   title: string;
   description?: string;
-  eventDate: string; // ISO 8601 date string
-  eventTime: string; // HH:MM format
-  location: string;
+  eventDate: string; // ISO 8601 date string - when event happens
+  eventTime: string; // HH:MM format - when event starts
+  registrationStartDate: string; // ISO 8601 date string - when registration opens
+  registrationStartTime: string; // HH:MM format - registration open time
+  registrationEndDate: string; // ISO 8601 date string - when registration closes
+  registrationEndTime: string; // HH:MM format - registration close time
+  locationId: number; // Foreign key to locations table
   maxAttendees?: number;
   status?: EventStatus; // Optional, defaults to DRAFT
 }
@@ -69,16 +85,21 @@ export interface UpdateEventDto {
   description?: string;
   eventDate?: string;
   eventTime?: string;
-  location?: string;
+  registrationStartDate?: string;
+  registrationStartTime?: string;
+  registrationEndDate?: string;
+  registrationEndTime?: string;
+  locationId?: number; // Foreign key to locations table
   maxAttendees?: number;
   status?: EventStatus;
 }
 
 // Helper function to convert Event to EventResponse
-export function toEventResponse(event: Event, creatorName: string, approverName?: string): EventResponse {
+export function toEventResponse(event: Event, creatorName: string, locationName: string, approverName?: string): EventResponse {
   return {
     ...event,
     creatorName,
+    locationName,
     approverName
   };
 }
@@ -102,4 +123,61 @@ export function isEventInPast(eventDate: string, eventTime: string): boolean {
   const now = new Date();
   const eventDateTime = new Date(`${eventDate}T${eventTime}`);
   return eventDateTime < now;
+}
+
+export function isRegistrationOpen(
+  registrationStartDate: string,
+  registrationStartTime: string,
+  registrationEndDate: string,
+  registrationEndTime: string
+): boolean {
+  const now = new Date();
+  const startDateTime = new Date(`${registrationStartDate}T${registrationStartTime}`);
+  const endDateTime = new Date(`${registrationEndDate}T${registrationEndTime}`);
+  return now >= startDateTime && now <= endDateTime;
+}
+
+export function hasRegistrationStarted(
+  registrationStartDate: string,
+  registrationStartTime: string
+): boolean {
+  const now = new Date();
+  const startDateTime = new Date(`${registrationStartDate}T${registrationStartTime}`);
+  return now >= startDateTime;
+}
+
+export function hasRegistrationEnded(
+  registrationEndDate: string,
+  registrationEndTime: string
+): boolean {
+  const now = new Date();
+  const endDateTime = new Date(`${registrationEndDate}T${registrationEndTime}`);
+  return now > endDateTime;
+}
+
+export function isValidRegistrationPeriod(
+  registrationStartDate: string,
+  registrationStartTime: string,
+  registrationEndDate: string,
+  registrationEndTime: string,
+  eventDate: string,
+  eventTime: string
+): boolean {
+  // Validate individual date and time formats
+  if (!isValidEventDate(registrationStartDate)) return false;
+  if (!isValidEventTime(registrationStartTime)) return false;
+  if (!isValidEventDate(registrationEndDate)) return false;
+  if (!isValidEventTime(registrationEndTime)) return false;
+
+  const regStartDateTime = new Date(`${registrationStartDate}T${registrationStartTime}`);
+  const regEndDateTime = new Date(`${registrationEndDate}T${registrationEndTime}`);
+  const eventStartDateTime = new Date(`${eventDate}T${eventTime}`);
+
+  // Registration start must be before registration end
+  if (regStartDateTime >= regEndDateTime) return false;
+
+  // Registration end must be before or equal to event start
+  if (regEndDateTime > eventStartDateTime) return false;
+
+  return true;
 }
