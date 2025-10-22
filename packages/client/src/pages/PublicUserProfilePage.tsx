@@ -2,12 +2,10 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { userApi } from '../auth/api'
 import type { PublicUserProfile, Event } from '../auth/api'
-import EventTimelineItem from '../components/EventTimelineItem'
-import { useAuth } from '../auth/AuthContext'
+import EventsTable from '../components/EventsTable'
 
 const PublicUserProfilePage = () => {
   const { id } = useParams<{ id: string }>()
-  const { isAuthenticated } = useAuth()
   const [profile, setProfile] = useState<PublicUserProfile | null>(null)
   const [createdEvents, setCreatedEvents] = useState<Event[]>([])
   const [joinedEvents, setJoinedEvents] = useState<Event[]>([])
@@ -114,17 +112,17 @@ const PublicUserProfilePage = () => {
   }
 
   return (
-    <div style={{ 
+    <div style={{
       minHeight: '100vh',
       backgroundColor: '#f8f9fa'
     }}>
       {/* Profile Header */}
-      <div style={{ 
+      <div style={{
         backgroundColor: 'white',
         borderBottom: '1px solid #e9ecef',
         padding: '24px 0'
       }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
           {/* Back Button */}
           <div style={{ marginBottom: '20px' }}>
             <Link
@@ -142,14 +140,11 @@ const PublicUserProfilePage = () => {
             </Link>
           </div>
 
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
+          <div style={{
             marginBottom: '20px'
           }}>
-            <h1 style={{ 
-              margin: '0', 
+            <h1 style={{
+              margin: '0',
               color: '#2c3e50',
               fontSize: '32px',
               fontWeight: '700'
@@ -157,7 +152,7 @@ const PublicUserProfilePage = () => {
               User Profile
             </h1>
           </div>
-          
+
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -183,23 +178,23 @@ const PublicUserProfilePage = () => {
             }}>
               {profile.name.charAt(0).toUpperCase()}
             </div>
-            
+
             {/* User Info */}
             <div style={{ flex: 1 }}>
-              <h2 style={{ 
+              <h2 style={{
                 margin: '0 0 8px 0',
                 fontSize: '24px',
                 color: '#2c3e50'
               }}>
                 {profile.name}
               </h2>
-              <div style={{ 
+              <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '16px',
                 marginBottom: '8px'
               }}>
-                <span style={{ 
+                <span style={{
                   backgroundColor: getRoleBadgeColor(profile.role),
                   color: getRoleTextColor(profile.role),
                   padding: '6px 12px',
@@ -218,22 +213,22 @@ const PublicUserProfilePage = () => {
                 </span>
               </div>
             </div>
-            
+
             {/* Stats */}
-            <div style={{ 
+            <div style={{
               display: 'flex',
               gap: '32px',
               alignItems: 'center'
             }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ 
+                <div style={{
                   fontSize: '24px',
                   fontWeight: '700',
                   color: '#2c3e50'
                 }}>
                   {createdEvents.length}
                 </div>
-                <div style={{ 
+                <div style={{
                   fontSize: '14px',
                   color: '#6c757d'
                 }}>
@@ -241,14 +236,14 @@ const PublicUserProfilePage = () => {
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ 
+                <div style={{
                   fontSize: '24px',
                   fontWeight: '700',
                   color: '#2c3e50'
                 }}>
                   {joinedEvents.length}
                 </div>
-                <div style={{ 
+                <div style={{
                   fontSize: '14px',
                   color: '#6c757d'
                 }}>
@@ -261,7 +256,7 @@ const PublicUserProfilePage = () => {
       </div>
 
       {/* Main Content */}
-      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '32px 20px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 20px' }}>
         {/* Tab Navigation */}
         <div style={{
           display: 'flex',
@@ -310,85 +305,30 @@ const PublicUserProfilePage = () => {
         {/* Tab Content */}
         <div>
           {activeTab === 'created' && (
-            <div>
-              {createdEvents.length === 0 ? (
-                <div style={{
-                  textAlign: 'center',
-                  padding: '80px 20px',
-                  backgroundColor: 'white',
-                  borderRadius: '12px',
-                  color: '#6c757d',
-                  border: '1px solid #e9ecef'
-                }}>
-                  <h3 style={{ 
-                    margin: '0 0 16px 0',
-                    fontSize: '24px',
-                    color: '#495057'
-                  }}>
-                    No Created Events
-                  </h3>
-                  <p style={{ 
-                    margin: '0',
-                    fontSize: '16px'
-                  }}>
-                    {profile.name} hasn't created any events yet.
-                  </p>
-                </div>
-              ) : (
-                <div style={{ marginBottom: '40px' }}>
-                  {createdEvents.map((event) => (
-                    <EventTimelineItem 
-                      key={event.id} 
-                      event={event}
-                      showJoinButton={isAuthenticated}
-                      showManagementActions={false}
-                      userRole={undefined}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+            <EventsTable
+              events={createdEvents}
+              loading={false}
+              showStatusFilters={true}
+              statusFilterOptions={['all', 'draft', 'pending_approval', 'revision_requested', 'published', 'cancelled', 'completed']}
+              showDateFilters={true}
+              showSearch={true}
+              actions={[]}
+              emptyMessage="No Created Events"
+              emptyDescription={`${profile.name} hasn't created any events yet.`}
+            />
           )}
 
           {activeTab === 'joined' && (
-            <div>
-              {joinedEvents.length === 0 ? (
-                <div style={{
-                  textAlign: 'center',
-                  padding: '80px 20px',
-                  backgroundColor: 'white',
-                  borderRadius: '12px',
-                  color: '#6c757d',
-                  border: '1px solid #e9ecef'
-                }}>
-                  <h3 style={{ 
-                    margin: '0 0 16px 0',
-                    fontSize: '24px',
-                    color: '#495057'
-                  }}>
-                    No Joined Events
-                  </h3>
-                  <p style={{ 
-                    margin: '0',
-                    fontSize: '16px'
-                  }}>
-                    {profile.name} hasn't joined any events yet.
-                  </p>
-                </div>
-              ) : (
-                <div style={{ marginBottom: '40px' }}>
-                  {joinedEvents.map((event) => (
-                    <EventTimelineItem 
-                      key={event.id} 
-                      event={event}
-                      showJoinButton={isAuthenticated}
-                      showManagementActions={false}
-                      userRole={undefined}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+            <EventsTable
+              events={joinedEvents}
+              loading={false}
+              showStatusFilters={false}
+              showDateFilters={true}
+              showSearch={true}
+              actions={[]}
+              emptyMessage="No Joined Events"
+              emptyDescription={`${profile.name} hasn't joined any events yet.`}
+            />
           )}
         </div>
       </div>
