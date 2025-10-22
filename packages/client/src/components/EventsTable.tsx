@@ -162,6 +162,71 @@ const EventsTable: React.FC<EventsTableProps> = ({
     })
   }
 
+  // CSV Export helper functions
+  const escapeCSV = (value: string) => {
+    if (!value) return ''
+    // If contains comma, quote, or newline, wrap in quotes and escape quotes
+    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+      return `"${value.replace(/"/g, '""')}"`
+    }
+    return value
+  }
+
+  const getStatusText = (status: string) => {
+    const statusMap: Record<string, string> = {
+      draft: 'Draft',
+      pending_approval: 'Pending Approval',
+      revision_requested: 'Revision Requested',
+      published: 'Published',
+      cancelled: 'Cancelled',
+      completed: 'Completed'
+    }
+    return statusMap[status] || status
+  }
+
+  const formatAttendees = (event: Event) => {
+    const current = event.currentAttendees || 0
+    const max = event.maxAttendees
+    return max ? `${current}/${max}` : `${current}`
+  }
+
+  const exportToCSV = () => {
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString()
+      .replace(/:/g, '-')
+      .replace(/\..+/, '')
+      .replace('T', '-')
+    const filename = `events-${timestamp}.csv`
+
+    // CSV headers
+    const headers = ['Event Title', 'Creator', 'Status', 'Event Date', 'Location', 'Attendees', 'Last Updated']
+
+    // Map events to CSV rows
+    const rows = events.map(event => [
+      escapeCSV(event.title),
+      escapeCSV(event.creatorName),
+      getStatusText(event.status),
+      formatDate(event.eventDate),
+      escapeCSV(event.locationName),
+      formatAttendees(event),
+      formatDateTime(event.updatedAt)
+    ])
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n')
+
+    // Trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = filename
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
+
   const getCountForStatus = (status: StatusFilterType) => {
     if (status === 'all') return events.length
     return events.filter(e => e.status === status).length
@@ -536,6 +601,41 @@ const EventsTable: React.FC<EventsTableProps> = ({
           border: '1px solid #f5c6cb'
         }}>
           {error}
+        </div>
+      )}
+
+      {/* Export Button */}
+      {events.length > 0 && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginBottom: '16px'
+        }}>
+          <button
+            onClick={exportToCSV}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#218838'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#28a745'
+            }}
+            style={{
+              backgroundColor: '#28a745',
+              color: 'white',
+              padding: '10px 20px',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'background-color 0.2s'
+            }}
+          >
+            📥 Export to CSV
+          </button>
         </div>
       )}
 
