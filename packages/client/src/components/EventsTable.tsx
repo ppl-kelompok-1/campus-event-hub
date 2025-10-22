@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import type { Event, EventStatus } from '../auth/api'
 
 export type StatusFilterType = 'all' | EventStatus
-export type SearchColumnType = '' | 'title' | 'creator' | 'status' | 'location' | 'date'
 
 export interface EventsTableAction {
   type: 'register' | 'leave' | 'edit' | 'delete' | 'publish' | 'submit' | 'cancel' | 'view'
@@ -43,8 +42,14 @@ const EventsTable: React.FC<EventsTableProps> = ({
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>('all')
   const [dateFilter, setDateFilter] = useState<'all' | 'upcoming' | 'past'>('all')
-  const [searchColumn, setSearchColumn] = useState<SearchColumnType>('')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [showColumnFilters, setShowColumnFilters] = useState(false)
+  const [columnSearches, setColumnSearches] = useState({
+    title: '',
+    creator: '',
+    status: '',
+    location: '',
+    date: ''
+  })
 
   // Helper function for date formatting
   const formatDate = (dateStr: string) => {
@@ -58,7 +63,7 @@ const EventsTable: React.FC<EventsTableProps> = ({
   // Filter events whenever filters change
   useEffect(() => {
     filterEvents()
-  }, [events, statusFilter, dateFilter, searchColumn, searchQuery])
+  }, [events, statusFilter, dateFilter, columnSearches])
 
   const filterEvents = () => {
     let filtered = [...events]
@@ -85,25 +90,33 @@ const EventsTable: React.FC<EventsTableProps> = ({
       })
     }
 
-    // Column-based search filter
-    if (showSearch && searchColumn && searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(event => {
-        switch (searchColumn) {
-          case 'title':
-            return event.title.toLowerCase().includes(query)
-          case 'creator':
-            return event.creatorName.toLowerCase().includes(query)
-          case 'status':
-            return event.status.toLowerCase().includes(query)
-          case 'location':
-            return event.locationName.toLowerCase().includes(query)
-          case 'date':
-            return formatDate(event.eventDate).toLowerCase().includes(query)
-          default:
-            return true
-        }
-      })
+    // Multi-column search filters (AND logic)
+    if (showSearch) {
+      if (columnSearches.title.trim()) {
+        filtered = filtered.filter(event =>
+          event.title.toLowerCase().includes(columnSearches.title.toLowerCase())
+        )
+      }
+      if (columnSearches.creator.trim()) {
+        filtered = filtered.filter(event =>
+          event.creatorName.toLowerCase().includes(columnSearches.creator.toLowerCase())
+        )
+      }
+      if (columnSearches.status.trim()) {
+        filtered = filtered.filter(event =>
+          event.status.toLowerCase().includes(columnSearches.status.toLowerCase())
+        )
+      }
+      if (columnSearches.location.trim()) {
+        filtered = filtered.filter(event =>
+          event.locationName.toLowerCase().includes(columnSearches.location.toLowerCase())
+        )
+      }
+      if (columnSearches.date.trim()) {
+        filtered = filtered.filter(event =>
+          formatDate(event.eventDate).toLowerCase().includes(columnSearches.date.toLowerCase())
+        )
+      }
     }
 
     setFilteredEvents(filtered)
@@ -277,66 +290,240 @@ const EventsTable: React.FC<EventsTableProps> = ({
           </div>
         )}
 
-        {/* Column-Based Search */}
+        {/* Toggle Column Filters Button */}
         {showSearch && (
-          <div style={{
-            display: 'flex',
-            gap: '12px',
-            alignItems: 'center'
-          }}>
-            {/* Column Dropdown */}
-            <select
-              value={searchColumn}
-              onChange={(e) => {
-                setSearchColumn(e.target.value as SearchColumnType)
-                setSearchQuery('') // Clear search query when column changes
-              }}
+          <div>
+            <button
+              onClick={() => setShowColumnFilters(!showColumnFilters)}
               style={{
-                width: '200px',
-                padding: '10px 16px',
+                padding: '8px 16px',
                 fontSize: '14px',
-                border: '1px solid #dee2e6',
+                fontWeight: '500',
+                border: showColumnFilters ? '2px solid #007bff' : '1px solid #dee2e6',
                 borderRadius: '6px',
-                outline: 'none',
-                backgroundColor: 'white',
+                backgroundColor: showColumnFilters ? '#e7f3ff' : 'white',
+                color: showColumnFilters ? '#007bff' : '#6c757d',
                 cursor: 'pointer',
-                color: searchColumn ? '#212529' : '#6c757d'
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}
             >
-              <option value="">Select column...</option>
-              <option value="title">Event Title</option>
-              <option value="creator">Creator</option>
-              <option value="status">Status</option>
-              <option value="location">Location</option>
-              <option value="date">Event Date</option>
-            </select>
-
-            {/* Search Input */}
-            <input
-              type="text"
-              placeholder={
-                searchColumn
-                  ? `Search by ${searchColumn === 'title' ? 'event title' : searchColumn === 'creator' ? 'creator name' : searchColumn === 'status' ? 'status' : searchColumn === 'location' ? 'location' : 'event date'}...`
-                  : 'Select a column first...'
-              }
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              disabled={!searchColumn}
-              style={{
-                flex: 1,
-                padding: '10px 16px',
-                fontSize: '14px',
-                border: '1px solid #dee2e6',
-                borderRadius: '6px',
-                outline: 'none',
-                backgroundColor: searchColumn ? 'white' : '#f8f9fa',
-                cursor: searchColumn ? 'text' : 'not-allowed',
-                color: searchColumn ? '#212529' : '#6c757d'
-              }}
-            />
+              🔍 {showColumnFilters ? 'Hide' : 'Show'} Column Filters
+            </button>
           </div>
         )}
       </div>
+
+      {/* Column Filter Row */}
+      {showSearch && showColumnFilters && (
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          padding: '16px',
+          marginBottom: '20px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          border: '1px solid #e9ecef'
+        }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '25% 15% 12% 12% 15% 10% 12% 150px',
+            gap: '12px',
+            alignItems: 'center'
+          }}>
+            {/* Event Title Search */}
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder="Search title..."
+                value={columnSearches.title}
+                onChange={(e) => setColumnSearches({...columnSearches, title: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '8px 28px 8px 10px',
+                  fontSize: '13px',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '6px',
+                  outline: 'none'
+                }}
+              />
+              {columnSearches.title && (
+                <button
+                  onClick={() => setColumnSearches({...columnSearches, title: ''})}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    color: '#6c757d',
+                    fontSize: '16px',
+                    padding: '0 4px'
+                  }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            {/* Creator Search */}
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder="Search creator..."
+                value={columnSearches.creator}
+                onChange={(e) => setColumnSearches({...columnSearches, creator: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '8px 28px 8px 10px',
+                  fontSize: '13px',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '6px',
+                  outline: 'none'
+                }}
+              />
+              {columnSearches.creator && (
+                <button
+                  onClick={() => setColumnSearches({...columnSearches, creator: ''})}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    color: '#6c757d',
+                    fontSize: '16px',
+                    padding: '0 4px'
+                  }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            {/* Status Search */}
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder="Search status..."
+                value={columnSearches.status}
+                onChange={(e) => setColumnSearches({...columnSearches, status: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '8px 28px 8px 10px',
+                  fontSize: '13px',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '6px',
+                  outline: 'none'
+                }}
+              />
+              {columnSearches.status && (
+                <button
+                  onClick={() => setColumnSearches({...columnSearches, status: ''})}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    color: '#6c757d',
+                    fontSize: '16px',
+                    padding: '0 4px'
+                  }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            {/* Event Date Search */}
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder="Search date..."
+                value={columnSearches.date}
+                onChange={(e) => setColumnSearches({...columnSearches, date: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '8px 28px 8px 10px',
+                  fontSize: '13px',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '6px',
+                  outline: 'none'
+                }}
+              />
+              {columnSearches.date && (
+                <button
+                  onClick={() => setColumnSearches({...columnSearches, date: ''})}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    color: '#6c757d',
+                    fontSize: '16px',
+                    padding: '0 4px'
+                  }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            {/* Location Search */}
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder="Search location..."
+                value={columnSearches.location}
+                onChange={(e) => setColumnSearches({...columnSearches, location: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '8px 28px 8px 10px',
+                  fontSize: '13px',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '6px',
+                  outline: 'none'
+                }}
+              />
+              {columnSearches.location && (
+                <button
+                  onClick={() => setColumnSearches({...columnSearches, location: ''})}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    color: '#6c757d',
+                    fontSize: '16px',
+                    padding: '0 4px'
+                  }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            {/* Empty cells for Attendees, Last Updated, Actions */}
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
