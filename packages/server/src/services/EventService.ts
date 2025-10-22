@@ -5,13 +5,15 @@ import { ILocationRepository } from '../repositories/ILocationRepository';
 import { Event, CreateEventDto, UpdateEventDto, EventResponse, EventStatus, ApprovalDto, toEventResponse, isValidEventDate, isValidEventTime, isEventInPast, isValidRegistrationPeriod, isRegistrationOpen, hasRegistrationStarted, hasRegistrationEnded } from '../models/Event';
 import { UserRole } from '../models/User';
 import { RegistrationStatus } from '../models/EventRegistration';
+import { EventApprovalHistoryService } from './EventApprovalHistoryService';
 
 export class EventService {
   constructor(
     private eventRepository: IEventRepository,
     private userRepository: IUserRepository,
     private locationRepository: ILocationRepository,
-    private eventRegistrationRepository?: IEventRegistrationRepository
+    private eventRegistrationRepository?: IEventRegistrationRepository,
+    private approvalHistoryService?: EventApprovalHistoryService
   ) {}
 
   // Create a new event
@@ -288,7 +290,24 @@ export class EventService {
       throw new Error('Only draft or revision requested events can be submitted for approval');
     }
 
-    return this.eventRepository.submitForApproval(eventId);
+    const statusBefore = event.status;
+    const result = await this.eventRepository.submitForApproval(eventId);
+
+    // Record approval history
+    if (result && this.approvalHistoryService) {
+      const user = await this.userRepository.findById(userId);
+      if (user) {
+        this.approvalHistoryService.recordSubmission(
+          eventId,
+          userId,
+          user.name,
+          statusBefore,
+          EventStatus.PENDING_APPROVAL
+        );
+      }
+    }
+
+    return result;
   }
 
   // Approve event (approver only)
@@ -314,7 +333,24 @@ export class EventService {
       throw new Error('Cannot approve events that are in the past');
     }
 
-    return this.eventRepository.approveEvent(eventId, approverId);
+    const statusBefore = event.status;
+    const result = await this.eventRepository.approveEvent(eventId, approverId);
+
+    // Record approval history
+    if (result && this.approvalHistoryService) {
+      const approver = await this.userRepository.findById(approverId);
+      if (approver) {
+        this.approvalHistoryService.recordApproval(
+          eventId,
+          approverId,
+          approver.name,
+          statusBefore,
+          EventStatus.PUBLISHED
+        );
+      }
+    }
+
+    return result;
   }
 
   // Request revision (approver only)
@@ -340,13 +376,38 @@ export class EventService {
       throw new Error('Revision comments are required when requesting revision');
     }
 
-    return this.eventRepository.requestRevision(eventId, approverId, approvalData.revisionComments);
+    const statusBefore = event.status;
+    const result = await this.eventRepository.requestRevision(eventId, approverId, approvalData.revisionComments);
+
+    // Record approval history
+    if (result && this.approvalHistoryService) {
+      const approver = await this.userRepository.findById(approverId);
+      if (approver) {
+        this.approvalHistoryService.recordRevisionRequest(
+          eventId,
+          approverId,
+          approver.name,
+          approvalData.revisionComments,
+          statusBefore,
+          EventStatus.REVISION_REQUESTED
+        );
+      }
+    }
+
+    return result;
   }
 
-  // Get events pending approval (approver only)
+  // Get events pending approval (approver only) - includes both pending_approval and revision_requested
   async getPendingApprovalEvents(): Promise<EventResponse[]> {
-    const events = await this.eventRepository.findByStatus(EventStatus.PENDING_APPROVAL);
-    return this.enrichEventsWithNames(events);
+    // Get events with both pending_approval and revision_requested statuses
+    const pendingEvents = await this.eventRepository.findByStatus(EventStatus.PENDING_APPROVAL);
+    const revisionEvents = await this.eventRepository.findByStatus(EventStatus.REVISION_REQUESTED);
+
+    // Combine and sort by updated_at (most recent first)
+    const allEvents = [...pendingEvents, ...revisionEvents];
+    allEvents.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+    return this.enrichEventsWithNames(allEvents);
   }
 
   // Updated publish event method for new approval workflow

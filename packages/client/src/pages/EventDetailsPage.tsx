@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { eventApi } from '../auth/api'
-import type { Event, EventAttachment } from '../auth/api'
+import type { Event, EventAttachment, EventApprovalHistory } from '../auth/api'
 import { FileUpload } from '../components/FileUpload'
 import { AttachmentList } from '../components/AttachmentList'
+import EventApprovalHistoryComponent from '../components/EventApprovalHistory'
 import { useAuth } from '../auth/AuthContext'
 
 interface Attendee {
@@ -17,9 +18,11 @@ const EventDetailsPage = () => {
   const [event, setEvent] = useState<Event | null>(null)
   const [attendees, setAttendees] = useState<Attendee[]>([])
   const [attachments, setAttachments] = useState<EventAttachment[]>([])
+  const [approvalHistory, setApprovalHistory] = useState<EventApprovalHistory[]>([])
   const [loading, setLoading] = useState(true)
   const [attendeesLoading, setAttendeesLoading] = useState(false)
   const [attachmentsLoading, setAttachmentsLoading] = useState(false)
+  const [approvalHistoryLoading, setApprovalHistoryLoading] = useState(false)
   const [error, setError] = useState('')
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
@@ -41,9 +44,10 @@ const EventDetailsPage = () => {
       const response = await eventApi.getEventById(Number(id))
       setEvent(response.data)
 
-      // Also fetch attendees and attachments
+      // Also fetch attendees, attachments, and approval history
       fetchAttendees()
       fetchAttachments()
+      fetchApprovalHistory()
     } catch (err) {
       setError('Failed to load event details.')
       console.error('Error fetching event:', err)
@@ -75,6 +79,20 @@ const EventDetailsPage = () => {
       console.error('Error fetching attachments:', err)
     } finally {
       setAttachmentsLoading(false)
+    }
+  }
+
+  const fetchApprovalHistory = async () => {
+    try {
+      setApprovalHistoryLoading(true)
+      const response = await eventApi.getApprovalHistory(Number(id))
+      setApprovalHistory(response.data)
+    } catch (err) {
+      // Don't set error for approval history - just log it
+      // User might not have permission to view it
+      console.error('Error fetching approval history:', err)
+    } finally {
+      setApprovalHistoryLoading(false)
     }
   }
 
@@ -461,6 +479,28 @@ const EventDetailsPage = () => {
             />
           )}
         </div>
+
+        {/* Approval History Section - Only visible to event creator, approvers, and admins */}
+        {user && (
+          user.id === event.createdBy ||
+          user.role === 'approver' ||
+          user.role === 'admin' ||
+          user.role === 'superadmin'
+        ) && approvalHistory.length > 0 && (
+          <div style={{ marginTop: '30px' }}>
+            {approvalHistoryLoading ? (
+              <div style={{
+                textAlign: 'center',
+                color: '#6c757d',
+                padding: '20px'
+              }}>
+                Loading approval history...
+              </div>
+            ) : (
+              <EventApprovalHistoryComponent history={approvalHistory} />
+            )}
+          </div>
+        )}
 
         {/* Event status notice */}
         {event.status === 'cancelled' && (

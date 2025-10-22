@@ -5,17 +5,20 @@ import { IEventRepository } from '../repositories/IEventRepository';
 import { IEventRegistrationRepository } from '../repositories/IEventRegistrationRepository';
 import { ILocationRepository } from '../repositories/ILocationRepository';
 import { IEventAttachmentRepository } from '../repositories/IEventAttachmentRepository';
+import { IEventApprovalHistoryRepository } from '../repositories/IEventApprovalHistoryRepository';
 import { SQLiteUserRepository } from './repositories/SQLiteUserRepository';
 import { SQLiteEventRepository } from './repositories/SQLiteEventRepository';
 import { SQLiteEventRegistrationRepository } from '../repositories/SQLiteEventRegistrationRepository';
 import { SQLiteLocationRepository } from './repositories/SQLiteLocationRepository';
 import { SQLiteEventAttachmentRepository } from './repositories/SQLiteEventAttachmentRepository';
+import { SQLiteEventApprovalHistoryRepository } from './repositories/SQLiteEventApprovalHistoryRepository';
 import { UserService } from '../services/UserService';
 import { AuthService } from '../services/AuthService';
 import { EventService } from '../services/EventService';
 import { EventRegistrationService } from '../services/EventRegistrationService';
 import { LocationService } from '../services/LocationService';
 import { EventAttachmentService } from '../services/EventAttachmentService';
+import { EventApprovalHistoryService } from '../services/EventApprovalHistoryService';
 import { MigrationRunner } from './database/MigrationRunner';
 import path from 'path';
 
@@ -28,12 +31,14 @@ export class Container {
   private eventRegistrationRepository?: IEventRegistrationRepository;
   private locationRepository?: ILocationRepository;
   private eventAttachmentRepository?: IEventAttachmentRepository;
+  private eventApprovalHistoryRepository?: IEventApprovalHistoryRepository;
   private userService?: UserService;
   private authService?: AuthService;
   private eventService?: EventService;
   private eventRegistrationService?: EventRegistrationService;
   private locationService?: LocationService;
   private eventAttachmentService?: EventAttachmentService;
+  private eventApprovalHistoryService?: EventApprovalHistoryService;
 
   private constructor() {}
 
@@ -98,6 +103,14 @@ export class Container {
     return this.eventAttachmentRepository;
   }
 
+  // Event approval history repository (singleton)
+  getEventApprovalHistoryRepository(): IEventApprovalHistoryRepository {
+    if (!this.eventApprovalHistoryRepository) {
+      this.eventApprovalHistoryRepository = new SQLiteEventApprovalHistoryRepository(this.getDatabase());
+    }
+    return this.eventApprovalHistoryRepository;
+  }
+
   // Auth service (singleton)
   getAuthService(): AuthService {
     if (!this.authService) {
@@ -121,7 +134,8 @@ export class Container {
         this.getEventRepository(),
         this.getUserRepository(),
         this.getLocationRepository(),
-        this.getEventRegistrationRepository()
+        this.getEventRegistrationRepository(),
+        this.getEventApprovalHistoryService()
       );
     }
     return this.eventService;
@@ -158,6 +172,16 @@ export class Container {
     return this.eventAttachmentService;
   }
 
+  // Event approval history service (singleton)
+  getEventApprovalHistoryService(): EventApprovalHistoryService {
+    if (!this.eventApprovalHistoryService) {
+      this.eventApprovalHistoryService = new EventApprovalHistoryService(
+        this.getEventApprovalHistoryRepository()
+      );
+    }
+    return this.eventApprovalHistoryService;
+  }
+
   // Method to close database connection
   async close(): Promise<void> {
     if (this.database) {
@@ -176,12 +200,14 @@ export class Container {
     this.eventRegistrationRepository = undefined;
     this.locationRepository = undefined;
     this.eventAttachmentRepository = undefined;
+    this.eventApprovalHistoryRepository = undefined;
     this.userService = undefined;
     this.authService = undefined;
     this.eventService = undefined;
     this.eventRegistrationService = undefined;
     this.locationService = undefined;
     this.eventAttachmentService = undefined;
+    this.eventApprovalHistoryService = undefined;
   }
 }
 

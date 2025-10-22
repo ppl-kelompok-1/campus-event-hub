@@ -74,6 +74,7 @@ const eventService = container.getEventService();
 const eventRegistrationService = container.getEventRegistrationService();
 const locationService = container.getLocationService();
 const eventAttachmentService = container.getEventAttachmentService();
+const eventApprovalHistoryService = container.getEventApprovalHistoryService();
 
 // Mount authentication routes
 router.use('/auth', createAuthRouter(authService, userService));
@@ -82,7 +83,7 @@ router.use('/auth', createAuthRouter(authService, userService));
 router.use('/users', createUserRouter(userService, authService, eventService, eventRegistrationService));
 
 // Mount event routes
-router.use('/events', createEventRouter(eventService, eventRegistrationService, authService));
+router.use('/events', createEventRouter(eventService, eventRegistrationService, authService, eventApprovalHistoryService));
 
 // Mount location routes
 router.use('/locations', createLocationRouter(locationService, authService));

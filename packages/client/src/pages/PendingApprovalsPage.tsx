@@ -42,7 +42,7 @@ const PendingApprovalsPage = () => {
     try {
       setActionLoading(eventId)
       await eventApi.approveEvent(eventId)
-      // Remove approved event from list
+      // Remove approved event from list (it's now published)
       setEvents(events.filter(event => event.id !== eventId))
     } catch (err: any) {
       setError(err.message || 'Failed to approve event')
@@ -60,8 +60,8 @@ const PendingApprovalsPage = () => {
     try {
       setActionLoading(showRevisionModal.eventId)
       await eventApi.requestRevision(showRevisionModal.eventId, revisionComments.trim())
-      // Remove event from pending list
-      setEvents(events.filter(event => event.id !== showRevisionModal.eventId))
+      // Reload the page to show updated status instead of removing
+      await loadPendingEvents()
       // Close modal
       setShowRevisionModal(null)
       setRevisionComments('')
@@ -82,6 +82,43 @@ const PendingApprovalsPage = () => {
     setShowRevisionModal(null)
     setRevisionComments('')
     setError('')
+  }
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { bg: string; color: string; text: string; icon: string }> = {
+      pending_approval: { bg: '#fff3cd', color: '#856404', text: 'Pending Approval', icon: '🟡' },
+      revision_requested: { bg: '#ffe5cc', color: '#cc6600', text: 'Revision Requested', icon: '🟠' }
+    }
+
+    const config = statusConfig[status] || statusConfig.pending_approval
+
+    return (
+      <span style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        backgroundColor: config.bg,
+        color: config.color,
+        padding: '6px 12px',
+        borderRadius: '16px',
+        fontSize: '13px',
+        fontWeight: '600'
+      }}>
+        <span>{config.icon}</span>
+        {config.text}
+      </span>
+    )
+  }
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   }
 
   if (loading) {
@@ -128,62 +165,135 @@ const PendingApprovalsPage = () => {
           gap: '20px' 
         }}>
           {events.map((event) => (
-            <div key={event.id} style={{ 
-              border: '1px solid #ddd', 
-              borderRadius: '8px', 
+            <div key={event.id} style={{
+              border: '1px solid #ddd',
+              borderRadius: '8px',
               overflow: 'hidden',
               backgroundColor: 'white'
             }}>
               <EventCard event={event} />
-              
-              <div style={{ 
-                padding: '15px', 
+
+              <div style={{
+                padding: '15px',
                 borderTop: '1px solid #eee',
                 backgroundColor: '#f8f9fa'
               }}>
-                <p style={{ 
-                  fontSize: '14px', 
-                  color: '#666', 
-                  marginBottom: '10px' 
+                {/* Status Badge */}
+                <div style={{ marginBottom: '12px' }}>
+                  {getStatusBadge(event.status)}
+                </div>
+
+                {/* Event Info */}
+                <p style={{
+                  fontSize: '14px',
+                  color: '#666',
+                  marginBottom: '8px'
                 }}>
                   <strong>Created by:</strong> {event.creatorName}
                 </p>
-                
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button
-                    onClick={() => handleApprove(event.id)}
-                    disabled={actionLoading === event.id}
-                    style={{
-                      flex: 1,
-                      padding: '8px 16px',
-                      backgroundColor: '#28a745',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: actionLoading === event.id ? 'not-allowed' : 'pointer',
-                      opacity: actionLoading === event.id ? 0.7 : 1,
-                    }}
-                  >
-                    {actionLoading === event.id ? 'Processing...' : 'Approve'}
-                  </button>
-                  
-                  <button
-                    onClick={() => openRevisionModal(event.id, event.title)}
-                    disabled={actionLoading === event.id}
-                    style={{
-                      flex: 1,
-                      padding: '8px 16px',
-                      backgroundColor: '#ffc107',
-                      color: '#212529',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: actionLoading === event.id ? 'not-allowed' : 'pointer',
-                      opacity: actionLoading === event.id ? 0.7 : 1,
-                    }}
-                  >
-                    Request Revision
-                  </button>
-                </div>
+
+                <p style={{
+                  fontSize: '13px',
+                  color: '#888',
+                  marginBottom: '12px'
+                }}>
+                  Last updated: {formatDate(event.updatedAt)}
+                </p>
+
+                {/* Revision Comments (if status is revision_requested) */}
+                {event.status === 'revision_requested' && event.revisionComments && (
+                  <div style={{
+                    backgroundColor: '#ffe5cc',
+                    border: '1px solid #ffcc99',
+                    borderRadius: '6px',
+                    padding: '10px',
+                    marginBottom: '12px'
+                  }}>
+                    <strong style={{ fontSize: '13px', color: '#cc6600' }}>Revision Comments:</strong>
+                    <p style={{
+                      fontSize: '13px',
+                      color: '#cc6600',
+                      marginTop: '4px',
+                      marginBottom: 0
+                    }}>
+                      {event.revisionComments}
+                    </p>
+                  </div>
+                )}
+
+                {/* Approver Info (if already has approver) */}
+                {event.approverName && (
+                  <p style={{
+                    fontSize: '13px',
+                    color: '#666',
+                    marginBottom: '12px'
+                  }}>
+                    <strong>Reviewed by:</strong> {event.approverName}
+                  </p>
+                )}
+
+                {/* Action Buttons - Conditional based on status */}
+                {event.status === 'pending_approval' ? (
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      onClick={() => handleApprove(event.id)}
+                      disabled={actionLoading === event.id}
+                      style={{
+                        flex: 1,
+                        padding: '8px 16px',
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: actionLoading === event.id ? 'not-allowed' : 'pointer',
+                        opacity: actionLoading === event.id ? 0.7 : 1,
+                      }}
+                    >
+                      {actionLoading === event.id ? 'Processing...' : 'Approve'}
+                    </button>
+
+                    <button
+                      onClick={() => openRevisionModal(event.id, event.title)}
+                      disabled={actionLoading === event.id}
+                      style={{
+                        flex: 1,
+                        padding: '8px 16px',
+                        backgroundColor: '#ffc107',
+                        color: '#212529',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: actionLoading === event.id ? 'not-allowed' : 'pointer',
+                        opacity: actionLoading === event.id ? 0.7 : 1,
+                      }}
+                    >
+                      Request Revision
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{
+                    backgroundColor: '#e8f5e9',
+                    border: '1px solid #a5d6a7',
+                    borderRadius: '6px',
+                    padding: '10px',
+                    textAlign: 'center'
+                  }}>
+                    <p style={{
+                      fontSize: '13px',
+                      color: '#2e7d32',
+                      marginBottom: '6px',
+                      fontWeight: '600'
+                    }}>
+                      ✓ Waiting for creator to address feedback
+                    </p>
+                    <p style={{
+                      fontSize: '12px',
+                      color: '#4caf50',
+                      marginBottom: 0
+                    }}>
+                      Event will reappear when resubmitted for approval
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           ))}

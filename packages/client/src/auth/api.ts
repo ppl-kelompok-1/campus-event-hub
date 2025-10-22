@@ -163,6 +163,20 @@ export interface EventAttachment {
   downloadUrl: string
 }
 
+export type ApprovalAction = 'submitted' | 'approved' | 'revision_requested'
+
+export interface EventApprovalHistory {
+  id: number
+  eventId: number
+  action: ApprovalAction
+  performedBy: number
+  performerName: string
+  comments?: string
+  statusBefore: string
+  statusAfter: string
+  createdAt: string
+}
+
 export interface ApprovalDto {
   revisionComments?: string
 }
@@ -541,6 +555,13 @@ export const eventApi = {
     return fetchApi<{ success: boolean; message: string }>(
       `/events/${eventId}/attachments/${attachmentId}`,
       { method: 'DELETE' }
+    )
+  },
+
+  // Get approval history for an event
+  getApprovalHistory: async (eventId: number) => {
+    return fetchApi<ApiResponse<EventApprovalHistory[]>>(
+      `/events/${eventId}/approval-history`
     )
   },
 }
