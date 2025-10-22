@@ -144,8 +144,8 @@ const SettingsPage = () => {
       // Explicitly refresh from server to ensure form shows latest data
       await refreshSettings()
 
-      // Show success with saved title as confirmation
-      setSuccessMessage(`Settings saved successfully! Site title: "${formData.siteTitle}"`)
+      // Show success message
+      setSuccessMessage('Settings saved successfully!')
 
       // Auto-hide success message after 5 seconds
       setTimeout(() => setSuccessMessage(''), 5000)
