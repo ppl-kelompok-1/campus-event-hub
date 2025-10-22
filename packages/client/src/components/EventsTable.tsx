@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { Event, EventStatus } from '../auth/api'
 
 export type StatusFilterType = 'all' | EventStatus
+export type SearchColumnType = '' | 'title' | 'creator' | 'status' | 'location' | 'date'
 
 export interface EventsTableAction {
   type: 'register' | 'leave' | 'edit' | 'delete' | 'publish' | 'submit' | 'cancel' | 'view'
@@ -42,12 +43,22 @@ const EventsTable: React.FC<EventsTableProps> = ({
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>('all')
   const [dateFilter, setDateFilter] = useState<'all' | 'upcoming' | 'past'>('all')
+  const [searchColumn, setSearchColumn] = useState<SearchColumnType>('')
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Helper function for date formatting
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })
+  }
 
   // Filter events whenever filters change
   useEffect(() => {
     filterEvents()
-  }, [events, statusFilter, dateFilter, searchQuery])
+  }, [events, statusFilter, dateFilter, searchColumn, searchQuery])
 
   const filterEvents = () => {
     let filtered = [...events]
@@ -74,14 +85,25 @@ const EventsTable: React.FC<EventsTableProps> = ({
       })
     }
 
-    // Search filter
-    if (showSearch && searchQuery.trim()) {
+    // Column-based search filter
+    if (showSearch && searchColumn && searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(event =>
-        event.title.toLowerCase().includes(query) ||
-        event.creatorName.toLowerCase().includes(query) ||
-        event.locationName.toLowerCase().includes(query)
-      )
+      filtered = filtered.filter(event => {
+        switch (searchColumn) {
+          case 'title':
+            return event.title.toLowerCase().includes(query)
+          case 'creator':
+            return event.creatorName.toLowerCase().includes(query)
+          case 'status':
+            return event.status.toLowerCase().includes(query)
+          case 'location':
+            return event.locationName.toLowerCase().includes(query)
+          case 'date':
+            return formatDate(event.eventDate).toLowerCase().includes(query)
+          default:
+            return true
+        }
+      })
     }
 
     setFilteredEvents(filtered)
@@ -116,14 +138,6 @@ const EventsTable: React.FC<EventsTableProps> = ({
         {config.text}
       </span>
     )
-  }
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    })
   }
 
   const formatDateTime = (dateStr: string) => {
@@ -263,21 +277,61 @@ const EventsTable: React.FC<EventsTableProps> = ({
           </div>
         )}
 
-        {/* Search Bar */}
+        {/* Column-Based Search */}
         {showSearch && (
-          <div>
-            <input
-              type="text"
-              placeholder="Search by title, creator, or location..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            alignItems: 'center'
+          }}>
+            {/* Column Dropdown */}
+            <select
+              value={searchColumn}
+              onChange={(e) => {
+                setSearchColumn(e.target.value as SearchColumnType)
+                setSearchQuery('') // Clear search query when column changes
+              }}
               style={{
-                width: '100%',
+                width: '200px',
                 padding: '10px 16px',
                 fontSize: '14px',
                 border: '1px solid #dee2e6',
                 borderRadius: '6px',
-                outline: 'none'
+                outline: 'none',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+                color: searchColumn ? '#212529' : '#6c757d'
+              }}
+            >
+              <option value="">Select column...</option>
+              <option value="title">Event Title</option>
+              <option value="creator">Creator</option>
+              <option value="status">Status</option>
+              <option value="location">Location</option>
+              <option value="date">Event Date</option>
+            </select>
+
+            {/* Search Input */}
+            <input
+              type="text"
+              placeholder={
+                searchColumn
+                  ? `Search by ${searchColumn === 'title' ? 'event title' : searchColumn === 'creator' ? 'creator name' : searchColumn === 'status' ? 'status' : searchColumn === 'location' ? 'location' : 'event date'}...`
+                  : 'Select a column first...'
+              }
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              disabled={!searchColumn}
+              style={{
+                flex: 1,
+                padding: '10px 16px',
+                fontSize: '14px',
+                border: '1px solid #dee2e6',
+                borderRadius: '6px',
+                outline: 'none',
+                backgroundColor: searchColumn ? 'white' : '#f8f9fa',
+                cursor: searchColumn ? 'text' : 'not-allowed',
+                color: searchColumn ? '#212529' : '#6c757d'
               }}
             />
           </div>
