@@ -3,6 +3,27 @@ import { useSettings } from '../contexts/SettingsContext'
 import { useAuth } from '../auth/AuthContext'
 import type { UpdateSettingsDto } from '../auth/api'
 
+// Default settings values
+const DEFAULT_SETTINGS: UpdateSettingsDto = {
+  siteTitle: 'Campus Event Hub',
+  primaryColor: '#007bff',
+  secondaryColor: '#28a745',
+  backgroundColor: '#f8f9fa',
+  cardBackgroundColor: '#ffffff',
+  textColorPrimary: '#2c3e50',
+  textColorSecondary: '#6c757d',
+  textColorMuted: '#999999',
+  textColorAuto: false,
+  footerText: '© 2025 Campus Event Hub. All rights reserved.',
+  contactEmail: '',
+  contactPhone: '',
+  contactAddress: '',
+  socialFacebook: '',
+  socialTwitter: '',
+  socialInstagram: '',
+  socialLinkedin: ''
+}
+
 const SettingsPage = () => {
   const { user } = useAuth()
   const { settings, loading, error, updateSettings, uploadLogo, deleteLogo, refreshSettings } = useSettings()
@@ -157,6 +178,15 @@ const SettingsPage = () => {
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleResetToDefault = () => {
+    if (!confirm('Are you sure you want to reset all settings to default? This will not save automatically.')) return
+
+    setFormData({ ...DEFAULT_SETTINGS })
+
+    setSuccessMessage('Settings reset to default values. Click "Save Settings" to apply.')
+    setTimeout(() => setSuccessMessage(''), 5000)
   }
 
   return (
@@ -589,8 +619,26 @@ const SettingsPage = () => {
             </div>
           </div>
 
-          {/* Save Button */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+            <button
+              type="button"
+              onClick={handleResetToDefault}
+              disabled={saving}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: saving ? 'not-allowed' : 'pointer',
+                fontSize: '16px',
+                fontWeight: '500',
+                opacity: saving ? 0.6 : 1
+              }}
+            >
+              Reset to Default
+            </button>
             <button
               type="submit"
               disabled={saving}
