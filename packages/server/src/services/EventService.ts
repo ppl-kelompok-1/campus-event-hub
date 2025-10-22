@@ -397,14 +397,18 @@ export class EventService {
     return result;
   }
 
-  // Get events pending approval (approver only) - includes both pending_approval and revision_requested
+  // Get all events in approval workflow (pending, revision, and approved) - for approvers to see complete history
   async getPendingApprovalEvents(): Promise<EventResponse[]> {
-    // Get events with both pending_approval and revision_requested statuses
+    // Get events with all approval workflow statuses
     const pendingEvents = await this.eventRepository.findByStatus(EventStatus.PENDING_APPROVAL);
     const revisionEvents = await this.eventRepository.findByStatus(EventStatus.REVISION_REQUESTED);
+    const publishedEvents = await this.eventRepository.findByStatus(EventStatus.PUBLISHED);
 
-    // Combine and sort by updated_at (most recent first)
-    const allEvents = [...pendingEvents, ...revisionEvents];
+    // Filter published events to only show those that went through approval (have approvedBy)
+    const approvedEvents = publishedEvents.filter(event => event.approvedBy !== undefined && event.approvedBy !== null);
+
+    // Combine all and sort by updated_at (most recent first)
+    const allEvents = [...pendingEvents, ...revisionEvents, ...approvedEvents];
     allEvents.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
     return this.enrichEventsWithNames(allEvents);
