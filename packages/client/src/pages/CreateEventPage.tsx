@@ -11,14 +11,17 @@ const CreateEventPage = () => {
     description: '',
     eventDate: '',
     eventTime: '',
-    eventEndDate: '',
-    eventEndTime: '',
+    registrationStartDate: '',
+    registrationStartTime: '',
+    registrationEndDate: '',
+    registrationEndTime: '',
     locationId: 0,
     maxAttendees: undefined,
     status: 'draft'
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [files, setFiles] = useState<File[]>([])
   const { isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
 
@@ -41,24 +44,40 @@ const CreateEventPage = () => {
     if (!formData.eventTime) {
       return 'Event time is required'
     }
-    if (!formData.eventEndTime) {
-      return 'Event end time is required'
+    if (!formData.registrationStartDate) {
+      return 'Registration start date is required'
+    }
+    if (!formData.registrationStartTime) {
+      return 'Registration start time is required'
+    }
+    if (!formData.registrationEndDate) {
+      return 'Registration end date is required'
+    }
+    if (!formData.registrationEndTime) {
+      return 'Registration end time is required'
     }
 
-    // Validate date range
-    const startDateTime = new Date(`${formData.eventDate}T${formData.eventTime}`)
-    const endDate = formData.eventEndDate || formData.eventDate
-    const endDateTime = new Date(`${endDate}T${formData.eventEndTime}`)
+    // Validate registration period
+    const regStartDateTime = new Date(`${formData.registrationStartDate}T${formData.registrationStartTime}`)
+    const regEndDateTime = new Date(`${formData.registrationEndDate}T${formData.registrationEndTime}`)
+    const eventStartDateTime = new Date(`${formData.eventDate}T${formData.eventTime}`)
 
-    if (endDateTime < startDateTime) {
-      return 'End date/time must be after or equal to start date/time'
+    if (regStartDateTime >= regEndDateTime) {
+      return 'Registration end must be after registration start'
     }
 
-    // Check if date is in the future (for published events)
+    if (regEndDateTime > eventStartDateTime) {
+      return 'Registration must close before or at event start time'
+    }
+
+    // Check if event is in the future (for published events)
     if (formData.status === 'published') {
       const now = new Date()
-      if (endDateTime <= now) {
+      if (eventStartDateTime <= now) {
         return 'Published events cannot be scheduled in the past'
+      }
+      if (regEndDateTime <= now) {
+        return 'Cannot publish events where registration has already ended'
       }
     }
 
@@ -71,7 +90,7 @@ const CreateEventPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const validationError = validateForm()
     if (validationError) {
       setError(validationError)
@@ -81,14 +100,25 @@ const CreateEventPage = () => {
     try {
       setLoading(true)
       setError('')
-      
+
       const eventData = {
         ...formData,
         maxAttendees: formData.maxAttendees || undefined
       }
-      
-      await eventApi.createEvent(eventData)
-      navigate('/profile?tab=created')
+
+      // Create the event first
+      const response = await eventApi.createEvent(eventData)
+      const eventId = response.data.id
+
+      // Upload files if any
+      if (files.length > 0) {
+        await Promise.all(
+          files.map(file => eventApi.uploadAttachment(eventId, file))
+        )
+      }
+
+      // Navigate to the event details page
+      navigate(`/events/${eventId}`)
     } catch (err) {
       setError('Failed to create event. Please try again.')
       console.error('Error creating event:', err)
@@ -103,6 +133,30 @@ const CreateEventPage = () => {
       ...prev,
       [name]: name === 'maxAttendees' ? (value ? parseInt(value) : undefined) : value
     }))
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || [])
+
+    // Validate file sizes
+    const invalidFiles = selectedFiles.filter(file => file.size > 10 * 1024 * 1024)
+    if (invalidFiles.length > 0) {
+      setError(`Some files exceed 10MB limit: ${invalidFiles.map(f => f.name).join(', ')}`)
+      return
+    }
+
+    setFiles(prev => [...prev, ...selectedFiles])
+    setError('')
+  }
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
   }
 
   return (
@@ -172,12 +226,12 @@ const CreateEventPage = () => {
 
         <div style={{ marginBottom: '20px' }}>
           <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>
-            Start Date & Time *
+            Event Date & Time *
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
-                Start Date
+                Event Date
               </label>
               <input
                 type="date"
@@ -197,7 +251,7 @@ const CreateEventPage = () => {
 
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
-                Start Time
+                Event Time
               </label>
               <input
                 type="time"
@@ -219,47 +273,87 @@ const CreateEventPage = () => {
 
         <div style={{ marginBottom: '20px' }}>
           <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>
-            End Date & Time *
+            Registration Period *
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
-                End Date (optional for same-day events)
-              </label>
-              <input
-                type="date"
-                name="eventEndDate"
-                value={formData.eventEndDate}
-                onChange={handleChange}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '16px'
-                }}
-                placeholder={formData.eventDate}
-              />
+          <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#6c757d' }}>
+            Users can only join this event during the registration period
+          </p>
+          <div style={{ marginBottom: '16px' }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '500' }}>
+              Registration Opens
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <input
+                  type="date"
+                  name="registrationStartDate"
+                  value={formData.registrationStartDate}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
+              <div>
+                <input
+                  type="time"
+                  name="registrationStartTime"
+                  value={formData.registrationStartTime}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
             </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
-                End Time
-              </label>
-              <input
-                type="time"
-                name="eventEndTime"
-                value={formData.eventEndTime}
-                onChange={handleChange}
-                required
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '16px'
-                }}
-              />
+          </div>
+          <div>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '500' }}>
+              Registration Closes
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <input
+                  type="date"
+                  name="registrationEndDate"
+                  value={formData.registrationEndDate}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
+              <div>
+                <input
+                  type="time"
+                  name="registrationEndTime"
+                  value={formData.registrationEndTime}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -295,6 +389,82 @@ const CreateEventPage = () => {
             }}
             placeholder="Leave empty for unlimited"
           />
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+            Event Attachments (Optional)
+          </label>
+          <input
+            type="file"
+            onChange={handleFileSelect}
+            multiple
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.txt"
+            style={{
+              width: '100%',
+              padding: '8px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px'
+            }}
+          />
+          <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+            Accepted formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, WEBP, TXT (max 10MB each)
+          </div>
+
+          {files.length > 0 && (
+            <div style={{ marginTop: '12px' }}>
+              <div style={{ fontWeight: '500', marginBottom: '8px', fontSize: '14px' }}>
+                Selected files ({files.length}):
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {files.map((file, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '8px 12px',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '4px',
+                      border: '1px solid #e9ecef'
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontWeight: '500',
+                        fontSize: '14px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {file.name}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                        {formatFileSize(file.size)}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      style={{
+                        padding: '4px 12px',
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        marginLeft: '12px'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div style={{ marginBottom: '30px' }}>

@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { eventApi } from '../auth/api'
-import type { Event } from '../auth/api'
+import type { Event, EventAttachment } from '../auth/api'
+import { FileUpload } from '../components/FileUpload'
+import { AttachmentList } from '../components/AttachmentList'
+import { useAuth } from '../auth/AuthContext'
 
 interface Attendee {
   id: number
@@ -13,10 +16,13 @@ interface Attendee {
 const EventDetailsPage = () => {
   const [event, setEvent] = useState<Event | null>(null)
   const [attendees, setAttendees] = useState<Attendee[]>([])
+  const [attachments, setAttachments] = useState<EventAttachment[]>([])
   const [loading, setLoading] = useState(true)
   const [attendeesLoading, setAttendeesLoading] = useState(false)
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false)
   const [error, setError] = useState('')
   const { id } = useParams<{ id: string }>()
+  const { user } = useAuth()
 
   useEffect(() => {
     if (!id || isNaN(Number(id))) {
@@ -34,9 +40,10 @@ const EventDetailsPage = () => {
       setError('')
       const response = await eventApi.getEventById(Number(id))
       setEvent(response.data)
-      
-      // Also fetch attendees
+
+      // Also fetch attendees and attachments
       fetchAttendees()
+      fetchAttachments()
     } catch (err) {
       setError('Failed to load event details.')
       console.error('Error fetching event:', err)
@@ -55,6 +62,19 @@ const EventDetailsPage = () => {
       console.error('Error fetching attendees:', err)
     } finally {
       setAttendeesLoading(false)
+    }
+  }
+
+  const fetchAttachments = async () => {
+    try {
+      setAttachmentsLoading(true)
+      const response = await eventApi.getEventAttachments(Number(id))
+      setAttachments(response.data)
+    } catch (err) {
+      // Don't set error for attachments - just log it
+      console.error('Error fetching attachments:', err)
+    } finally {
+      setAttachmentsLoading(false)
     }
   }
 
@@ -79,39 +99,6 @@ const EventDetailsPage = () => {
     })
   }
 
-  const formatDateRange = (startDate: string, endDate?: string) => {
-    const start = new Date(startDate)
-
-    if (!endDate || startDate === endDate) {
-      // Same day event
-      return formatDate(startDate)
-    }
-
-    // Multi-day event
-    const end = new Date(endDate)
-    const startMonth = start.toLocaleDateString('en-US', { month: 'long' })
-    const endMonth = end.toLocaleDateString('en-US', { month: 'long' })
-    const startDay = start.getDate()
-    const endDay = end.getDate()
-    const startYear = start.getFullYear()
-    const endYear = end.getFullYear()
-
-    if (startYear !== endYear) {
-      // Different years: "May 31, 2024 - Jan 2, 2025"
-      return `${startMonth} ${startDay}, ${startYear} - ${endMonth} ${endDay}, ${endYear}`
-    } else if (startMonth !== endMonth) {
-      // Same year, different months: "May 31 - June 2, 2024"
-      return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${startYear}`
-    } else {
-      // Same month: "May 31 - June 2, 2024"
-      return `${startMonth} ${startDay} - ${endDay}, ${startYear}`
-    }
-  }
-
-  const formatTimeRange = (startTime: string, endTime: string) => {
-    return `${formatTime(startTime)} - ${formatTime(endTime)}`
-  }
-
   const getStatusBadge = (status: string) => {
     const statusStyles: Record<string, React.CSSProperties> = {
       draft: { backgroundColor: '#6c757d', color: 'white' },
@@ -121,7 +108,7 @@ const EventDetailsPage = () => {
     }
 
     return (
-      <span 
+      <span
         style={{
           ...(statusStyles[status] || statusStyles.draft),
           padding: '6px 12px',
@@ -136,12 +123,9 @@ const EventDetailsPage = () => {
     )
   }
 
-  const isEventInPast = (eventDate: string, eventTime: string, eventEndDate?: string, eventEndTime?: string) => {
-    // Check if event has ended (use end datetime if available, otherwise use start datetime)
-    const endDate = eventEndDate || eventDate
-    const endTime = eventEndTime || eventTime
-    const eventEndDateTime = new Date(`${endDate}T${endTime}`)
-    return eventEndDateTime < new Date()
+  const isEventInPast = (eventDate: string, eventTime: string) => {
+    const eventDateTime = new Date(`${eventDate}T${eventTime}`)
+    return eventDateTime < new Date()
   }
 
   if (loading) {
@@ -243,12 +227,12 @@ const EventDetailsPage = () => {
               📅 Date & Time
             </div>
             <div style={{ fontWeight: '500' }}>
-              {formatDateRange(event.eventDate, event.eventEndDate)}
+              {formatDate(event.eventDate)}
             </div>
             <div style={{ color: '#6c757d' }}>
-              {formatTimeRange(event.eventTime, event.eventEndTime)}
+              {formatTime(event.eventTime)}
             </div>
-            {isEventInPast(event.eventDate, event.eventTime, event.eventEndDate, event.eventEndTime) && (
+            {isEventInPast(event.eventDate, event.eventTime) && (
               <div style={{
                 color: '#dc3545',
                 fontSize: '0.875rem',
@@ -437,6 +421,44 @@ const EventDetailsPage = () => {
                 ))}
               </div>
             </>
+          )}
+        </div>
+
+        {/* Attachments Section */}
+        <div style={{ marginTop: '30px' }}>
+          <h3 style={{
+            margin: '0 0 16px 0',
+            color: '#2c3e50',
+            fontSize: '1.25rem'
+          }}>
+            Event Attachments
+          </h3>
+
+          {user && user.id === event.createdBy && (
+            <FileUpload
+              eventId={event.id}
+              onUploadSuccess={(attachment) => {
+                setAttachments(prev => [attachment, ...prev])
+              }}
+            />
+          )}
+
+          {attachmentsLoading ? (
+            <div style={{
+              padding: '20px',
+              textAlign: 'center',
+              color: '#6c757d'
+            }}>
+              Loading attachments...
+            </div>
+          ) : (
+            <AttachmentList
+              attachments={attachments}
+              eventCreatorId={event.createdBy}
+              onDeleteSuccess={(attachmentId) => {
+                setAttachments(prev => prev.filter(a => a.id !== attachmentId))
+              }}
+            />
           )}
         </div>
 

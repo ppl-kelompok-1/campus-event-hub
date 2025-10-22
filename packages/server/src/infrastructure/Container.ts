@@ -4,15 +4,18 @@ import { IUserRepository } from '../repositories/IUserRepository';
 import { IEventRepository } from '../repositories/IEventRepository';
 import { IEventRegistrationRepository } from '../repositories/IEventRegistrationRepository';
 import { ILocationRepository } from '../repositories/ILocationRepository';
+import { IEventAttachmentRepository } from '../repositories/IEventAttachmentRepository';
 import { SQLiteUserRepository } from './repositories/SQLiteUserRepository';
 import { SQLiteEventRepository } from './repositories/SQLiteEventRepository';
 import { SQLiteEventRegistrationRepository } from '../repositories/SQLiteEventRegistrationRepository';
 import { SQLiteLocationRepository } from './repositories/SQLiteLocationRepository';
+import { SQLiteEventAttachmentRepository } from './repositories/SQLiteEventAttachmentRepository';
 import { UserService } from '../services/UserService';
 import { AuthService } from '../services/AuthService';
 import { EventService } from '../services/EventService';
 import { EventRegistrationService } from '../services/EventRegistrationService';
 import { LocationService } from '../services/LocationService';
+import { EventAttachmentService } from '../services/EventAttachmentService';
 import { MigrationRunner } from './database/MigrationRunner';
 import path from 'path';
 
@@ -24,11 +27,13 @@ export class Container {
   private eventRepository?: IEventRepository;
   private eventRegistrationRepository?: IEventRegistrationRepository;
   private locationRepository?: ILocationRepository;
+  private eventAttachmentRepository?: IEventAttachmentRepository;
   private userService?: UserService;
   private authService?: AuthService;
   private eventService?: EventService;
   private eventRegistrationService?: EventRegistrationService;
   private locationService?: LocationService;
+  private eventAttachmentService?: EventAttachmentService;
 
   private constructor() {}
 
@@ -85,6 +90,14 @@ export class Container {
     return this.locationRepository;
   }
 
+  // Event attachment repository (singleton)
+  getEventAttachmentRepository(): IEventAttachmentRepository {
+    if (!this.eventAttachmentRepository) {
+      this.eventAttachmentRepository = new SQLiteEventAttachmentRepository(this.getDatabase());
+    }
+    return this.eventAttachmentRepository;
+  }
+
   // Auth service (singleton)
   getAuthService(): AuthService {
     if (!this.authService) {
@@ -133,6 +146,18 @@ export class Container {
     return this.locationService;
   }
 
+  // Event attachment service (singleton)
+  getEventAttachmentService(): EventAttachmentService {
+    if (!this.eventAttachmentService) {
+      this.eventAttachmentService = new EventAttachmentService(
+        this.getEventAttachmentRepository(),
+        this.getEventRepository(),
+        this.getUserRepository()
+      );
+    }
+    return this.eventAttachmentService;
+  }
+
   // Method to close database connection
   async close(): Promise<void> {
     if (this.database) {
@@ -150,11 +175,13 @@ export class Container {
     this.eventRepository = undefined;
     this.eventRegistrationRepository = undefined;
     this.locationRepository = undefined;
+    this.eventAttachmentRepository = undefined;
     this.userService = undefined;
     this.authService = undefined;
     this.eventService = undefined;
     this.eventRegistrationService = undefined;
     this.locationService = undefined;
+    this.eventAttachmentService = undefined;
   }
 }
 

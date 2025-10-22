@@ -94,8 +94,10 @@ export interface Event {
   description?: string
   eventDate: string
   eventTime: string
-  eventEndDate?: string
-  eventEndTime: string
+  registrationStartDate: string
+  registrationStartTime: string
+  registrationEndDate: string
+  registrationEndTime: string
   locationId: number
   locationName: string
   maxAttendees?: number
@@ -114,6 +116,9 @@ export interface Event {
   userRegistrationStatus?: 'registered' | 'waitlisted' | 'cancelled'
   isFull?: boolean
   canRegister?: boolean
+  isRegistrationOpen?: boolean
+  hasRegistrationStarted?: boolean
+  hasRegistrationEnded?: boolean
 }
 
 export interface CreateEventDto {
@@ -121,8 +126,10 @@ export interface CreateEventDto {
   description?: string
   eventDate: string
   eventTime: string
-  eventEndDate?: string
-  eventEndTime: string
+  registrationStartDate: string
+  registrationStartTime: string
+  registrationEndDate: string
+  registrationEndTime: string
   locationId: number
   maxAttendees?: number
   status?: EventStatus
@@ -133,11 +140,27 @@ export interface UpdateEventDto {
   description?: string
   eventDate?: string
   eventTime?: string
-  eventEndDate?: string
-  eventEndTime?: string
+  registrationStartDate?: string
+  registrationStartTime?: string
+  registrationEndDate?: string
+  registrationEndTime?: string
   locationId?: number
   maxAttendees?: number
   status?: EventStatus
+}
+
+// Event Attachment types
+export interface EventAttachment {
+  id: number
+  eventId: number
+  fileName: string
+  originalName: string
+  fileSize: number
+  mimeType: string
+  uploadedBy: number
+  uploaderName: string
+  uploadedAt: string
+  downloadUrl: string
 }
 
 export interface ApprovalDto {
@@ -467,6 +490,58 @@ export const eventApi = {
     }[]>>(`/events/${id}/attendees`, {
       requireAuth: false
     })
+  },
+
+  // Upload attachment to event
+  uploadAttachment: async (eventId: number, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const token = getToken()
+    const url = `${API_BASE_URL}/events/${eventId}/attachments`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : ''
+      },
+      body: formData
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new ApiError(
+        response.status,
+        data.error || data.message || 'Upload failed'
+      )
+    }
+
+    return data as ApiResponse<EventAttachment>
+  },
+
+  // Get all attachments for an event
+  getEventAttachments: async (eventId: number) => {
+    return fetchApi<ApiResponse<EventAttachment[]>>(
+      `/events/${eventId}/attachments`,
+      { requireAuth: false }
+    )
+  },
+
+  // Get single attachment info
+  getAttachment: async (eventId: number, attachmentId: number) => {
+    return fetchApi<ApiResponse<EventAttachment>>(
+      `/events/${eventId}/attachments/${attachmentId}`,
+      { requireAuth: false }
+    )
+  },
+
+  // Delete an attachment
+  deleteAttachment: async (eventId: number, attachmentId: number) => {
+    return fetchApi<{ success: boolean; message: string }>(
+      `/events/${eventId}/attachments/${attachmentId}`,
+      { method: 'DELETE' }
+    )
   },
 }
 

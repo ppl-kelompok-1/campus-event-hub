@@ -12,8 +12,10 @@ const EditEventPage = () => {
     description: '',
     eventDate: '',
     eventTime: '',
-    eventEndDate: '',
-    eventEndTime: '',
+    registrationStartDate: '',
+    registrationStartTime: '',
+    registrationEndDate: '',
+    registrationEndTime: '',
     locationId: 0,
     maxAttendees: undefined,
     status: 'draft'
@@ -54,8 +56,10 @@ const EditEventPage = () => {
         description: eventData.description,
         eventDate: eventData.eventDate,
         eventTime: eventData.eventTime,
-        eventEndDate: eventData.eventEndDate,
-        eventEndTime: eventData.eventEndTime,
+        registrationStartDate: eventData.registrationStartDate,
+        registrationStartTime: eventData.registrationStartTime,
+        registrationEndDate: eventData.registrationEndDate,
+        registrationEndTime: eventData.registrationEndTime,
         locationId: eventData.locationId,
         maxAttendees: eventData.maxAttendees,
         status: eventData.status
@@ -81,24 +85,40 @@ const EditEventPage = () => {
     if (!formData.eventTime) {
       return 'Event time is required'
     }
-    if (!formData.eventEndTime) {
-      return 'Event end time is required'
+    if (!formData.registrationStartDate) {
+      return 'Registration start date is required'
+    }
+    if (!formData.registrationStartTime) {
+      return 'Registration start time is required'
+    }
+    if (!formData.registrationEndDate) {
+      return 'Registration end date is required'
+    }
+    if (!formData.registrationEndTime) {
+      return 'Registration end time is required'
     }
 
-    // Validate date range
-    const startDateTime = new Date(`${formData.eventDate}T${formData.eventTime}`)
-    const endDate = formData.eventEndDate || formData.eventDate
-    const endDateTime = new Date(`${endDate}T${formData.eventEndTime}`)
+    // Validate registration period
+    const regStartDateTime = new Date(`${formData.registrationStartDate}T${formData.registrationStartTime}`)
+    const regEndDateTime = new Date(`${formData.registrationEndDate}T${formData.registrationEndTime}`)
+    const eventStartDateTime = new Date(`${formData.eventDate}T${formData.eventTime}`)
 
-    if (endDateTime < startDateTime) {
-      return 'End date/time must be after or equal to start date/time'
+    if (regStartDateTime >= regEndDateTime) {
+      return 'Registration end must be after registration start'
     }
 
-    // Check if date is in the future (for published events)
+    if (regEndDateTime > eventStartDateTime) {
+      return 'Registration must close before or at event start time'
+    }
+
+    // Check if event is in the future (for published events)
     if (formData.status === 'published') {
       const now = new Date()
-      if (endDateTime <= now) {
+      if (eventStartDateTime <= now) {
         return 'Published events cannot be scheduled in the past'
+      }
+      if (regEndDateTime <= now) {
+        return 'Cannot publish events where registration has already ended'
       }
     }
 
@@ -246,12 +266,12 @@ const EditEventPage = () => {
 
         <div style={{ marginBottom: '20px' }}>
           <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>
-            Start Date & Time *
+            Event Date & Time *
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
-                Start Date
+                Event Date
               </label>
               <input
                 type="date"
@@ -271,7 +291,7 @@ const EditEventPage = () => {
 
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
-                Start Time
+                Event Time
               </label>
               <input
                 type="time"
@@ -293,47 +313,87 @@ const EditEventPage = () => {
 
         <div style={{ marginBottom: '20px' }}>
           <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>
-            End Date & Time *
+            Registration Period *
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
-                End Date (optional for same-day events)
-              </label>
-              <input
-                type="date"
-                name="eventEndDate"
-                value={formData.eventEndDate || ''}
-                onChange={handleChange}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '16px'
-                }}
-                placeholder={formData.eventDate}
-              />
+          <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#6c757d' }}>
+            Users can only join this event during the registration period
+          </p>
+          <div style={{ marginBottom: '16px' }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '500' }}>
+              Registration Opens
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <input
+                  type="date"
+                  name="registrationStartDate"
+                  value={formData.registrationStartDate || ''}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
+              <div>
+                <input
+                  type="time"
+                  name="registrationStartTime"
+                  value={formData.registrationStartTime || ''}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
             </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
-                End Time
-              </label>
-              <input
-                type="time"
-                name="eventEndTime"
-                value={formData.eventEndTime || ''}
-                onChange={handleChange}
-                required
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '16px'
-                }}
-              />
+          </div>
+          <div>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '500' }}>
+              Registration Closes
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <input
+                  type="date"
+                  name="registrationEndDate"
+                  value={formData.registrationEndDate || ''}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
+              <div>
+                <input
+                  type="time"
+                  name="registrationEndTime"
+                  value={formData.registrationEndTime || ''}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

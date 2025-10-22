@@ -2,7 +2,7 @@ import { IEventRepository } from '../repositories/IEventRepository';
 import { IUserRepository } from '../repositories/IUserRepository';
 import { IEventRegistrationRepository } from '../repositories/IEventRegistrationRepository';
 import { ILocationRepository } from '../repositories/ILocationRepository';
-import { Event, CreateEventDto, UpdateEventDto, EventResponse, EventStatus, ApprovalDto, toEventResponse, isValidEventDate, isValidEventTime, isEventInPast, isValidEventDateRange } from '../models/Event';
+import { Event, CreateEventDto, UpdateEventDto, EventResponse, EventStatus, ApprovalDto, toEventResponse, isValidEventDate, isValidEventTime, isEventInPast, isValidRegistrationPeriod, isRegistrationOpen, hasRegistrationStarted, hasRegistrationEnded } from '../models/Event';
 import { UserRole } from '../models/User';
 import { RegistrationStatus } from '../models/EventRegistration';
 
@@ -138,20 +138,23 @@ export class EventService {
 
     // Validate update data
     if (eventData.eventDate !== undefined || eventData.eventTime !== undefined ||
-        eventData.eventEndDate !== undefined || eventData.eventEndTime !== undefined) {
-      const newDate = eventData.eventDate || existingEvent.eventDate;
-      const newTime = eventData.eventTime || existingEvent.eventTime;
-      const newEndDate = eventData.eventEndDate !== undefined ? eventData.eventEndDate : existingEvent.eventEndDate;
-      const newEndTime = eventData.eventEndTime || existingEvent.eventEndTime;
+        eventData.registrationStartDate !== undefined || eventData.registrationStartTime !== undefined ||
+        eventData.registrationEndDate !== undefined || eventData.registrationEndTime !== undefined) {
+      const newEventDate = eventData.eventDate || existingEvent.eventDate;
+      const newEventTime = eventData.eventTime || existingEvent.eventTime;
+      const newRegStartDate = eventData.registrationStartDate || existingEvent.registrationStartDate;
+      const newRegStartTime = eventData.registrationStartTime || existingEvent.registrationStartTime;
+      const newRegEndDate = eventData.registrationEndDate || existingEvent.registrationEndDate;
+      const newRegEndTime = eventData.registrationEndTime || existingEvent.registrationEndTime;
 
-      if (!isValidEventDate(newDate)) {
+      if (!isValidEventDate(newEventDate)) {
         throw new Error('Invalid event date format. Use YYYY-MM-DD');
       }
-      if (!isValidEventTime(newTime)) {
+      if (!isValidEventTime(newEventTime)) {
         throw new Error('Invalid event time format. Use HH:MM');
       }
-      if (!isValidEventDateRange(newDate, newTime, newEndDate, newEndTime)) {
-        throw new Error('Invalid event date/time range. End date/time must be after or equal to start date/time');
+      if (!isValidRegistrationPeriod(newRegStartDate, newRegStartTime, newRegEndDate, newRegEndTime, newEventDate, newEventTime)) {
+        throw new Error('Invalid registration period. Registration must start before it ends, and end before or at event start time');
       }
     }
 
@@ -234,13 +237,16 @@ export class EventService {
       throw new Error('Invalid event time format. Use HH:MM');
     }
 
-    if (!eventData.eventEndTime) {
-      throw new Error('Event end time is required');
-    }
-
-    // Validate date range (start and end datetime)
-    if (!isValidEventDateRange(eventData.eventDate, eventData.eventTime, eventData.eventEndDate, eventData.eventEndTime)) {
-      throw new Error('Invalid event date/time range. End date/time must be after or equal to start date/time');
+    // Validate registration period
+    if (!isValidRegistrationPeriod(
+      eventData.registrationStartDate,
+      eventData.registrationStartTime,
+      eventData.registrationEndDate,
+      eventData.registrationEndTime,
+      eventData.eventDate,
+      eventData.eventTime
+    )) {
+      throw new Error('Invalid registration period. Registration must start before it ends, and end before or at event start time');
     }
 
     if (eventData.maxAttendees !== undefined && eventData.maxAttendees < 1) {
@@ -248,8 +254,13 @@ export class EventService {
     }
 
     // Check if event is in the past (only for published events)
-    if (eventData.status === EventStatus.PUBLISHED && isEventInPast(eventData.eventDate, eventData.eventTime, eventData.eventEndDate, eventData.eventEndTime)) {
+    if (eventData.status === EventStatus.PUBLISHED && isEventInPast(eventData.eventDate, eventData.eventTime)) {
       throw new Error('Cannot create published events in the past');
+    }
+
+    // Check if registration end is in the past (only for published events)
+    if (eventData.status === EventStatus.PUBLISHED && hasRegistrationEnded(eventData.registrationEndDate, eventData.registrationEndTime)) {
+      throw new Error('Cannot publish events where registration has already ended');
     }
   }
 
@@ -299,7 +310,7 @@ export class EventService {
     }
 
     // Check if event is in the past
-    if (isEventInPast(event.eventDate, event.eventTime, event.eventEndDate, event.eventEndTime)) {
+    if (isEventInPast(event.eventDate, event.eventTime)) {
       throw new Error('Cannot approve events that are in the past');
     }
 
@@ -358,7 +369,7 @@ export class EventService {
     }
 
     // Check if event is in the past
-    if (isEventInPast(event.eventDate, event.eventTime, event.eventEndDate, event.eventEndTime)) {
+    if (isEventInPast(event.eventDate, event.eventTime)) {
       throw new Error('Cannot publish events that are in the past');
     }
 
@@ -411,14 +422,25 @@ export class EventService {
 
     // Get current attendee count
     const currentAttendees = await this.eventRegistrationRepository.getRegistrationCountByStatus(event.id, RegistrationStatus.REGISTERED);
-    
+
     // Check if event is full
     const isFull = event.maxAttendees ? currentAttendees >= event.maxAttendees : false;
-    
-    // Check if user can register (event is published, not full, not in past)
+
+    // Check registration period status
+    const registrationOpen = isRegistrationOpen(
+      event.registrationStartDate,
+      event.registrationStartTime,
+      event.registrationEndDate,
+      event.registrationEndTime
+    );
+    const registrationStarted = hasRegistrationStarted(event.registrationStartDate, event.registrationStartTime);
+    const registrationEnded = hasRegistrationEnded(event.registrationEndDate, event.registrationEndTime);
+
+    // Check if user can register (event is published, registration is open, not full, not in past)
     const canRegister = event.status === EventStatus.PUBLISHED &&
+                       registrationOpen &&
                        !isFull &&
-                       !isEventInPast(event.eventDate, event.eventTime, event.eventEndDate, event.eventEndTime);
+                       !isEventInPast(event.eventDate, event.eventTime);
 
     let isUserRegistered = false;
     let userRegistrationStatus: 'registered' | 'waitlisted' | 'cancelled' | undefined;
@@ -438,7 +460,10 @@ export class EventService {
       isUserRegistered,
       userRegistrationStatus,
       isFull,
-      canRegister
+      canRegister,
+      isRegistrationOpen: registrationOpen,
+      hasRegistrationStarted: registrationStarted,
+      hasRegistrationEnded: registrationEnded
     };
   }
 

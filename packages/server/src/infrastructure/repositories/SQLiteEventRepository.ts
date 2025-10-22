@@ -7,8 +7,13 @@ export class SQLiteEventRepository implements IEventRepository {
 
   async create(eventData: CreateEventDto, createdBy: number): Promise<Event> {
     const query = `
-      INSERT INTO events (title, description, event_date, event_time, event_end_date, event_end_time, location_id, max_attendees, created_by, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO events (
+        title, description, event_date, event_time,
+        registration_start_date, registration_start_time,
+        registration_end_date, registration_end_time,
+        location_id, max_attendees, created_by, status
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const status = eventData.status || EventStatus.DRAFT;
@@ -17,8 +22,10 @@ export class SQLiteEventRepository implements IEventRepository {
       eventData.description || null,
       eventData.eventDate,
       eventData.eventTime,
-      eventData.eventEndDate || null,
-      eventData.eventEndTime,
+      eventData.registrationStartDate,
+      eventData.registrationStartTime,
+      eventData.registrationEndDate,
+      eventData.registrationEndTime,
       eventData.locationId,
       eventData.maxAttendees || null,
       createdBy,
@@ -136,13 +143,21 @@ export class SQLiteEventRepository implements IEventRepository {
       updates.push('event_time = ?');
       params.push(eventData.eventTime);
     }
-    if (eventData.eventEndDate !== undefined) {
-      updates.push('event_end_date = ?');
-      params.push(eventData.eventEndDate);
+    if (eventData.registrationStartDate !== undefined) {
+      updates.push('registration_start_date = ?');
+      params.push(eventData.registrationStartDate);
     }
-    if (eventData.eventEndTime !== undefined) {
-      updates.push('event_end_time = ?');
-      params.push(eventData.eventEndTime);
+    if (eventData.registrationStartTime !== undefined) {
+      updates.push('registration_start_time = ?');
+      params.push(eventData.registrationStartTime);
+    }
+    if (eventData.registrationEndDate !== undefined) {
+      updates.push('registration_end_date = ?');
+      params.push(eventData.registrationEndDate);
+    }
+    if (eventData.registrationEndTime !== undefined) {
+      updates.push('registration_end_time = ?');
+      params.push(eventData.registrationEndTime);
     }
     if (eventData.locationId !== undefined) {
       updates.push('location_id = ?');
@@ -268,8 +283,10 @@ export class SQLiteEventRepository implements IEventRepository {
       description: row.description,
       eventDate: row.event_date,
       eventTime: row.event_time,
-      eventEndDate: row.event_end_date,
-      eventEndTime: row.event_end_time,
+      registrationStartDate: row.registration_start_date,
+      registrationStartTime: row.registration_start_time,
+      registrationEndDate: row.registration_end_date,
+      registrationEndTime: row.registration_end_time,
       locationId: row.location_id,
       maxAttendees: row.max_attendees,
       createdBy: row.created_by,

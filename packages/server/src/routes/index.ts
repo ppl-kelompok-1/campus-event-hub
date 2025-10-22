@@ -3,6 +3,7 @@ import { createUserRouter } from './users';
 import { createAuthRouter } from './auth';
 import { createEventRouter } from './events';
 import { createLocationRouter } from './locations';
+import { createAttachmentRouter } from './attachments';
 import { container } from '../infrastructure/Container';
 
 const router = Router();
@@ -72,6 +73,7 @@ const authService = container.getAuthService();
 const eventService = container.getEventService();
 const eventRegistrationService = container.getEventRegistrationService();
 const locationService = container.getLocationService();
+const eventAttachmentService = container.getEventAttachmentService();
 
 // Mount authentication routes
 router.use('/auth', createAuthRouter(authService, userService));
@@ -84,5 +86,8 @@ router.use('/events', createEventRouter(eventService, eventRegistrationService, 
 
 // Mount location routes
 router.use('/locations', createLocationRouter(locationService, authService));
+
+// Mount attachment routes (nested under events)
+router.use('/events', createAttachmentRouter(eventAttachmentService, authService));
 
 export default router;

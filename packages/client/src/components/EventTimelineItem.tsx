@@ -61,16 +61,6 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
     return { localTime, gmtTime }
   }
 
-  const formatTimeRange = (startTime: string, endTime: string) => {
-    const start = formatTime(startTime)
-    const end = formatTime(endTime)
-    return {
-      localTimeRange: `${start.localTime} - ${end.localTime}`,
-      gmtTimeRange: `${start.gmtTime} - ${end.gmtTime}`
-    }
-  }
-
-
   const getStatusBadge = (status: string) => {
     const statusStyles: Record<string, React.CSSProperties> = {
       draft: { backgroundColor: '#6c757d', color: 'white' },
@@ -97,7 +87,7 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
     )
   }
 
-  const formatDateTime = formatTimeRange(event.eventTime, event.eventEndTime)
+  const formattedTime = formatTime(event.eventTime)
   const dateInfo = formatDate(event.eventDate)
 
   return (
@@ -172,10 +162,10 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
           color: '#6c757d',
           marginBottom: '8px'
         }}>
-          <span style={{ color: '#95a5a6' }}>{formatDateTime.localTimeRange}</span>
+          <span style={{ color: '#95a5a6' }}>{formattedTime.localTime}</span>
           <span style={{ margin: '0 8px', color: '#dee2e6' }}>·</span>
           <span style={{ color: '#f39c12', fontWeight: '500' }}>
-            {formatDateTime.gmtTimeRange} GMT+7
+            {formattedTime.gmtTime} GMT+7
           </span>
         </div>
 
@@ -368,6 +358,13 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
               }
             } else if (event.isFull) {
               buttonText = 'Event Full';
+              buttonColor = '#6c757d';
+              buttonHoverColor = '#6c757d';
+              isDisabled = true;
+              clickHandler = () => {};
+            } else if (!event.hasRegistrationStarted) {
+              const regDate = formatDate(event.registrationStartDate);
+              buttonText = `Registration opens ${regDate.month} ${regDate.day}`;
               buttonColor = '#6c757d';
               buttonHoverColor = '#6c757d';
               isDisabled = true;
