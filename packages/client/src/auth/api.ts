@@ -462,3 +462,74 @@ export const eventApi = {
     })
   },
 }
+
+// Location types
+export interface Location {
+  id: number
+  name: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+// Location API calls
+export const locationApi = {
+  // Get all locations
+  getAll: async () => {
+    return fetchApi<ApiResponse<Location[]>>('/locations', {
+      requireAuth: false
+    })
+  },
+
+  // Get only active locations (for dropdown)
+  getActive: async () => {
+    return fetchApi<ApiResponse<Location[]>>('/locations/active', {
+      requireAuth: false
+    })
+  },
+
+  // Get a specific location
+  getById: async (id: number) => {
+    return fetchApi<ApiResponse<Location>>(`/locations/${id}`, {
+      requireAuth: false
+    })
+  },
+
+  // Create a new location (admin only)
+  create: async (data: { name: string }) => {
+    return fetchApi<ApiResponse<Location>>('/locations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      requireAuth: true,
+      includeAuth: true
+    })
+  },
+
+  // Update a location (admin only)
+  update: async (id: number, data: { name?: string; isActive?: boolean }) => {
+    return fetchApi<ApiResponse<Location>>(`/locations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      requireAuth: true,
+      includeAuth: true
+    })
+  },
+
+  // Toggle location status (admin only)
+  toggleStatus: async (id: number) => {
+    return fetchApi<ApiResponse<Location>>(`/locations/${id}/toggle`, {
+      method: 'PATCH',
+      requireAuth: true,
+      includeAuth: true
+    })
+  },
+
+  // Delete a location (admin only)
+  delete: async (id: number) => {
+    return fetchApi<{ success: boolean; message: string }>(`/locations/${id}`, {
+      method: 'DELETE',
+      requireAuth: true,
+      includeAuth: true
+    })
+  }
+}

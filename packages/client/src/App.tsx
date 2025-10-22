@@ -14,6 +14,7 @@ import CreateEventPage from './pages/CreateEventPage'
 import EditEventPage from './pages/EditEventPage'
 import EventDetailsPage from './pages/EventDetailsPage'
 import PendingApprovalsPage from './pages/PendingApprovalsPage'
+import LocationManagementPage from './pages/LocationManagementPage'
 import './App.css'
 
 function App() {
@@ -91,6 +92,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <EditUserPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Location management route - admin only */}
+          <Route
+            path="/locations"
+            element={
+              <ProtectedRoute>
+                <LocationManagementPage />
               </ProtectedRoute>
             }
           />

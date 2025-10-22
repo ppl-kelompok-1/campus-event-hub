@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { eventApi } from '../auth/api'
 import type { Event, UpdateEventDto } from '../auth/api'
+import { LocationDropdown } from '../components/LocationDropdown'
 
 const EditEventPage = () => {
   const [event, setEvent] = useState<Event | null>(null)
@@ -270,26 +271,17 @@ const EditEventPage = () => {
           </div>
         </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-            Location *
-          </label>
-          <input
-            type="text"
-            name="location"
-            value={formData.location || ''}
-            onChange={handleChange}
-            required
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '16px'
-            }}
-            placeholder="Enter event location"
-          />
-        </div>
+        <LocationDropdown
+          value={formData.location || ''}
+          onChange={(_locationId, locationName) => {
+            setFormData(prev => ({
+              ...prev,
+              location: locationName
+            }))
+          }}
+          label="Location"
+          required={true}
+        />
 
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>

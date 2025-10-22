@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { createUserRouter } from './users';
 import { createAuthRouter } from './auth';
 import { createEventRouter } from './events';
+import { createLocationRouter } from './locations';
 import { container } from '../infrastructure/Container';
 
 const router = Router();
@@ -38,6 +39,15 @@ router.get('/', (req, res) => {
         'DELETE /api/v1/events/:id',
         'POST /api/v1/events/:id/publish',
         'POST /api/v1/events/:id/cancel'
+      ],
+      locations: [
+        'GET /api/v1/locations',
+        'GET /api/v1/locations/active',
+        'GET /api/v1/locations/:id',
+        'POST /api/v1/locations (admin)',
+        'PUT /api/v1/locations/:id (admin)',
+        'PATCH /api/v1/locations/:id/toggle (admin)',
+        'DELETE /api/v1/locations/:id (admin)'
       ]
     },
     setup: {
@@ -61,6 +71,7 @@ const userService = container.getUserService();
 const authService = container.getAuthService();
 const eventService = container.getEventService();
 const eventRegistrationService = container.getEventRegistrationService();
+const locationService = container.getLocationService();
 
 // Mount authentication routes
 router.use('/auth', createAuthRouter(authService, userService));
@@ -70,5 +81,8 @@ router.use('/users', createUserRouter(userService, authService, eventService, ev
 
 // Mount event routes
 router.use('/events', createEventRouter(eventService, eventRegistrationService, authService));
+
+// Mount location routes
+router.use('/locations', createLocationRouter(locationService, authService));
 
 export default router;

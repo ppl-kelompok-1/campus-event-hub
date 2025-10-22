@@ -3,13 +3,16 @@ import { SQLiteDatabase } from './database/SQLiteDatabase';
 import { IUserRepository } from '../repositories/IUserRepository';
 import { IEventRepository } from '../repositories/IEventRepository';
 import { IEventRegistrationRepository } from '../repositories/IEventRegistrationRepository';
+import { ILocationRepository } from '../repositories/ILocationRepository';
 import { SQLiteUserRepository } from './repositories/SQLiteUserRepository';
 import { SQLiteEventRepository } from './repositories/SQLiteEventRepository';
 import { SQLiteEventRegistrationRepository } from '../repositories/SQLiteEventRegistrationRepository';
+import { SQLiteLocationRepository } from './repositories/SQLiteLocationRepository';
 import { UserService } from '../services/UserService';
 import { AuthService } from '../services/AuthService';
 import { EventService } from '../services/EventService';
 import { EventRegistrationService } from '../services/EventRegistrationService';
+import { LocationService } from '../services/LocationService';
 import { MigrationRunner } from './database/MigrationRunner';
 import path from 'path';
 
@@ -20,10 +23,12 @@ export class Container {
   private userRepository?: IUserRepository;
   private eventRepository?: IEventRepository;
   private eventRegistrationRepository?: IEventRegistrationRepository;
+  private locationRepository?: ILocationRepository;
   private userService?: UserService;
   private authService?: AuthService;
   private eventService?: EventService;
   private eventRegistrationService?: EventRegistrationService;
+  private locationService?: LocationService;
 
   private constructor() {}
 
@@ -72,6 +77,14 @@ export class Container {
     return this.eventRegistrationRepository;
   }
 
+  // Location repository (singleton)
+  getLocationRepository(): ILocationRepository {
+    if (!this.locationRepository) {
+      this.locationRepository = new SQLiteLocationRepository(this.getDatabase());
+    }
+    return this.locationRepository;
+  }
+
   // Auth service (singleton)
   getAuthService(): AuthService {
     if (!this.authService) {
@@ -111,6 +124,14 @@ export class Container {
     return this.eventRegistrationService;
   }
 
+  // Location service (singleton)
+  getLocationService(): LocationService {
+    if (!this.locationService) {
+      this.locationService = new LocationService(this.getLocationRepository());
+    }
+    return this.locationService;
+  }
+
   // Method to close database connection
   async close(): Promise<void> {
     if (this.database) {
@@ -127,10 +148,12 @@ export class Container {
     this.userRepository = undefined;
     this.eventRepository = undefined;
     this.eventRegistrationRepository = undefined;
+    this.locationRepository = undefined;
     this.userService = undefined;
     this.authService = undefined;
     this.eventService = undefined;
     this.eventRegistrationService = undefined;
+    this.locationService = undefined;
   }
 }
 

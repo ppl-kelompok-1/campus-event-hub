@@ -10,10 +10,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user, logout, isAuthenticated } = useAuth()
   const location = useLocation()
   
-  const isActive = (path: string) => location.pathname === path || 
+  const isActive = (path: string) => location.pathname === path ||
     (path === '/users' && location.pathname.startsWith('/users')) ||
     (path === '/events/create' && location.pathname.startsWith('/events/create')) ||
-    (path === '/approvals' && location.pathname.startsWith('/approvals'))
+    (path === '/approvals' && location.pathname.startsWith('/approvals')) ||
+    (path === '/locations' && location.pathname.startsWith('/locations'))
 
   const handleNavigation = () => {
     // Auto-close sidebar on mobile after navigation
@@ -131,13 +132,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           {isAuthenticated && (user?.role === 'admin' || user?.role === 'superadmin') && (
             <div className="nav-section">
               <div className="nav-section-title">Administration</div>
-              <Link 
-                to="/users" 
+              <Link
+                to="/users"
                 className={`nav-item ${isActive('/users') ? 'nav-item-active' : ''}`}
                 onClick={handleNavigation}
               >
                 <span className="nav-icon">👥</span>
                 <span className="nav-text">Manage Users</span>
+              </Link>
+              <Link
+                to="/locations"
+                className={`nav-item ${isActive('/locations') ? 'nav-item-active' : ''}`}
+                onClick={handleNavigation}
+              >
+                <span className="nav-icon">📍</span>
+                <span className="nav-text">Manage Locations</span>
               </Link>
             </div>
           )}
