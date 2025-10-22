@@ -121,25 +121,17 @@ export const createAttachmentRouter = (
         })
       }
 
-      const attachment = await attachmentService.getAttachment(id)
-      if (!attachment) {
+      // Get the raw attachment record with filePath
+      const attachmentRecord = await attachmentService.getAttachmentRecord(id)
+      if (!attachmentRecord) {
         return res.status(404).json({
           success: false,
           error: 'Attachment not found'
         })
       }
 
-      // Get the full file path from repository
-      const attachmentRecord = await attachmentService.getAttachment(id)
-      if (!attachmentRecord) {
-        return res.status(404).json({
-          success: false,
-          error: 'Attachment file not found'
-        })
-      }
-
-      // Send file
-      res.download(attachmentRecord.fileName, attachmentRecord.originalName)
+      // Send file with full path and original name
+      res.download(attachmentRecord.filePath, attachmentRecord.originalName)
     })
   )
 

@@ -73,6 +73,12 @@ export class EventAttachmentService {
     return this.toAttachmentResponse(attachment, uploaderName)
   }
 
+  // Get raw attachment record (for internal use like file downloads)
+  async getAttachmentRecord(id: number): Promise<EventAttachment | null> {
+    const attachment = this.attachmentRepository.findById(id)
+    return attachment || null
+  }
+
   // Delete an attachment
   async deleteAttachment(id: number, userId: number, userRole: UserRole): Promise<boolean> {
     const attachment = this.attachmentRepository.findById(id)
@@ -144,7 +150,7 @@ export class EventAttachmentService {
       uploadedBy: attachment.uploadedBy,
       uploaderName,
       uploadedAt: attachment.uploadedAt.toISOString(),
-      downloadUrl: `/api/events/${attachment.eventId}/attachments/${attachment.id}/download`
+      downloadUrl: `/events/${attachment.eventId}/attachments/${attachment.id}/download`
     }
   }
 }
