@@ -19,6 +19,7 @@ import { EventRegistrationService } from '../services/EventRegistrationService';
 import { LocationService } from '../services/LocationService';
 import { EventAttachmentService } from '../services/EventAttachmentService';
 import { EventApprovalHistoryService } from '../services/EventApprovalHistoryService';
+import { SettingsService } from '../services/SettingsService';
 import { MigrationRunner } from './database/MigrationRunner';
 import path from 'path';
 
@@ -39,6 +40,7 @@ export class Container {
   private locationService?: LocationService;
   private eventAttachmentService?: EventAttachmentService;
   private eventApprovalHistoryService?: EventApprovalHistoryService;
+  private settingsService?: SettingsService;
 
   private constructor() {}
 
@@ -182,6 +184,14 @@ export class Container {
     return this.eventApprovalHistoryService;
   }
 
+  // Settings service (singleton)
+  getSettingsService(): SettingsService {
+    if (!this.settingsService) {
+      this.settingsService = new SettingsService(this.getDatabase());
+    }
+    return this.settingsService;
+  }
+
   // Method to close database connection
   async close(): Promise<void> {
     if (this.database) {
@@ -208,6 +218,7 @@ export class Container {
     this.locationService = undefined;
     this.eventAttachmentService = undefined;
     this.eventApprovalHistoryService = undefined;
+    this.settingsService = undefined;
   }
 }
 

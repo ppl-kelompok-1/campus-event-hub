@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
+import { SettingsProvider } from './contexts/SettingsContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Home from './pages/Home'
@@ -15,13 +16,15 @@ import EditEventPage from './pages/EditEventPage'
 import EventDetailsPage from './pages/EventDetailsPage'
 import PendingApprovalsPage from './pages/PendingApprovalsPage'
 import LocationManagementPage from './pages/LocationManagementPage'
+import SettingsPage from './pages/SettingsPage'
 import './App.css'
 
 function App() {
   return (
-    <AuthProvider>
-      <Layout>
-        <Routes>
+    <SettingsProvider>
+      <AuthProvider>
+        <Layout>
+          <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           
@@ -105,9 +108,20 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Settings route - superadmin only */}
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
-      </Layout>
-    </AuthProvider>
+        </Layout>
+      </AuthProvider>
+    </SettingsProvider>
   )
 }
 

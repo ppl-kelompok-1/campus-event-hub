@@ -636,3 +636,107 @@ export const locationApi = {
     })
   }
 }
+
+// Settings Types
+export interface SiteSettings {
+  id: number
+  siteTitle: string
+  siteLogoUrl: string | null
+  primaryColor: string
+  secondaryColor: string
+  backgroundColor: string
+  cardBackgroundColor: string
+  textColorAuto: boolean
+  textColorPrimary: string
+  textColorSecondary: string
+  textColorMuted: string
+  footerText: string
+  contactEmail: string | null
+  contactPhone: string | null
+  contactAddress: string | null
+  socialFacebook: string | null
+  socialTwitter: string | null
+  socialInstagram: string | null
+  socialLinkedin: string | null
+  updatedAt: string
+  updatedBy: number | null
+}
+
+export interface UpdateSettingsDto {
+  siteTitle?: string
+  siteLogoUrl?: string | null
+  primaryColor?: string
+  secondaryColor?: string
+  backgroundColor?: string
+  cardBackgroundColor?: string
+  textColorAuto?: boolean
+  textColorPrimary?: string
+  textColorSecondary?: string
+  textColorMuted?: string
+  footerText?: string
+  contactEmail?: string | null
+  contactPhone?: string | null
+  contactAddress?: string | null
+  socialFacebook?: string | null
+  socialTwitter?: string | null
+  socialInstagram?: string | null
+  socialLinkedin?: string | null
+}
+
+// Settings API
+export const settingsApi = {
+  // Get current site settings (public)
+  getSettings: async () => {
+    return fetchApi<ApiResponse<SiteSettings>>('/settings', {
+      method: 'GET',
+      requireAuth: false
+    })
+  },
+
+  // Update site settings (superadmin only)
+  updateSettings: async (data: UpdateSettingsDto) => {
+    return fetchApi<ApiResponse<SiteSettings>>('/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      requireAuth: true,
+      includeAuth: true
+    })
+  },
+
+  // Upload site logo (superadmin only)
+  uploadLogo: async (file: File) => {
+    const formData = new FormData()
+    formData.append('logo', file)
+
+    const token = getToken()
+    const url = `${API_BASE_URL}/settings/logo`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new ApiError(
+        response.status,
+        data.error || data.message || 'Failed to upload logo'
+      )
+    }
+
+    return data as ApiResponse<SiteSettings>
+  },
+
+  // Delete site logo (superadmin only)
+  deleteLogo: async () => {
+    return fetchApi<{ success: boolean; message: string }>('/settings/logo', {
+      method: 'DELETE',
+      requireAuth: true,
+      includeAuth: true
+    })
+  }
+}
