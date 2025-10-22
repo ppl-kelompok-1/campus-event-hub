@@ -42,23 +42,32 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
     const [hours, minutes] = timeStr.split(':')
     const date = new Date()
     date.setHours(parseInt(hours), parseInt(minutes))
-    
+
     // Local time
     const localTime = date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false
     })
-    
+
     // GMT time (assuming GMT+7 for local time)
     const gmtDate = new Date(date.getTime() - (7 * 60 * 60 * 1000))
     const gmtTime = gmtDate.toLocaleTimeString('en-US', {
       hour: '2-digit',
-      minute: '2-digit', 
+      minute: '2-digit',
       hour12: false
     })
-    
+
     return { localTime, gmtTime }
+  }
+
+  const formatTimeRange = (startTime: string, endTime: string) => {
+    const start = formatTime(startTime)
+    const end = formatTime(endTime)
+    return {
+      localTimeRange: `${start.localTime} - ${end.localTime}`,
+      gmtTimeRange: `${start.gmtTime} - ${end.gmtTime}`
+    }
   }
 
 
@@ -88,7 +97,7 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
     )
   }
 
-  const formatDateTime = formatTime(event.eventTime)
+  const formatDateTime = formatTimeRange(event.eventTime, event.eventEndTime)
   const dateInfo = formatDate(event.eventDate)
 
   return (
@@ -158,15 +167,15 @@ const EventTimelineItem: React.FC<EventTimelineItemProps> = ({
       }}>
 
         {/* Time */}
-        <div style={{ 
+        <div style={{
           fontSize: '14px',
           color: '#6c757d',
           marginBottom: '8px'
         }}>
-          <span style={{ color: '#95a5a6' }}>{formatDateTime.localTime}</span>
+          <span style={{ color: '#95a5a6' }}>{formatDateTime.localTimeRange}</span>
           <span style={{ margin: '0 8px', color: '#dee2e6' }}>·</span>
           <span style={{ color: '#f39c12', fontWeight: '500' }}>
-            {formatDateTime.gmtTime} GMT+7
+            {formatDateTime.gmtTimeRange} GMT+7
           </span>
         </div>
 

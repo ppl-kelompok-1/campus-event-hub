@@ -15,6 +15,8 @@ export interface Event {
   description?: string;
   eventDate: string; // ISO 8601 date string (YYYY-MM-DD)
   eventTime: string; // Time in HH:MM format
+  eventEndDate?: string; // ISO 8601 date string (YYYY-MM-DD) - optional for multi-day events
+  eventEndTime: string; // Time in HH:MM format - end time of event
   locationId: number; // Foreign key to locations table
   maxAttendees?: number;
   createdBy: number; // User ID
@@ -33,6 +35,8 @@ export interface EventResponse {
   description?: string;
   eventDate: string;
   eventTime: string;
+  eventEndDate?: string;
+  eventEndTime: string;
   locationId: number;
   locationName: string; // Added for convenience
   maxAttendees?: number;
@@ -59,6 +63,8 @@ export interface CreateEventDto {
   description?: string;
   eventDate: string; // ISO 8601 date string
   eventTime: string; // HH:MM format
+  eventEndDate?: string; // ISO 8601 date string - optional for multi-day events
+  eventEndTime: string; // HH:MM format
   locationId: number; // Foreign key to locations table
   maxAttendees?: number;
   status?: EventStatus; // Optional, defaults to DRAFT
@@ -70,6 +76,8 @@ export interface UpdateEventDto {
   description?: string;
   eventDate?: string;
   eventTime?: string;
+  eventEndDate?: string;
+  eventEndTime?: string;
   locationId?: number; // Foreign key to locations table
   maxAttendees?: number;
   status?: EventStatus;
@@ -100,8 +108,45 @@ export function isValidEventTime(timeString: string): boolean {
   return Boolean(timeString.match(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/));
 }
 
-export function isEventInPast(eventDate: string, eventTime: string): boolean {
+export function isEventInPast(eventDate: string, eventTime: string, eventEndDate?: string, eventEndTime?: string): boolean {
   const now = new Date();
+  // Event is in the past if its end time has passed
+  if (eventEndDate && eventEndTime) {
+    const endDateTime = new Date(`${eventEndDate}T${eventEndTime}`);
+    return endDateTime < now;
+  }
+  // If no end date, check against end time on same day
+  if (eventEndTime) {
+    const endDateTime = new Date(`${eventDate}T${eventEndTime}`);
+    return endDateTime < now;
+  }
+  // Fallback to start time
   const eventDateTime = new Date(`${eventDate}T${eventTime}`);
   return eventDateTime < now;
+}
+
+export function isValidEventDateRange(
+  eventDate: string,
+  eventTime: string,
+  eventEndDate: string | undefined,
+  eventEndTime: string
+): boolean {
+  // Validate individual date and time formats
+  if (!isValidEventDate(eventDate)) return false;
+  if (!isValidEventTime(eventTime)) return false;
+  if (!isValidEventTime(eventEndTime)) return false;
+  if (eventEndDate && !isValidEventDate(eventEndDate)) return false;
+
+  // If no end date specified, it's a same-day event
+  if (!eventEndDate) {
+    // End time must be >= start time on same day
+    const startDateTime = new Date(`${eventDate}T${eventTime}`);
+    const endDateTime = new Date(`${eventDate}T${eventEndTime}`);
+    return endDateTime >= startDateTime;
+  }
+
+  // Multi-day event: end date/time must be >= start date/time
+  const startDateTime = new Date(`${eventDate}T${eventTime}`);
+  const endDateTime = new Date(`${eventEndDate}T${eventEndTime}`);
+  return endDateTime >= startDateTime;
 }

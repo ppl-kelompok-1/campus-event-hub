@@ -12,6 +12,8 @@ const EditEventPage = () => {
     description: '',
     eventDate: '',
     eventTime: '',
+    eventEndDate: '',
+    eventEndTime: '',
     locationId: 0,
     maxAttendees: undefined,
     status: 'draft'
@@ -52,6 +54,8 @@ const EditEventPage = () => {
         description: eventData.description,
         eventDate: eventData.eventDate,
         eventTime: eventData.eventTime,
+        eventEndDate: eventData.eventEndDate,
+        eventEndTime: eventData.eventEndTime,
         locationId: eventData.locationId,
         maxAttendees: eventData.maxAttendees,
         status: eventData.status
@@ -77,12 +81,23 @@ const EditEventPage = () => {
     if (!formData.eventTime) {
       return 'Event time is required'
     }
+    if (!formData.eventEndTime) {
+      return 'Event end time is required'
+    }
+
+    // Validate date range
+    const startDateTime = new Date(`${formData.eventDate}T${formData.eventTime}`)
+    const endDate = formData.eventEndDate || formData.eventDate
+    const endDateTime = new Date(`${endDate}T${formData.eventEndTime}`)
+
+    if (endDateTime < startDateTime) {
+      return 'End date/time must be after or equal to start date/time'
+    }
 
     // Check if date is in the future (for published events)
     if (formData.status === 'published') {
-      const eventDateTime = new Date(`${formData.eventDate}T${formData.eventTime}`)
       const now = new Date()
-      if (eventDateTime <= now) {
+      if (endDateTime <= now) {
         return 'Published events cannot be scheduled in the past'
       }
     }
@@ -229,45 +244,97 @@ const EditEventPage = () => {
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-              Date *
-            </label>
-            <input
-              type="date"
-              name="eventDate"
-              value={formData.eventDate || ''}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '16px'
-              }}
-            />
-          </div>
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>
+            Start Date & Time *
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
+                Start Date
+              </label>
+              <input
+                type="date"
+                name="eventDate"
+                value={formData.eventDate || ''}
+                onChange={handleChange}
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-              Time *
-            </label>
-            <input
-              type="time"
-              name="eventTime"
-              value={formData.eventTime || ''}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '16px'
-              }}
-            />
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
+                Start Time
+              </label>
+              <input
+                type="time"
+                name="eventTime"
+                value={formData.eventTime || ''}
+                onChange={handleChange}
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>
+            End Date & Time *
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
+                End Date (optional for same-day events)
+              </label>
+              <input
+                type="date"
+                name="eventEndDate"
+                value={formData.eventEndDate || ''}
+                onChange={handleChange}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '16px'
+                }}
+                placeholder={formData.eventDate}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '400', fontSize: '14px' }}>
+                End Time
+              </label>
+              <input
+                type="time"
+                name="eventEndTime"
+                value={formData.eventEndTime || ''}
+                onChange={handleChange}
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
           </div>
         </div>
 

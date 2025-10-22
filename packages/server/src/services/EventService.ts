@@ -2,7 +2,7 @@ import { IEventRepository } from '../repositories/IEventRepository';
 import { IUserRepository } from '../repositories/IUserRepository';
 import { IEventRegistrationRepository } from '../repositories/IEventRegistrationRepository';
 import { ILocationRepository } from '../repositories/ILocationRepository';
-import { Event, CreateEventDto, UpdateEventDto, EventResponse, EventStatus, ApprovalDto, toEventResponse, isValidEventDate, isValidEventTime, isEventInPast } from '../models/Event';
+import { Event, CreateEventDto, UpdateEventDto, EventResponse, EventStatus, ApprovalDto, toEventResponse, isValidEventDate, isValidEventTime, isEventInPast, isValidEventDateRange } from '../models/Event';
 import { UserRole } from '../models/User';
 import { RegistrationStatus } from '../models/EventRegistration';
 
@@ -137,15 +137,21 @@ export class EventService {
     }
 
     // Validate update data
-    if (eventData.eventDate !== undefined || eventData.eventTime !== undefined) {
+    if (eventData.eventDate !== undefined || eventData.eventTime !== undefined ||
+        eventData.eventEndDate !== undefined || eventData.eventEndTime !== undefined) {
       const newDate = eventData.eventDate || existingEvent.eventDate;
       const newTime = eventData.eventTime || existingEvent.eventTime;
+      const newEndDate = eventData.eventEndDate !== undefined ? eventData.eventEndDate : existingEvent.eventEndDate;
+      const newEndTime = eventData.eventEndTime || existingEvent.eventEndTime;
 
       if (!isValidEventDate(newDate)) {
         throw new Error('Invalid event date format. Use YYYY-MM-DD');
       }
       if (!isValidEventTime(newTime)) {
         throw new Error('Invalid event time format. Use HH:MM');
+      }
+      if (!isValidEventDateRange(newDate, newTime, newEndDate, newEndTime)) {
+        throw new Error('Invalid event date/time range. End date/time must be after or equal to start date/time');
       }
     }
 
@@ -228,12 +234,21 @@ export class EventService {
       throw new Error('Invalid event time format. Use HH:MM');
     }
 
+    if (!eventData.eventEndTime) {
+      throw new Error('Event end time is required');
+    }
+
+    // Validate date range (start and end datetime)
+    if (!isValidEventDateRange(eventData.eventDate, eventData.eventTime, eventData.eventEndDate, eventData.eventEndTime)) {
+      throw new Error('Invalid event date/time range. End date/time must be after or equal to start date/time');
+    }
+
     if (eventData.maxAttendees !== undefined && eventData.maxAttendees < 1) {
       throw new Error('Maximum attendees must be at least 1');
     }
 
     // Check if event is in the past (only for published events)
-    if (eventData.status === EventStatus.PUBLISHED && isEventInPast(eventData.eventDate, eventData.eventTime)) {
+    if (eventData.status === EventStatus.PUBLISHED && isEventInPast(eventData.eventDate, eventData.eventTime, eventData.eventEndDate, eventData.eventEndTime)) {
       throw new Error('Cannot create published events in the past');
     }
   }
@@ -284,7 +299,7 @@ export class EventService {
     }
 
     // Check if event is in the past
-    if (isEventInPast(event.eventDate, event.eventTime)) {
+    if (isEventInPast(event.eventDate, event.eventTime, event.eventEndDate, event.eventEndTime)) {
       throw new Error('Cannot approve events that are in the past');
     }
 
@@ -343,7 +358,7 @@ export class EventService {
     }
 
     // Check if event is in the past
-    if (isEventInPast(event.eventDate, event.eventTime)) {
+    if (isEventInPast(event.eventDate, event.eventTime, event.eventEndDate, event.eventEndTime)) {
       throw new Error('Cannot publish events that are in the past');
     }
 
@@ -401,9 +416,9 @@ export class EventService {
     const isFull = event.maxAttendees ? currentAttendees >= event.maxAttendees : false;
     
     // Check if user can register (event is published, not full, not in past)
-    const canRegister = event.status === EventStatus.PUBLISHED && 
-                       !isFull && 
-                       !isEventInPast(event.eventDate, event.eventTime);
+    const canRegister = event.status === EventStatus.PUBLISHED &&
+                       !isFull &&
+                       !isEventInPast(event.eventDate, event.eventTime, event.eventEndDate, event.eventEndTime);
 
     let isUserRegistered = false;
     let userRegistrationStatus: 'registered' | 'waitlisted' | 'cancelled' | undefined;

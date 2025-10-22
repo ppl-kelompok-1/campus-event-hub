@@ -105,6 +105,8 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
         description: req.body.description,
         eventDate: req.body.eventDate,
         eventTime: req.body.eventTime,
+        eventEndDate: req.body.eventEndDate,
+        eventEndTime: req.body.eventEndTime,
         locationId: req.body.locationId,
         maxAttendees: req.body.maxAttendees,
         status: req.body.status || EventStatus.DRAFT
@@ -241,6 +243,8 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
         description: req.body.description,
         eventDate: req.body.eventDate,
         eventTime: req.body.eventTime,
+        eventEndDate: req.body.eventEndDate,
+        eventEndTime: req.body.eventEndTime,
         locationId: req.body.locationId,
         maxAttendees: req.body.maxAttendees,
         status: req.body.status

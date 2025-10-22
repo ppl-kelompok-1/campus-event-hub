@@ -79,6 +79,39 @@ const EventDetailsPage = () => {
     })
   }
 
+  const formatDateRange = (startDate: string, endDate?: string) => {
+    const start = new Date(startDate)
+
+    if (!endDate || startDate === endDate) {
+      // Same day event
+      return formatDate(startDate)
+    }
+
+    // Multi-day event
+    const end = new Date(endDate)
+    const startMonth = start.toLocaleDateString('en-US', { month: 'long' })
+    const endMonth = end.toLocaleDateString('en-US', { month: 'long' })
+    const startDay = start.getDate()
+    const endDay = end.getDate()
+    const startYear = start.getFullYear()
+    const endYear = end.getFullYear()
+
+    if (startYear !== endYear) {
+      // Different years: "May 31, 2024 - Jan 2, 2025"
+      return `${startMonth} ${startDay}, ${startYear} - ${endMonth} ${endDay}, ${endYear}`
+    } else if (startMonth !== endMonth) {
+      // Same year, different months: "May 31 - June 2, 2024"
+      return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${startYear}`
+    } else {
+      // Same month: "May 31 - June 2, 2024"
+      return `${startMonth} ${startDay} - ${endDay}, ${startYear}`
+    }
+  }
+
+  const formatTimeRange = (startTime: string, endTime: string) => {
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`
+  }
+
   const getStatusBadge = (status: string) => {
     const statusStyles: Record<string, React.CSSProperties> = {
       draft: { backgroundColor: '#6c757d', color: 'white' },
@@ -103,9 +136,12 @@ const EventDetailsPage = () => {
     )
   }
 
-  const isEventInPast = (eventDate: string, eventTime: string) => {
-    const eventDateTime = new Date(`${eventDate}T${eventTime}`)
-    return eventDateTime < new Date()
+  const isEventInPast = (eventDate: string, eventTime: string, eventEndDate?: string, eventEndTime?: string) => {
+    // Check if event has ended (use end datetime if available, otherwise use start datetime)
+    const endDate = eventEndDate || eventDate
+    const endTime = eventEndTime || eventTime
+    const eventEndDateTime = new Date(`${endDate}T${endTime}`)
+    return eventEndDateTime < new Date()
   }
 
   if (loading) {
@@ -207,14 +243,14 @@ const EventDetailsPage = () => {
               📅 Date & Time
             </div>
             <div style={{ fontWeight: '500' }}>
-              {formatDate(event.eventDate)}
+              {formatDateRange(event.eventDate, event.eventEndDate)}
             </div>
             <div style={{ color: '#6c757d' }}>
-              {formatTime(event.eventTime)}
+              {formatTimeRange(event.eventTime, event.eventEndTime)}
             </div>
-            {isEventInPast(event.eventDate, event.eventTime) && (
-              <div style={{ 
-                color: '#dc3545', 
+            {isEventInPast(event.eventDate, event.eventTime, event.eventEndDate, event.eventEndTime) && (
+              <div style={{
+                color: '#dc3545',
                 fontSize: '0.875rem',
                 fontStyle: 'italic',
                 marginTop: '4px'

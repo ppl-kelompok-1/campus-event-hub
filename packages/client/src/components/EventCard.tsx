@@ -40,6 +40,39 @@ const EventCard: React.FC<EventCardProps> = ({
     })
   }
 
+  const formatDateRange = (startDate: string, endDate?: string) => {
+    const start = new Date(startDate)
+
+    if (!endDate || startDate === endDate) {
+      // Same day event
+      return formatDate(startDate)
+    }
+
+    // Multi-day event
+    const end = new Date(endDate)
+    const startMonth = start.toLocaleDateString('en-US', { month: 'long' })
+    const endMonth = end.toLocaleDateString('en-US', { month: 'long' })
+    const startDay = start.getDate()
+    const endDay = end.getDate()
+    const startYear = start.getFullYear()
+    const endYear = end.getFullYear()
+
+    if (startYear !== endYear) {
+      // Different years: "May 31, 2024 - Jan 2, 2025"
+      return `${startMonth} ${startDay}, ${startYear} - ${endMonth} ${endDay}, ${endYear}`
+    } else if (startMonth !== endMonth) {
+      // Same year, different months: "May 31 - June 2, 2024"
+      return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${startYear}`
+    } else {
+      // Same month: "May 31 - June 2, 2024"
+      return `${startMonth} ${startDay} - ${endDay}, ${startYear}`
+    }
+  }
+
+  const formatTimeRange = (startTime: string, endTime: string) => {
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`
+  }
+
   const getStatusBadge = (status: string) => {
     const statusStyles: Record<string, React.CSSProperties> = {
       draft: { backgroundColor: '#6c757d', color: 'white' },
@@ -89,7 +122,10 @@ const EventCard: React.FC<EventCardProps> = ({
 
       <div style={{ marginBottom: '12px', color: '#6c757d', fontSize: '0.9rem' }}>
         <div style={{ marginBottom: '4px' }}>
-          📅 {formatDate(event.eventDate)} at {formatTime(event.eventTime)}
+          📅 {formatDateRange(event.eventDate, event.eventEndDate)}
+        </div>
+        <div style={{ marginBottom: '4px' }}>
+          ⏰ {formatTimeRange(event.eventTime, event.eventEndTime)}
         </div>
         <div style={{ marginBottom: '4px' }}>
           📍 {event.locationName}
