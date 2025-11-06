@@ -5,7 +5,15 @@
   "main": "index.js",
   "scripts": {
     "format": "prettier --write \"packages/**/src/**/*.ts\" ",
-    "build": "pnpm -r run build"
+    "build": "pnpm -r run build",
+    "test:api": "newman run docs/testing/postman/Campus-Event-Hub.postman_collection.json -e docs/testing/postman/Campus-Event-Hub.postman_environment.json --reporters cli,htmlextra --reporter-htmlextra-export docs/testing/reports/api-test-report.html",
+    "test:api:auth": "newman run docs/testing/postman/Campus-Event-Hub.postman_collection.json -e docs/testing/postman/Campus-Event-Hub.postman_environment.json --folder Authentication",
+    "test:api:users": "newman run docs/testing/postman/Campus-Event-Hub.postman_collection.json -e docs/testing/postman/Campus-Event-Hub.postman_environment.json --folder \"User Management\"",
+    "test:api:events": "newman run docs/testing/postman/Campus-Event-Hub.postman_collection.json -e docs/testing/postman/Campus-Event-Hub.postman_environment.json --folder Events",
+    "test:api:registration": "newman run docs/testing/postman/Campus-Event-Hub.postman_collection.json -e docs/testing/postman/Campus-Event-Hub.postman_environment.json --folder \"Event Registration\"",
+    "test:api:locations": "newman run docs/testing/postman/Campus-Event-Hub.postman_collection.json -e docs/testing/postman/Campus-Event-Hub.postman_environment.json --folder Locations",
+    "test:api:settings": "newman run docs/testing/postman/Campus-Event-Hub.postman_collection.json -e docs/testing/postman/Campus-Event-Hub.postman_environment.json --folder Settings",
+    "test:api:report": "open docs/testing/reports/api-test-report.html"
   },
   "keywords": [],
   "author": "",

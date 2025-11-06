@@ -21,6 +21,15 @@ docs/testing/
 ├── README.md                    # This file - Testing documentation overview
 ├── TEST_SCRIPT.md              # Complete test cases with execution tracking
 ├── TEST_DATA.md                # Pre-defined test data and reference values
+├── postman/                    # Postman collection & Newman setup ⭐ NEW!
+│   ├── Campus-Event-Hub.postman_collection.json  # API test collection
+│   ├── Campus-Event-Hub.postman_environment.json # Environment variables
+│   ├── newman-config.json      # Newman CLI configuration
+│   └── README.md               # Postman usage guide
+├── scripts/                    # Automation scripts ⭐ NEW!
+│   └── run-api-tests.sh        # Automated test runner
+├── reports/                    # Generated test reports ⭐ NEW!
+│   └── api-test-report.html    # HTML test report (auto-generated)
 └── screenshots/                # Test evidence and screenshots
     ├── README.md               # Screenshot guide and conventions
     ├── frontend/               # UI testing screenshots
@@ -79,7 +88,38 @@ docs/testing/
 - Database queries for verification
 - Environment variables for testing
 
-### 3. [screenshots/README.md](./screenshots/README.md)
+### 3. [postman/README.md](./postman/README.md) ⭐ NEW!
+
+**Postman Collection & Automated API Testing** - Automated testing setup with Newman.
+
+**Includes:**
+- ✅ Complete Postman collection (38 API test cases)
+- ✅ Environment configuration with test data
+- ✅ Newman CLI setup and usage guide
+- ✅ Automated test execution scripts
+- ✅ HTML report generation
+- ✅ Screenshot capture instructions
+
+**Quick Start:**
+```bash
+# Install Newman
+npm install -g newman newman-reporter-htmlextra
+
+# Run all API tests
+pnpm test:api
+
+# View professional HTML report
+pnpm test:api:report
+```
+
+**What You Get:**
+- ✅ Automated test execution (1-2 minutes)
+- ✅ Beautiful HTML reports with request/response details
+- ✅ Pass/fail statistics
+- ✅ Response time metrics
+- ✅ Ready-to-screenshot professional documentation
+
+### 4. [screenshots/README.md](./screenshots/README.md)
 
 **Screenshot Evidence Guide** - Standards for capturing test evidence.
 
@@ -125,10 +165,29 @@ docs/testing/
 - ✅ Browser DevTools (F12)
 - ✅ Screenshot tool (Snipping Tool, Greenshot, etc.)
 
-**For Backend Testing:**
-- ✅ API Client (Postman/Thunder Client/Insomnia)
-- ✅ Import API collection (optional)
-- ✅ Set up environment variables
+**For Backend Testing - Choose ONE:**
+
+**Option A: Automated (Recommended) ⭐**
+```bash
+# Install Newman CLI
+npm install -g newman newman-reporter-htmlextra
+
+# Run all API tests automatically
+pnpm test:api
+
+# View beautiful HTML report
+pnpm test:api:report
+```
+
+**Option B: Manual (Postman UI)**
+- ✅ Install Postman Desktop App
+- ✅ Import `docs/testing/postman/Campus-Event-Hub.postman_collection.json`
+- ✅ Import `docs/testing/postman/Campus-Event-Hub.postman_environment.json`
+- ✅ Run tests manually in Postman UI
+
+**Option C: Other API Client**
+- ✅ Thunder Client / Insomnia / REST Client
+- ✅ Manual API testing following TEST_SCRIPT.md
 
 ### Step 3: Execute Tests
 

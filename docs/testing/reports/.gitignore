@@ -1,0 +1,10 @@
+# Ignore generated test reports
+*.html
+*.json
+*.xml
+
+# But keep this .gitignore
+!.gitignore
+
+# Keep README if exists
+!README.md
