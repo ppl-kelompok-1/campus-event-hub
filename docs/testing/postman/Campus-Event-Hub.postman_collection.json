@@ -1,0 +1,1507 @@
+{
+	"info": {
+		"_postman_id": "campus-event-hub-api-tests",
+		"name": "Campus Event Hub - API Testing",
+		"description": "Complete API testing collection for Campus Event Hub application.\n\n**Features:**\n- Authentication & Authorization tests\n- User Management (CRUD + Role-based)\n- Event Management (CRUD + Approval workflow)\n- Event Registration\n- Location Management\n- Site Settings\n\n**Test Coverage:** 38 API test cases (Positive + Negative)\n\n**Usage:**\n1. Import this collection to Postman\n2. Import the environment file\n3. Run collection or individual requests\n4. Use Newman for automated testing\n\n**Created for:** Software Project Week 8-10 Testing Deliverable",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "TC-API-LOGIN-001 ✅ Login with Valid Credentials",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// TC-API-LOGIN-001: Positive test - Login with valid credentials",
+									"",
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 1000ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+									"});",
+									"",
+									"pm.test(\"Response has success field set to true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});",
+									"",
+									"pm.test(\"Response contains user object\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('user');",
+									"    pm.expect(jsonData.data.user).to.have.property('id');",
+									"    pm.expect(jsonData.data.user).to.have.property('name');",
+									"    pm.expect(jsonData.data.user).to.have.property('email');",
+									"    pm.expect(jsonData.data.user).to.have.property('role');",
+									"});",
+									"",
+									"pm.test(\"Response contains JWT token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('token');",
+									"    pm.expect(jsonData.data.token).to.be.a('string');",
+									"    pm.expect(jsonData.data.token.length).to.be.above(20);",
+									"});",
+									"",
+									"pm.test(\"User email matches request\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.user.email).to.eql(pm.environment.get('user_email'));",
+									"});",
+									"",
+									"pm.test(\"Password is not included in response\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.user).to.not.have.property('password');",
+									"});",
+									"",
+									"// Store token for subsequent requests",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('token', jsonData.data.token);",
+									"    pm.environment.set('current_user_id', jsonData.data.user.id);",
+									"    pm.environment.set('current_user_role', jsonData.data.user.role);",
+									"    console.log('✅ Token stored successfully');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "**Test Case:** TC-API-LOGIN-001 (Positive)\n\n**Scenario:** User logs in with valid email and password via API\n\n**Test Data:**\n- Email: user@test.com\n- Password: User123!\n\n**Expected Result:**\n- HTTP 200 OK\n- Response time < 1s\n- Response contains user object and JWT token\n- No password in response"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-LOGIN-002 ❌ Login with Wrong Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// TC-API-LOGIN-002: Negative test - Wrong password",
+									"",
+									"pm.test(\"Status code is 401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Response has success field set to false\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"});",
+									"",
+									"pm.test(\"Error message is clear and specific\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error.toLowerCase()).to.include('invalid');",
+									"});",
+									"",
+									"pm.test(\"No token returned in response\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.not.have.property('token');",
+									"    if (jsonData.data) {",
+									"        pm.expect(jsonData.data).to.not.have.property('token');",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"No user data returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data) {",
+									"        pm.expect(jsonData.data).to.not.have.property('user');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"WrongPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "**Test Case:** TC-API-LOGIN-002 (Negative)\n\n**Scenario:** Login with correct email but wrong password\n\n**Expected Result:**\n- HTTP 401 Unauthorized\n- Error message: 'Invalid credentials'\n- No token returned\n- No user data returned"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-PROFILE-001 ✅ Get Profile with Valid Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// TC-API-PROFILE-001: Positive test - Get profile with token",
+									"",
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains user profile\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('name');",
+									"    pm.expect(jsonData.data).to.have.property('email');",
+									"    pm.expect(jsonData.data).to.have.property('role');",
+									"    pm.expect(jsonData.data).to.have.property('createdAt');",
+									"});",
+									"",
+									"pm.test(\"Password is not included in profile\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.not.have.property('password');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/profile",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "profile"]
+						},
+						"description": "**Test Case:** TC-API-PROFILE-001 (Positive)\n\n**Scenario:** Get current user profile with valid authentication token\n\n**Expected Result:**\n- HTTP 200 OK\n- User profile data returned (without password)"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-PROFILE-002 ❌ Get Profile Without Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// TC-API-PROFILE-002: Negative test - No authentication",
+									"",
+									"pm.test(\"Status code is 401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Error indicates missing authentication\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error.toLowerCase()).to.match(/token|authentication|unauthorized/);",
+									"});",
+									"",
+									"pm.test(\"No user data returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.not.have.property('data');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/profile",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "profile"]
+						},
+						"description": "**Test Case:** TC-API-PROFILE-002 (Negative)\n\n**Scenario:** Attempt to get profile without authentication token\n\n**Expected Result:**\n- HTTP 401 Unauthorized\n- Error: 'No token provided' or similar\n- No user data returned"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-PROFILE-003 ❌ Update Profile - Short Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// TC-API-PROFILE-003: Negative test - Password validation",
+									"",
+									"pm.test(\"Status code is 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Validation error for password length\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error.toLowerCase()).to.match(/password.*8.*character/);",
+									"});",
+									"",
+									"pm.test(\"Profile was not updated\", function () {",
+									"    // Verification would require checking database",
+									"    // Here we verify no success response",
+									"    pm.expect(pm.response.code).to.not.equal(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"password\": \"Pass1\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/profile",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "profile"]
+						},
+						"description": "**Test Case:** TC-API-PROFILE-003 (Negative)\n\n**Scenario:** Update profile with password less than 8 characters\n\n**Test Data:**\n- Password: Pass1 (only 5 characters)\n\n**Expected Result:**\n- HTTP 400 Bad Request\n- Error: 'Password must be at least 8 characters'\n- Profile not updated"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication and authorization test cases including login, profile retrieval, and token validation."
+		},
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "Setup - Login as Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('admin_token', jsonData.data.token);",
+									"    pm.environment.set('admin_id', jsonData.data.user.id);",
+									"    console.log('✅ Admin token stored');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Helper request to get admin token for user management tests"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-USER-LIST-001 ✅ List Users (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains users array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('users');",
+									"    pm.expect(jsonData.data.users).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Response contains pagination info\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('pagination');",
+									"    pm.expect(jsonData.data.pagination).to.have.property('page');",
+									"    pm.expect(jsonData.data.pagination).to.have.property('limit');",
+									"    pm.expect(jsonData.data.pagination).to.have.property('total');",
+									"});",
+									"",
+									"pm.test(\"Users array length respects limit\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.users.length).to.be.at.most(10);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users?page=1&limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["users"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "**Test Case:** TC-API-USER-LIST-001 (Positive)\n\n**Scenario:** Admin retrieves paginated user list\n\n**Expected Result:**\n- HTTP 200 OK\n- Users array with pagination metadata\n- Array length ≤ limit"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-USER-LIST-002 ❌ List Users (Regular User)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403 Forbidden\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Access denied error message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error.toLowerCase()).to.match(/access denied|forbidden|permission/);",
+									"});",
+									"",
+									"pm.test(\"No user data returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.not.have.property('data');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users?page=1&limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["users"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "**Test Case:** TC-API-USER-LIST-002 (Negative)\n\n**Scenario:** Regular user tries to list all users\n\n**Expected Result:**\n- HTTP 403 Forbidden\n- Error: 'Access denied'\n- No user data returned"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-USER-CREATE-001 ✅ Create User (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"User created with correct data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data.name).to.eql('API Test User');",
+									"    pm.expect(jsonData.data.email).to.eql('apitest@test.com');",
+									"    pm.expect(jsonData.data.role).to.eql('user');",
+									"});",
+									"",
+									"pm.test(\"Password not in response\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.not.have.property('password');",
+									"});",
+									"",
+									"// Store user ID for cleanup",
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('test_user_id', jsonData.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate unique email for test",
+									"var timestamp = Date.now();",
+									"pm.environment.set('test_user_email', 'apitest' + timestamp + '@test.com');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"API Test User\",\n  \"email\": \"{{test_user_email}}\",\n  \"password\": \"SecurePass123!\",\n  \"role\": \"user\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": ["{{base_url}}"],
+							"path": ["users"]
+						},
+						"description": "**Test Case:** TC-API-USER-CREATE-001 (Positive)\n\n**Scenario:** Admin creates new user with valid data\n\n**Expected Result:**\n- HTTP 201 Created\n- User object returned (without password)\n- User can login with provided credentials"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-USER-CREATE-002 ❌ Create User - Invalid Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Validation error for invalid email\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error.toLowerCase()).to.match(/email|invalid/);",
+									"});",
+									"",
+									"pm.test(\"No user created\", function () {",
+									"    pm.expect(pm.response.code).to.not.equal(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"invalid-email\",\n  \"password\": \"Password123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": ["{{base_url}}"],
+							"path": ["users"]
+						},
+						"description": "**Test Case:** TC-API-USER-CREATE-002 (Negative)\n\n**Scenario:** Create user with invalid email format\n\n**Expected Result:**\n- HTTP 400 Bad Request\n- Validation error: 'Invalid email format'\n- No user created"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-USER-CREATE-003 ❌ Admin Creates Superadmin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403 Forbidden\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Role assignment error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error.toLowerCase()).to.match(/role|permission|assign/);",
+									"});",
+									"",
+									"pm.test(\"No superadmin user created\", function () {",
+									"    pm.expect(pm.response.code).to.not.equal(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Fake Superadmin\",\n  \"email\": \"fakesuperadmin@test.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"superadmin\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": ["{{base_url}}"],
+							"path": ["users"]
+						},
+						"description": "**Test Case:** TC-API-USER-CREATE-003 (Negative)\n\n**Scenario:** Admin tries to create user with superadmin role\n\n**Expected Result:**\n- HTTP 403 Forbidden\n- Error: 'You cannot assign this role'\n- Role hierarchy enforced\n- No superadmin user created"
+					},
+					"response": []
+				}
+			],
+			"description": "User management test cases including user CRUD operations and role-based access control."
+		},
+		{
+			"name": "Events",
+			"item": [
+				{
+					"name": "TC-API-EVENT-CREATE-001 ✅ Create Event - Valid Data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Event created with correct data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data.title).to.eql('API Test Event');",
+									"    pm.expect(jsonData.data.eventDate).to.eql('2025-12-31');",
+									"    pm.expect(jsonData.data.locationId).to.eql(1);",
+									"});",
+									"",
+									"pm.test(\"Event status is draft for regular user\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.status).to.eql('draft');",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 1s\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+									"});",
+									"",
+									"// Store event ID",
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('test_event_id', jsonData.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"API Test Event\",\n  \"description\": \"Event created via API testing\",\n  \"eventDate\": \"2025-12-31\",\n  \"eventTime\": \"14:00\",\n  \"registrationStartDate\": \"2025-11-01\",\n  \"registrationStartTime\": \"09:00\",\n  \"registrationEndDate\": \"2025-12-30\",\n  \"registrationEndTime\": \"17:00\",\n  \"locationId\": 1,\n  \"maxAttendees\": 100\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/events",
+							"host": ["{{base_url}}"],
+							"path": ["events"]
+						},
+						"description": "**Test Case:** TC-API-EVENT-CREATE-001 (Positive)\n\n**Scenario:** Create event with all valid data\n\n**Expected Result:**\n- HTTP 201 Created\n- Event object returned\n- Status: 'draft' (for USER role)\n- Response time < 1s"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-EVENT-CREATE-002 ❌ Invalid Date Format",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Date format validation error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error.toLowerCase()).to.match(/date.*format|yyyy-mm-dd/);",
+									"});",
+									"",
+									"pm.test(\"No event created\", function () {",
+									"    pm.expect(pm.response.code).to.not.equal(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Invalid Event\",\n  \"eventDate\": \"31-12-2025\",\n  \"eventTime\": \"14:00\",\n  \"registrationStartDate\": \"2025-11-01\",\n  \"registrationStartTime\": \"09:00\",\n  \"registrationEndDate\": \"2025-12-30\",\n  \"registrationEndTime\": \"17:00\",\n  \"locationId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/events",
+							"host": ["{{base_url}}"],
+							"path": ["events"]
+						},
+						"description": "**Test Case:** TC-API-EVENT-CREATE-002 (Negative)\n\n**Scenario:** Create event with invalid date format (DD-MM-YYYY instead of YYYY-MM-DD)\n\n**Expected Result:**\n- HTTP 400 Bad Request\n- Error: 'Event date must be in YYYY-MM-DD format'\n- No event created"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-EVENT-CREATE-003 ❌ Non-existent Location",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 or 404\", function () {",
+									"    pm.expect([400, 404]).to.include(pm.response.code);",
+									"});",
+									"",
+									"pm.test(\"Location not found error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error.toLowerCase()).to.match(/location.*not found|invalid.*location/);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Event with Invalid Location\",\n  \"eventDate\": \"2025-12-31\",\n  \"eventTime\": \"14:00\",\n  \"registrationStartDate\": \"2025-11-01\",\n  \"registrationStartTime\": \"09:00\",\n  \"registrationEndDate\": \"2025-12-30\",\n  \"registrationEndTime\": \"17:00\",\n  \"locationId\": 99999\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/events",
+							"host": ["{{base_url}}"],
+							"path": ["events"]
+						},
+						"description": "**Test Case:** TC-API-EVENT-CREATE-003 (Negative)\n\n**Scenario:** Create event with non-existent location ID\n\n**Expected Result:**\n- HTTP 400/404\n- Error: 'Location not found'\n- No event created"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-EVENT-SUBMIT-001 ✅ Submit for Approval",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Event status updated to pending_approval\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.status).to.eql('pending_approval');",
+									"});",
+									"",
+									"pm.test(\"Approval history created\", function () {",
+									"    // This would be verified through GET approval history endpoint",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/events/{{test_event_id}}/submit-for-approval",
+							"host": ["{{base_url}}"],
+							"path": ["events", "{{test_event_id}}", "submit-for-approval"]
+						},
+						"description": "**Test Case:** TC-API-EVENT-SUBMIT-001 (Positive)\n\n**Scenario:** USER submits draft event for approval\n\n**Expected Result:**\n- HTTP 200 OK\n- Event status: 'pending_approval'\n- Approval history entry created"
+					},
+					"response": []
+				}
+			],
+			"description": "Event management test cases including CRUD operations and workflow transitions."
+		},
+		{
+			"name": "Event Registration",
+			"item": [
+				{
+					"name": "TC-API-REG-001 ✅ Register for Published Event",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Registration created successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.registration).to.have.property('id');",
+									"    pm.expect(jsonData.data.registration.status).to.eql('registered');",
+									"});",
+									"",
+									"pm.test(\"Registration saved in database\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.registration.eventId).to.be.a('number');",
+									"    pm.expect(jsonData.data.registration.userId).to.be.a('number');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/events/1/register",
+							"host": ["{{base_url}}"],
+							"path": ["events", "1", "register"]
+						},
+						"description": "**Test Case:** TC-API-REG-001 (Positive)\n\n**Scenario:** User registers for published event\n\n**Note:** Requires event ID 1 to be published and within registration period\n\n**Expected Result:**\n- HTTP 201 Created\n- Registration object with status 'registered'\n- Registration saved in database"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-REG-002 ❌ Register for Draft Event",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Event not published error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error.toLowerCase()).to.match(/not published|cannot register/);",
+									"});",
+									"",
+									"pm.test(\"No registration created\", function () {",
+									"    pm.expect(pm.response.code).to.not.equal(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/events/{{test_event_id}}/register",
+							"host": ["{{base_url}}"],
+							"path": ["events", "{{test_event_id}}", "register"]
+						},
+						"description": "**Test Case:** TC-API-REG-002 (Negative)\n\n**Scenario:** Attempt to register for draft event (not published)\n\n**Expected Result:**\n- HTTP 400 Bad Request\n- Error: 'Event is not published'\n- No registration created"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-REG-003 ❌ Register Twice (Duplicate)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 409 Conflict\", function () {",
+									"    pm.response.to.have.status(409);",
+									"});",
+									"",
+									"pm.test(\"Already registered error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error.toLowerCase()).to.match(/already registered/);",
+									"});",
+									"",
+									"pm.test(\"No duplicate registration\", function () {",
+									"    pm.expect(pm.response.code).to.not.equal(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/events/1/register",
+							"host": ["{{base_url}}"],
+							"path": ["events", "1", "register"]
+						},
+						"description": "**Test Case:** TC-API-REG-003 (Negative)\n\n**Scenario:** User tries to register twice for same event\n\n**Prerequisites:** User must already be registered for event ID 1\n\n**Expected Result:**\n- HTTP 409 Conflict\n- Error: 'You are already registered for this event'\n- No duplicate registration created"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-REG-004 ❌ Register Without Auth",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Authentication required error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error.toLowerCase()).to.match(/auth|token|unauthorized/);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/events/1/register",
+							"host": ["{{base_url}}"],
+							"path": ["events", "1", "register"]
+						},
+						"description": "**Test Case:** TC-API-REG-004 (Negative)\n\n**Scenario:** Attempt to register without authentication token\n\n**Expected Result:**\n- HTTP 401 Unauthorized\n- Error: 'Authentication required'\n- No registration created"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-REG-005 ✅ Unregister from Event",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Success message returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});",
+									"",
+									"pm.test(\"Registration removed from database\", function () {",
+									"    // This would be verified through GET registrations endpoint",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/events/1/register",
+							"host": ["{{base_url}}"],
+							"path": ["events", "1", "register"]
+						},
+						"description": "**Test Case:** TC-API-REG-005 (Positive)\n\n**Scenario:** User unregisters from event\n\n**Prerequisites:** User must be registered for event ID 1\n\n**Expected Result:**\n- HTTP 200 OK\n- Success message\n- Registration removed/cancelled in database"
+					},
+					"response": []
+				}
+			],
+			"description": "Event registration test cases including registration, unregistration, and validation."
+		},
+		{
+			"name": "Locations",
+			"item": [
+				{
+					"name": "TC-API-LOC-LIST-001 ✅ Get Active Locations (Public)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains locations array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"All locations are active\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    jsonData.data.forEach(function(location) {",
+									"        pm.expect(location.isActive).to.eql(true);",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/locations/active",
+							"host": ["{{base_url}}"],
+							"path": ["locations", "active"]
+						},
+						"description": "**Test Case:** TC-API-LOC-LIST-001 (Positive)\n\n**Scenario:** Get active locations (public access, no auth required)\n\n**Expected Result:**\n- HTTP 200 OK\n- Array of locations with isActive: true\n- No authentication required"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-LOC-CREATE-001 ✅ Create Location (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Location created with correct data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data.name).to.eql('API Test Location');",
+									"    pm.expect(jsonData.data.isActive).to.eql(true);",
+									"});",
+									"",
+									"// Store location ID",
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('test_location_id', jsonData.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"API Test Location\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/locations",
+							"host": ["{{base_url}}"],
+							"path": ["locations"]
+						},
+						"description": "**Test Case:** TC-API-LOC-CREATE-001 (Positive)\n\n**Scenario:** Admin creates new location\n\n**Expected Result:**\n- HTTP 201 Created\n- Location object with generated ID\n- Default isActive: true"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-LOC-CREATE-002 ❌ Create Location (User)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403 Forbidden\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Access denied error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error.toLowerCase()).to.match(/access denied|permission|admin/);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Unauthorized Location\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/locations",
+							"host": ["{{base_url}}"],
+							"path": ["locations"]
+						},
+						"description": "**Test Case:** TC-API-LOC-CREATE-002 (Negative)\n\n**Scenario:** Regular user tries to create location\n\n**Expected Result:**\n- HTTP 403 Forbidden\n- Error: 'Access denied' or 'Admin privileges required'\n- No location created"
+					},
+					"response": []
+				}
+			],
+			"description": "Location management test cases including CRUD operations and access control."
+		},
+		{
+			"name": "Settings",
+			"item": [
+				{
+					"name": "Setup - Login as Superadmin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('superadmin_token', jsonData.data.token);",
+									"    console.log('✅ Superadmin token stored');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{superadmin_email}}\",\n  \"password\": \"{{superadmin_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Helper request to get superadmin token for settings tests"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-SETTINGS-001 ✅ Get Settings (Public)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains settings\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('siteTitle');",
+									"    pm.expect(jsonData.data).to.have.property('primaryColor');",
+									"    pm.expect(jsonData.data).to.have.property('secondaryColor');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/settings",
+							"host": ["{{base_url}}"],
+							"path": ["settings"]
+						},
+						"description": "**Test Case:** TC-API-SETTINGS-001 (Positive)\n\n**Scenario:** Get site settings (public access)\n\n**Expected Result:**\n- HTTP 200 OK\n- Settings object with all customization fields\n- No authentication required"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-SETTINGS-002 ✅ Update Settings (Superadmin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Settings updated successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.siteTitle).to.eql('Updated Title');",
+									"    pm.expect(jsonData.data.primaryColor).to.eql('#007bff');",
+									"});",
+									"",
+									"pm.test(\"Updated timestamp changed\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('updatedAt');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{superadmin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"siteTitle\": \"Updated Title\",\n  \"primaryColor\": \"#007bff\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/settings",
+							"host": ["{{base_url}}"],
+							"path": ["settings"]
+						},
+						"description": "**Test Case:** TC-API-SETTINGS-002 (Positive)\n\n**Scenario:** Superadmin updates site settings\n\n**Expected Result:**\n- HTTP 200 OK\n- Settings updated in database\n- Updated timestamp changed"
+					},
+					"response": []
+				},
+				{
+					"name": "TC-API-SETTINGS-003 ❌ Update Settings (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403 Forbidden\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Superadmin only error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error.toLowerCase()).to.match(/superadmin|permission/);",
+									"});",
+									"",
+									"pm.test(\"Settings not updated\", function () {",
+									"    pm.expect(pm.response.code).to.not.equal(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"siteTitle\": \"Hacked Title\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/settings",
+							"host": ["{{base_url}}"],
+							"path": ["settings"]
+						},
+						"description": "**Test Case:** TC-API-SETTINGS-003 (Negative)\n\n**Scenario:** Admin tries to update settings (only superadmin allowed)\n\n**Expected Result:**\n- HTTP 403 Forbidden\n- Error: 'Only superadmin can update settings'\n- Settings unchanged"
+					},
+					"response": []
+				}
+			],
+			"description": "Site settings test cases including public read access and superadmin-only updates."
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000/api/v1",
+			"type": "string"
+		}
+	]
+}

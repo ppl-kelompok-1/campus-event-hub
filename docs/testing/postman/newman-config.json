@@ -1,0 +1,40 @@
+{
+  "collection": "docs/testing/postman/Campus-Event-Hub.postman_collection.json",
+  "environment": "docs/testing/postman/Campus-Event-Hub.postman_environment.json",
+  "reporters": ["htmlextra", "cli", "json"],
+  "reporter": {
+    "htmlextra": {
+      "export": "docs/testing/reports/api-test-report.html",
+      "title": "Campus Event Hub - API Test Report",
+      "logs": true,
+      "darkTheme": false,
+      "testPaging": true,
+      "browserTitle": "Campus Event Hub API Tests",
+      "omitRequestBodies": false,
+      "omitResponseBodies": false,
+      "hideRequest": false,
+      "hideResponse": false,
+      "showEnvironmentData": true,
+      "skipEnvironmentVars": ["superadmin_password", "admin_password", "approver_password", "user_password"],
+      "showGlobalData": false,
+      "skipGlobalVars": [],
+      "skipHeaders": ["Authorization"],
+      "showMarkdownLinks": true,
+      "showFolderDescription": true,
+      "timezone": "Asia/Jakarta"
+    },
+    "json": {
+      "export": "docs/testing/reports/api-test-results.json"
+    }
+  },
+  "bail": false,
+  "insecure": false,
+  "timeout": 10000,
+  "timeoutRequest": 5000,
+  "timeoutScript": 5000,
+  "delayRequest": 100,
+  "iterationCount": 1,
+  "folder": [],
+  "verbose": false,
+  "color": "on"
+}
