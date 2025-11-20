@@ -44,12 +44,48 @@ const PendingApprovalsPage = () => {
   const loadPendingEvents = async () => {
     try {
       setLoading(true)
+
+      // Debug: Log pagination parameters being sent
+      console.log('🔍 Fetching pending events - Page:', currentPage, 'Limit:', itemsPerPage)
+
       const response = await eventApi.getPendingApprovalEvents(currentPage, itemsPerPage)
-      setEvents(response.data)
-      setTotalPages(response.pagination.totalPages)
-      setTotalItems(response.pagination.total)
+
+      // Defensive: Check if response has expected structure
+      if (!response) {
+        throw new Error('Invalid response from server')
+      }
+
+      // Debug: Log what API actually returned
+      console.log('📦 API Response:')
+      console.log('  - Events returned:', response.data?.length || 0)
+      console.log('  - Pagination metadata:', response.pagination)
+      console.log('  - Expected limit:', itemsPerPage)
+
+      // Alert if backend returned more events than requested
+      if (response.data && response.data.length > itemsPerPage) {
+        console.warn('⚠️ Backend returned MORE events than requested!')
+        console.warn(`   Expected: ${itemsPerPage}, Got: ${response.data.length}`)
+        console.warn('   Backend pagination may not be working correctly.')
+      }
+
+      // Set events data
+      setEvents(response.data || [])
+
+      // Defensive: Use optional chaining and provide defaults
+      setTotalPages(response.pagination?.totalPages || 1)
+      setTotalItems(response.pagination?.total || 0)
+
+      // Log for debugging if pagination is missing
+      if (!response.pagination) {
+        console.warn('API response missing pagination metadata:', response)
+      }
     } catch (err: any) {
+      console.error('Error loading pending events:', err)
       setError(err.message || 'Failed to load events')
+      // Reset to safe defaults on error
+      setEvents([])
+      setTotalPages(1)
+      setTotalItems(0)
     } finally {
       setLoading(false)
     }

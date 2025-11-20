@@ -138,11 +138,22 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
     authorize(UserRole.APPROVER, UserRole.ADMIN, UserRole.SUPERADMIN),
     asyncHandler(async (req: Request, res: Response) => {
       try {
-        const events = await eventService.getPendingApprovalEvents();
-        
+        // Extract pagination parameters from query string
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+
+        // Get paginated events
+        const result = await eventService.getPendingApprovalEvents(page, limit);
+
         res.json({
           success: true,
-          data: events
+          data: result.events,
+          pagination: {
+            total: result.total,
+            page: result.page,
+            totalPages: result.totalPages,
+            limit: limit
+          }
         });
       } catch (error) {
         res.status(500).json({

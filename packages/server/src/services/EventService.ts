@@ -428,7 +428,12 @@ export class EventService {
   }
 
   // Get all events in approval workflow (pending, revision, and approved) - for approvers to see complete history
-  async getPendingApprovalEvents(): Promise<EventResponse[]> {
+  async getPendingApprovalEvents(page: number = 1, limit: number = 10): Promise<{
+    events: EventResponse[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
     // Get events with all approval workflow statuses
     const pendingEvents = await this.eventRepository.findByStatus(EventStatus.PENDING_APPROVAL);
     const revisionEvents = await this.eventRepository.findByStatus(EventStatus.REVISION_REQUESTED);
@@ -441,7 +446,21 @@ export class EventService {
     const allEvents = [...pendingEvents, ...revisionEvents, ...approvedEvents];
     allEvents.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
-    return this.enrichEventsWithNames(allEvents);
+    // Apply pagination
+    const total = allEvents.length;
+    const totalPages = Math.ceil(total / limit);
+    const offset = (page - 1) * limit;
+    const paginatedEvents = allEvents.slice(offset, offset + limit);
+
+    // Enrich only the paginated events
+    const enrichedEvents = await this.enrichEventsWithNames(paginatedEvents);
+
+    return {
+      events: enrichedEvents,
+      total,
+      page,
+      totalPages
+    };
   }
 
   // Updated publish event method for new approval workflow
