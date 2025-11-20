@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { eventApi } from '../auth/api'
 import type { Event, EventAttachment, EventApprovalHistory } from '../auth/api'
 import { FileUpload } from '../components/FileUpload'
 import { AttachmentList } from '../components/AttachmentList'
 import EventApprovalHistoryComponent from '../components/EventApprovalHistory'
 import { useAuth } from '../auth/AuthContext'
+import { getToken } from '../auth/storage'
 
 interface Attendee {
   id: number
@@ -24,8 +25,12 @@ const EventDetailsPage = () => {
   const [attachmentsLoading, setAttachmentsLoading] = useState(false)
   const [approvalHistoryLoading, setApprovalHistoryLoading] = useState(false)
   const [error, setError] = useState('')
+  const [actionLoading, setActionLoading] = useState(false)
+  const [showRevisionModal, setShowRevisionModal] = useState(false)
+  const [revisionComments, setRevisionComments] = useState('')
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!id || isNaN(Number(id))) {
@@ -146,6 +151,240 @@ const EventDetailsPage = () => {
     return eventDateTime < new Date()
   }
 
+  // Action Handlers
+  const handleEdit = () => {
+    navigate(`/events/edit/${event?.id}`)
+  }
+
+  const handleDelete = async () => {
+    if (!event || !window.confirm(`Are you sure you want to delete "${event.title}"? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      setActionLoading(true)
+      await eventApi.deleteEvent(event.id)
+      navigate('/profile')
+    } catch (err) {
+      setError('Failed to delete event. Please try again.')
+      console.error('Error deleting event:', err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handlePublish = async () => {
+    if (!event) return
+
+    try {
+      setActionLoading(true)
+      await eventApi.publishEvent(event.id)
+      setEvent({ ...event, status: 'published' as const })
+      setError('')
+    } catch (err) {
+      setError('Failed to publish event. Please try again.')
+      console.error('Error publishing event:', err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleSubmitForApproval = async () => {
+    if (!event) return
+
+    try {
+      setActionLoading(true)
+      await eventApi.submitForApproval(event.id)
+      setEvent({ ...event, status: 'pending_approval' as const })
+      setError('')
+    } catch (err) {
+      setError('Failed to submit event for approval. Please try again.')
+      console.error('Error submitting event for approval:', err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleCancel = async () => {
+    if (!event || !window.confirm(`Are you sure you want to cancel "${event.title}"?`)) {
+      return
+    }
+
+    try {
+      setActionLoading(true)
+      await eventApi.cancelEvent(event.id)
+      setEvent({ ...event, status: 'cancelled' as const })
+      setError('')
+    } catch (err) {
+      setError('Failed to cancel event. Please try again.')
+      console.error('Error cancelling event:', err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleJoinEvent = async () => {
+    if (!event) return
+
+    try {
+      setActionLoading(true)
+      const response = await eventApi.joinEvent(event.id)
+
+      // Update event state with new registration info
+      setEvent({
+        ...event,
+        isUserRegistered: true,
+        userRegistrationStatus: response.data.status as 'registered' | 'waitlisted' | 'cancelled',
+        currentAttendees: response.data.status === 'registered'
+          ? (event.currentAttendees || 0) + 1
+          : event.currentAttendees,
+        isFull: event.maxAttendees ? ((event.currentAttendees || 0) + (response.data.status === 'registered' ? 1 : 0)) >= event.maxAttendees : false
+      })
+
+      // Refresh attendees list
+      await fetchAttendees()
+      setError('')
+    } catch (err) {
+      console.error('Failed to join event:', err)
+      setError('Failed to join event. Please try again.')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleLeaveEvent = async () => {
+    if (!event || !window.confirm(`Are you sure you want to leave "${event.title}"?`)) {
+      return
+    }
+
+    try {
+      setActionLoading(true)
+      await eventApi.leaveEvent(event.id)
+
+      // Update event state
+      setEvent({
+        ...event,
+        isUserRegistered: false,
+        userRegistrationStatus: undefined,
+        currentAttendees: event.userRegistrationStatus === 'registered'
+          ? Math.max((event.currentAttendees || 1) - 1, 0)
+          : event.currentAttendees,
+        isFull: false
+      })
+
+      // Refresh attendees list
+      await fetchAttendees()
+      setError('')
+    } catch (err) {
+      console.error('Failed to leave event:', err)
+      setError('Failed to leave event. Please try again.')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleApprove = async () => {
+    if (!event) return
+
+    try {
+      setActionLoading(true)
+      await eventApi.approveEvent(event.id)
+      await fetchEvent()
+      setError('')
+    } catch (err: any) {
+      setError(err.message || 'Failed to approve event')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleRequestRevision = async () => {
+    if (!event || !revisionComments.trim()) {
+      setError('Revision comments are required')
+      return
+    }
+
+    try {
+      setActionLoading(true)
+      await eventApi.requestRevision(event.id, revisionComments.trim())
+      setShowRevisionModal(false)
+      setRevisionComments('')
+      await fetchEvent()
+      setError('')
+    } catch (err: any) {
+      setError(err.message || 'Failed to request revision')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const openRevisionModal = () => {
+    setShowRevisionModal(true)
+    setRevisionComments('')
+    setError('')
+  }
+
+  const closeRevisionModal = () => {
+    setShowRevisionModal(false)
+    setRevisionComments('')
+    setError('')
+  }
+
+  const exportAttendees = async () => {
+    if (!event) return
+
+    try {
+      const token = getToken()
+      if (!token) {
+        setError('No authentication token found')
+        return
+      }
+
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
+      const response = await fetch(`${API_BASE_URL}/events/${event.id}/attendees/export/csv`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to export attendees')
+      }
+
+      // Get the CSV content
+      const csvContent = await response.text()
+
+      // Extract filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = `${event.title.replace(/[^a-z0-9]/gi, '_')}_attendees.csv`
+      if (contentDisposition) {
+        const matches = /filename="([^"]+)"/.exec(contentDisposition)
+        if (matches && matches[1]) {
+          filename = matches[1]
+        }
+      }
+
+      // Create a blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+
+      link.setAttribute('href', url)
+      link.setAttribute('download', filename)
+      link.style.visibility = 'hidden'
+
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Failed to export attendees:', err)
+      setError('Failed to export attendees. Please try again.')
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '40px' }}>
@@ -211,15 +450,15 @@ const EventDetailsPage = () => {
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         marginBottom: '20px'
       }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'flex-start',
           marginBottom: '20px',
           flexWrap: 'wrap',
           gap: '16px'
         }}>
-          <h1 style={{ 
+          <h1 style={{
             margin: '0',
             color: '#2c3e50',
             fontSize: '2rem',
@@ -229,6 +468,264 @@ const EventDetailsPage = () => {
           </h1>
           {getStatusBadge(event.status)}
         </div>
+
+        {/* Action Buttons */}
+        {user && (
+          <div style={{
+            marginBottom: '20px',
+            padding: '16px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '6px',
+            border: '1px solid #e9ecef'
+          }}>
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '8px'
+            }}>
+              {/* Creator Actions */}
+              {user.id === event.createdBy && (
+                <>
+                  {/* Edit Button */}
+                  {(event.status === 'draft' || event.status === 'revision_requested') && (
+                    <button
+                      onClick={handleEdit}
+                      disabled={actionLoading}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#007bff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: actionLoading ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        opacity: actionLoading ? 0.7 : 1
+                      }}
+                    >
+                      Edit
+                    </button>
+                  )}
+
+                  {/* Submit for Approval Button - only for regular users */}
+                  {(event.status === 'draft' || event.status === 'revision_requested') && user.role === 'user' && (
+                    <button
+                      onClick={handleSubmitForApproval}
+                      disabled={actionLoading}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: actionLoading ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        opacity: actionLoading ? 0.7 : 1
+                      }}
+                    >
+                      Submit for Approval
+                    </button>
+                  )}
+
+                  {/* Publish Button - for approvers/admins/superadmins */}
+                  {event.status === 'draft' && ['approver', 'admin', 'superadmin'].includes(user.role) && (
+                    <button
+                      onClick={handlePublish}
+                      disabled={actionLoading}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: actionLoading ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        opacity: actionLoading ? 0.7 : 1
+                      }}
+                    >
+                      Publish
+                    </button>
+                  )}
+
+                  {/* Cancel Button */}
+                  {event.status === 'published' && (
+                    <button
+                      onClick={handleCancel}
+                      disabled={actionLoading}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#ffc107',
+                        color: '#212529',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: actionLoading ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        opacity: actionLoading ? 0.7 : 1
+                      }}
+                    >
+                      Cancel Event
+                    </button>
+                  )}
+
+                  {/* Delete Button */}
+                  {(event.status === 'draft' || event.status === 'revision_requested') && (
+                    <button
+                      onClick={handleDelete}
+                      disabled={actionLoading}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: actionLoading ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        opacity: actionLoading ? 0.7 : 1
+                      }}
+                    >
+                      Delete
+                    </button>
+                  )}
+
+                  {/* Export Attendees Button - for event creators */}
+                  {attendees.length > 0 && (
+                    <button
+                      onClick={exportAttendees}
+                      disabled={actionLoading}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#17a2b8',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: actionLoading ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        opacity: actionLoading ? 0.7 : 1
+                      }}
+                    >
+                      📥 Export Attendees
+                    </button>
+                  )}
+                </>
+              )}
+
+              {/* Approver/Admin Actions */}
+              {user.id !== event.createdBy && ['approver', 'admin', 'superadmin'].includes(user.role) && (
+                <>
+                  {/* Approve Button */}
+                  {event.status === 'pending_approval' && (
+                    <button
+                      onClick={handleApprove}
+                      disabled={actionLoading}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: actionLoading ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        opacity: actionLoading ? 0.7 : 1
+                      }}
+                    >
+                      Approve
+                    </button>
+                  )}
+
+                  {/* Request Revision Button */}
+                  {event.status === 'pending_approval' && (
+                    <button
+                      onClick={openRevisionModal}
+                      disabled={actionLoading}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#ffc107',
+                        color: '#212529',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: actionLoading ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        opacity: actionLoading ? 0.7 : 1
+                      }}
+                    >
+                      Request Revision
+                    </button>
+                  )}
+                </>
+              )}
+
+              {/* Registration Actions - for non-creators */}
+              {user.id !== event.createdBy && event.status === 'published' && (
+                <>
+                  {/* Register Button */}
+                  {!event.isUserRegistered && event.canRegister && event.hasRegistrationStarted && !event.isFull && (
+                    <button
+                      onClick={handleJoinEvent}
+                      disabled={actionLoading}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#007bff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: actionLoading ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        opacity: actionLoading ? 0.7 : 1
+                      }}
+                    >
+                      Register for Event
+                    </button>
+                  )}
+
+                  {/* Leave Button */}
+                  {event.isUserRegistered && (
+                    <button
+                      onClick={handleLeaveEvent}
+                      disabled={actionLoading}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: actionLoading ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        opacity: actionLoading ? 0.7 : 1
+                      }}
+                    >
+                      Leave Event
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Display revision comments if present */}
+            {event.revisionComments && (
+              <div style={{
+                marginTop: '12px',
+                padding: '12px',
+                backgroundColor: '#fff3cd',
+                color: '#856404',
+                borderRadius: '4px',
+                border: '1px solid #ffeeba',
+                fontSize: '14px'
+              }}>
+                <strong>Revision Comments:</strong>
+                <div style={{ marginTop: '4px' }}>{event.revisionComments}</div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Event meta information */}
         <div style={{
@@ -562,6 +1059,93 @@ const EventDetailsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Revision Request Modal */}
+      {showRevisionModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '8px',
+            width: '90%',
+            maxWidth: '500px',
+            position: 'relative',
+          }}>
+            <h3 style={{ marginBottom: '15px' }}>Request Revision</h3>
+            <p style={{ marginBottom: '15px', color: '#666' }}>
+              Event: <strong>{event.title}</strong>
+            </p>
+
+            <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
+              Revision Comments (Required):
+            </label>
+            <textarea
+              value={revisionComments}
+              onChange={(e) => setRevisionComments(e.target.value)}
+              placeholder="Please explain what needs to be revised..."
+              rows={4}
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                marginBottom: '20px',
+                resize: 'vertical',
+                fontSize: '14px'
+              }}
+            />
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={handleRequestRevision}
+                disabled={!revisionComments.trim() || actionLoading}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  backgroundColor: '#ffc107',
+                  color: '#212529',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: (!revisionComments.trim() || actionLoading) ? 'not-allowed' : 'pointer',
+                  opacity: (!revisionComments.trim() || actionLoading) ? 0.7 : 1,
+                  fontWeight: '500'
+                }}
+              >
+                {actionLoading ? 'Processing...' : 'Send Revision Request'}
+              </button>
+
+              <button
+                onClick={closeRevisionModal}
+                disabled={actionLoading}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: actionLoading ? 'not-allowed' : 'pointer',
+                  opacity: actionLoading ? 0.7 : 1,
+                  fontWeight: '500'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
