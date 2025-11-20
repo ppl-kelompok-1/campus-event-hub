@@ -318,22 +318,18 @@ export const userApi = {
     })
   },
 
-  getUserCreatedEvents: async (userId: number) => {
-    return fetchApi<{
-      success: boolean
-      data: Event[]
-    }>(`/users/${userId}/events/created`, {
-      requireAuth: false
-    })
+  getUserCreatedEvents: async (userId: number, page = 1, limit = 10) => {
+    return fetchApi<PaginatedResponse<Event>>(
+      `/users/${userId}/events/created?page=${page}&limit=${limit}`,
+      { requireAuth: false }
+    )
   },
 
-  getUserJoinedEvents: async (userId: number) => {
-    return fetchApi<{
-      success: boolean
-      data: Event[]
-    }>(`/users/${userId}/events/joined`, {
-      requireAuth: false
-    })
+  getUserJoinedEvents: async (userId: number, page = 1, limit = 10) => {
+    return fetchApi<PaginatedResponse<Event>>(
+      `/users/${userId}/events/joined?page=${page}&limit=${limit}`,
+      { requireAuth: false }
+    )
   },
 }
 
@@ -348,8 +344,10 @@ export const eventApi = {
   },
 
   // Get current user's events
-  getMyEvents: async () => {
-    return fetchApi<ApiResponse<Event[]>>('/events/my')
+  getMyEvents: async (page = 1, limit = 10) => {
+    return fetchApi<PaginatedResponse<Event>>(
+      `/events/my?page=${page}&limit=${limit}`
+    )
   },
 
   // Get event by ID
@@ -398,8 +396,10 @@ export const eventApi = {
   },
 
   // Get events pending approval
-  getPendingApprovalEvents: async () => {
-    return fetchApi<ApiResponse<Event[]>>('/events/pending')
+  getPendingApprovalEvents: async (page = 1, limit = 10) => {
+    return fetchApi<PaginatedResponse<Event>>(
+      `/events/pending?page=${page}&limit=${limit}`
+    )
   },
 
   // Submit event for approval
@@ -451,8 +451,8 @@ export const eventApi = {
   },
 
   // Get user's joined events
-  getJoinedEvents: async () => {
-    return fetchApi<ApiResponse<{
+  getJoinedEvents: async (page = 1, limit = 10) => {
+    return fetchApi<PaginatedResponse<{
       id: number
       eventId: number
       userId: number
@@ -462,7 +462,7 @@ export const eventApi = {
       status: 'registered' | 'waitlisted' | 'cancelled'
       createdAt: string
       updatedAt: string
-    }[]>>('/events/joined')
+    }>>(`/events/joined?page=${page}&limit=${limit}`)
   },
 
   // Get event registrations (for event creators/admins)
@@ -570,6 +570,7 @@ export const eventApi = {
 export interface Location {
   id: number
   name: string
+  maxCapacity?: number
   isActive: boolean
   createdAt: string
   updatedAt: string

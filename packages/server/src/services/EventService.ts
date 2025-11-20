@@ -2,6 +2,7 @@ import { IEventRepository } from '../repositories/IEventRepository';
 import { IUserRepository } from '../repositories/IUserRepository';
 import { IEventRegistrationRepository } from '../repositories/IEventRegistrationRepository';
 import { ILocationRepository } from '../repositories/ILocationRepository';
+import { IEventAttachmentRepository } from '../repositories/IEventAttachmentRepository';
 import { Event, CreateEventDto, UpdateEventDto, EventResponse, EventStatus, ApprovalDto, toEventResponse, isValidEventDate, isValidEventTime, isEventInPast, isValidRegistrationPeriod, isRegistrationOpen, hasRegistrationStarted, hasRegistrationEnded } from '../models/Event';
 import { UserRole } from '../models/User';
 import { RegistrationStatus } from '../models/EventRegistration';
@@ -13,7 +14,8 @@ export class EventService {
     private userRepository: IUserRepository,
     private locationRepository: ILocationRepository,
     private eventRegistrationRepository?: IEventRegistrationRepository,
-    private approvalHistoryService?: EventApprovalHistoryService
+    private approvalHistoryService?: EventApprovalHistoryService,
+    private eventAttachmentRepository?: IEventAttachmentRepository
   ) {}
 
   // Create a new event
@@ -231,6 +233,16 @@ export class EventService {
       throw new Error('Invalid location selected');
     }
 
+    // Validate maxAttendees doesn't exceed location capacity
+    if (eventData.maxAttendees !== undefined) {
+      const location = await this.locationRepository.findById(eventData.locationId);
+      if (location && location.maxCapacity !== undefined) {
+        if (eventData.maxAttendees > location.maxCapacity) {
+          throw new Error(`Maximum attendees (${eventData.maxAttendees}) cannot exceed location capacity (${location.maxCapacity})`);
+        }
+      }
+    }
+
     if (!isValidEventDate(eventData.eventDate)) {
       throw new Error('Invalid event date format. Use YYYY-MM-DD');
     }
@@ -266,6 +278,18 @@ export class EventService {
     }
   }
 
+  // Validate event has attachments
+  private async validateEventHasAttachments(eventId: number): Promise<void> {
+    if (!this.eventAttachmentRepository) {
+      return; // Skip validation if repository not available
+    }
+
+    const attachments = this.eventAttachmentRepository.findByEventId(eventId);
+    if (!attachments || attachments.length === 0) {
+      throw new Error('Events must have at least one attachment');
+    }
+  }
+
   // Submit event for approval (regular users only)
   async submitForApproval(eventId: number, userId: number, userRole: UserRole): Promise<boolean> {
     // Check if event exists
@@ -289,6 +313,9 @@ export class EventService {
     if (event.status !== EventStatus.DRAFT && event.status !== EventStatus.REVISION_REQUESTED) {
       throw new Error('Only draft or revision requested events can be submitted for approval');
     }
+
+    // Validate attachments exist before submitting for approval
+    await this.validateEventHasAttachments(eventId);
 
     const statusBefore = event.status;
     const result = await this.eventRepository.submitForApproval(eventId);
@@ -327,6 +354,9 @@ export class EventService {
     if (event.status !== EventStatus.PENDING_APPROVAL) {
       throw new Error('Only events pending approval can be approved');
     }
+
+    // Validate attachments exist before approving
+    await this.validateEventHasAttachments(eventId);
 
     // Check if event is in the past
     if (isEventInPast(event.eventDate, event.eventTime)) {
@@ -398,7 +428,12 @@ export class EventService {
   }
 
   // Get all events in approval workflow (pending, revision, and approved) - for approvers to see complete history
-  async getPendingApprovalEvents(): Promise<EventResponse[]> {
+  async getPendingApprovalEvents(page: number = 1, limit: number = 10): Promise<{
+    events: EventResponse[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
     // Get events with all approval workflow statuses
     const pendingEvents = await this.eventRepository.findByStatus(EventStatus.PENDING_APPROVAL);
     const revisionEvents = await this.eventRepository.findByStatus(EventStatus.REVISION_REQUESTED);
@@ -411,7 +446,21 @@ export class EventService {
     const allEvents = [...pendingEvents, ...revisionEvents, ...approvedEvents];
     allEvents.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
-    return this.enrichEventsWithNames(allEvents);
+    // Apply pagination
+    const total = allEvents.length;
+    const totalPages = Math.ceil(total / limit);
+    const offset = (page - 1) * limit;
+    const paginatedEvents = allEvents.slice(offset, offset + limit);
+
+    // Enrich only the paginated events
+    const enrichedEvents = await this.enrichEventsWithNames(paginatedEvents);
+
+    return {
+      events: enrichedEvents,
+      total,
+      page,
+      totalPages
+    };
   }
 
   // Updated publish event method for new approval workflow
@@ -432,6 +481,9 @@ export class EventService {
     if (!canModify) {
       throw new Error('Insufficient permissions to publish this event');
     }
+
+    // Validate attachments exist before publishing
+    await this.validateEventHasAttachments(id);
 
     // Check if event is in the past
     if (isEventInPast(event.eventDate, event.eventTime)) {
@@ -544,5 +596,110 @@ export class EventService {
       enrichedEvents.push(enrichedEvent);
     }
     return enrichedEvents;
+  }
+
+  // Helper function to escape CSV values
+  private escapeCSV(value: string | number | undefined | null): string {
+    if (value === null || value === undefined) return '';
+    const stringValue = String(value);
+    // If contains comma, quote, or newline, wrap in quotes and escape quotes
+    if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+      return `"${stringValue.replace(/"/g, '""')}"`;
+    }
+    return stringValue;
+  }
+
+  // Helper function to get human-readable status text
+  private getStatusText(status: string): string {
+    const statusMap: Record<string, string> = {
+      draft: 'Draft',
+      pending_approval: 'Pending Approval',
+      revision_requested: 'Revision Requested',
+      published: 'Published',
+      cancelled: 'Cancelled',
+      completed: 'Completed'
+    };
+    return statusMap[status] || status;
+  }
+
+  // Helper function to format date (YYYY-MM-DD format for CSV)
+  private formatDate(date: string | Date): string {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // Helper function to format date time (YYYY-MM-DD HH:mm:ss format for CSV)
+  private formatDateTime(date: string | Date): string {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
+
+  // Helper function to format attendees
+  private formatAttendees(currentAttendees: number | undefined, maxAttendees: number | undefined): string {
+    const current = currentAttendees || 0;
+    return maxAttendees ? `${current}/${maxAttendees}` : `${current}`;
+  }
+
+  // Export events to CSV
+  async exportEventsToCSV(userId: number, userRole: UserRole, filters?: {
+    status?: EventStatus;
+    dateFrom?: string;
+    dateTo?: string;
+  }): Promise<string> {
+    let events: EventResponse[];
+
+    // Fetch events based on user role
+    if (userRole === UserRole.ADMIN || userRole === UserRole.SUPERADMIN) {
+      // Admins can export all events
+      const result = await this.getEventsPaginated(1, 10000, filters?.status, userId);
+      events = result.events;
+    } else {
+      // Regular users and approvers can only export their own events
+      events = await this.getUserEvents(userId);
+
+      // Apply status filter if provided
+      if (filters?.status) {
+        events = events.filter(event => event.status === filters.status);
+      }
+    }
+
+    // Apply date range filter if provided
+    if (filters?.dateFrom) {
+      events = events.filter(event => event.eventDate >= filters.dateFrom!);
+    }
+    if (filters?.dateTo) {
+      events = events.filter(event => event.eventDate <= filters.dateTo!);
+    }
+
+    // CSV headers
+    const headers = ['Event Title', 'Creator', 'Status', 'Event Date', 'Location', 'Attendees', 'Last Updated'];
+
+    // Map events to CSV rows
+    const rows = events.map(event => [
+      this.escapeCSV(event.title),
+      this.escapeCSV(event.creatorName),
+      this.getStatusText(event.status),
+      this.formatDateTime(`${event.eventDate}T${event.eventTime}`),
+      this.escapeCSV(event.locationName),
+      this.formatAttendees(event.currentAttendees, event.maxAttendees),
+      this.formatDateTime(event.updatedAt)
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    return csvContent;
   }
 }

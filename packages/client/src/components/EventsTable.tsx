@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Event, EventStatus } from '../auth/api'
+import { getToken } from '../auth/storage'
+import { useAuth } from '../auth/AuthContext'
+import Pagination from './Pagination'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
 
 export type StatusFilterType = 'all' | EventStatus
 
@@ -24,6 +29,15 @@ export interface EventsTableProps {
   actions?: EventsTableAction[]
   emptyMessage?: string
   emptyDescription?: string
+  // Pagination props
+  pagination?: {
+    currentPage: number
+    totalPages: number
+    totalItems: number
+    itemsPerPage: number
+  }
+  onPageChange?: (page: number) => void
+  onItemsPerPageChange?: (itemsPerPage: number) => void
 }
 
 const EventsTable: React.FC<EventsTableProps> = ({
@@ -31,14 +45,18 @@ const EventsTable: React.FC<EventsTableProps> = ({
   loading = false,
   error = '',
   showStatusFilters = false,
-  statusFilterOptions = ['all', 'draft', 'pending_approval', 'revision_requested', 'published', 'cancelled', 'completed'],
+  statusFilterOptions = ['all', 'draft', 'pending_approval', 'revision_requested', 'published', 'cancelled'],
   showDateFilters = false,
   showSearch = true,
   actions = [],
   emptyMessage = 'No Events Found',
-  emptyDescription = 'There are no events to display.'
+  emptyDescription = 'There are no events to display.',
+  pagination,
+  onPageChange,
+  onItemsPerPageChange
 }) => {
   const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>('all')
   const [dateFilter, setDateFilter] = useState<'all' | 'upcoming' | 'past'>('all')
@@ -128,8 +146,7 @@ const EventsTable: React.FC<EventsTableProps> = ({
       pending_approval: { bg: '#fff3cd', color: '#856404', text: 'Pending', icon: '🟡' },
       revision_requested: { bg: '#ffe5cc', color: '#cc6600', text: 'Revision', icon: '🟠' },
       published: { bg: '#d4edda', color: '#155724', text: 'Published', icon: '✅' },
-      cancelled: { bg: '#f8d7da', color: '#721c24', text: 'Cancelled', icon: '❌' },
-      completed: { bg: '#cce5ff', color: '#004085', text: 'Completed', icon: '🏁' }
+      cancelled: { bg: '#f8d7da', color: '#721c24', text: 'Cancelled', icon: '❌' }
     }
 
     const config = statusConfig[status] || statusConfig.draft
@@ -162,69 +179,49 @@ const EventsTable: React.FC<EventsTableProps> = ({
     })
   }
 
-  // CSV Export helper functions
-  const escapeCSV = (value: string) => {
-    if (!value) return ''
-    // If contains comma, quote, or newline, wrap in quotes and escape quotes
-    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-      return `"${value.replace(/"/g, '""')}"`
+  // Export to CSV by calling backend endpoint
+  const exportToCSV = async () => {
+    try {
+      const token = getToken()
+      if (!token) {
+        console.error('No authentication token found')
+        return
+      }
+
+      const response = await fetch(`${API_BASE_URL}/events/export/csv`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to export CSV')
+      }
+
+      // Get the CSV content
+      const csvContent = await response.text()
+
+      // Extract filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = 'events.csv'
+      if (contentDisposition) {
+        const matches = /filename="([^"]+)"/.exec(contentDisposition)
+        if (matches && matches[1]) {
+          filename = matches[1]
+        }
+      }
+
+      // Trigger download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = filename
+      link.click()
+      URL.revokeObjectURL(link.href)
+    } catch (error) {
+      console.error('Error exporting CSV:', error)
     }
-    return value
-  }
-
-  const getStatusText = (status: string) => {
-    const statusMap: Record<string, string> = {
-      draft: 'Draft',
-      pending_approval: 'Pending Approval',
-      revision_requested: 'Revision Requested',
-      published: 'Published',
-      cancelled: 'Cancelled',
-      completed: 'Completed'
-    }
-    return statusMap[status] || status
-  }
-
-  const formatAttendees = (event: Event) => {
-    const current = event.currentAttendees || 0
-    const max = event.maxAttendees
-    return max ? `${current}/${max}` : `${current}`
-  }
-
-  const exportToCSV = () => {
-    // Generate filename with timestamp
-    const timestamp = new Date().toISOString()
-      .replace(/:/g, '-')
-      .replace(/\..+/, '')
-      .replace('T', '-')
-    const filename = `events-${timestamp}.csv`
-
-    // CSV headers
-    const headers = ['Event Title', 'Creator', 'Status', 'Event Date', 'Location', 'Attendees', 'Last Updated']
-
-    // Map events to CSV rows
-    const rows = events.map(event => [
-      escapeCSV(event.title),
-      escapeCSV(event.creatorName),
-      getStatusText(event.status),
-      formatDate(event.eventDate),
-      escapeCSV(event.locationName),
-      formatAttendees(event),
-      formatDateTime(event.updatedAt)
-    ])
-
-    // Combine headers and rows
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n')
-
-    // Trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = filename
-    link.click()
-    URL.revokeObjectURL(link.href)
   }
 
   const getCountForStatus = (status: StatusFilterType) => {
@@ -239,8 +236,7 @@ const EventsTable: React.FC<EventsTableProps> = ({
       pending_approval: 'Pending',
       revision_requested: 'Revision',
       published: 'Published',
-      cancelled: 'Cancelled',
-      completed: 'Completed'
+      cancelled: 'Cancelled'
     }
     return labels[status] || status
   }
@@ -605,7 +601,7 @@ const EventsTable: React.FC<EventsTableProps> = ({
       )}
 
       {/* Export Button */}
-      {events.length > 0 && (
+      {events.length > 0 && isAuthenticated && (
         <div style={{
           display: 'flex',
           justifyContent: 'flex-end',
@@ -879,6 +875,18 @@ const EventsTable: React.FC<EventsTableProps> = ({
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Pagination */}
+      {pagination && onPageChange && onItemsPerPageChange && !loading && filteredEvents.length > 0 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          itemsPerPage={pagination.itemsPerPage}
+          onPageChange={onPageChange}
+          onItemsPerPageChange={onItemsPerPageChange}
+        />
       )}
     </div>
   )

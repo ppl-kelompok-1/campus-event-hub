@@ -23,6 +23,10 @@ const JoinedEventsPage = () => {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [totalPages, setTotalPages] = useState(0)
+  const [totalItems, setTotalItems] = useState(0)
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
 
@@ -32,7 +36,7 @@ const JoinedEventsPage = () => {
       return
     }
     fetchJoinedEvents()
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate, currentPage, itemsPerPage])
 
   const fetchJoinedEvents = async () => {
     try {
@@ -40,8 +44,10 @@ const JoinedEventsPage = () => {
       setError('')
 
       // Get user's registrations
-      const registrationsResponse = await eventApi.getJoinedEvents()
+      const registrationsResponse = await eventApi.getJoinedEvents(currentPage, itemsPerPage)
       setRegistrations(registrationsResponse.data)
+      setTotalPages(registrationsResponse.pagination.totalPages)
+      setTotalItems(registrationsResponse.pagination.total)
 
       // Get full event details for each registration
       const eventPromises = registrationsResponse.data.map(reg =>
@@ -97,6 +103,15 @@ const JoinedEventsPage = () => {
     }
   }
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handleItemsPerPageChange = (items: number) => {
+    setItemsPerPage(items)
+    setCurrentPage(1) // Reset to first page when changing items per page
+  }
+
   // Define table actions
   const tableActions: EventsTableAction[] = [
     {
@@ -149,6 +164,14 @@ const JoinedEventsPage = () => {
           actions={tableActions}
           emptyMessage="No Joined Events Yet"
           emptyDescription="You haven't joined any events yet. Explore events and join ones that interest you!"
+          pagination={{
+            currentPage,
+            totalPages,
+            totalItems,
+            itemsPerPage
+          }}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
         />
       </div>
     </div>

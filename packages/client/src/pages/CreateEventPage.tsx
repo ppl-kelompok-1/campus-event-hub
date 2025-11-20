@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { eventApi } from '../auth/api'
-import type { CreateEventDto } from '../auth/api'
+import { eventApi, locationApi } from '../auth/api'
+import type { CreateEventDto, Location } from '../auth/api'
 import { LocationDropdown } from '../components/LocationDropdown'
 
 const CreateEventPage = () => {
@@ -22,6 +22,7 @@ const CreateEventPage = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [files, setFiles] = useState<File[]>([])
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
   const { isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
 
@@ -30,6 +31,24 @@ const CreateEventPage = () => {
     navigate('/login')
     return null
   }
+
+  // Fetch location details when locationId changes
+  useEffect(() => {
+    const fetchLocation = async () => {
+      if (formData.locationId && formData.locationId > 0) {
+        try {
+          const response = await locationApi.getById(formData.locationId)
+          setSelectedLocation(response.data)
+        } catch (err) {
+          console.error('Error fetching location:', err)
+          setSelectedLocation(null)
+        }
+      } else {
+        setSelectedLocation(null)
+      }
+    }
+    fetchLocation()
+  }, [formData.locationId])
 
   const validateForm = (): string | null => {
     if (!formData.title.trim()) {
@@ -83,6 +102,18 @@ const CreateEventPage = () => {
 
     if (formData.maxAttendees !== undefined && formData.maxAttendees < 1) {
       return 'Maximum attendees must be at least 1'
+    }
+
+    // Validate maxAttendees doesn't exceed location capacity
+    if (formData.maxAttendees !== undefined && selectedLocation && selectedLocation.maxCapacity !== undefined) {
+      if (formData.maxAttendees > selectedLocation.maxCapacity) {
+        return `Maximum attendees (${formData.maxAttendees}) cannot exceed location capacity (${selectedLocation.maxCapacity})`
+      }
+    }
+
+    // Validate attachments are required
+    if (files.length === 0) {
+      return 'At least one attachment is required'
     }
 
     return null
@@ -239,12 +270,14 @@ const CreateEventPage = () => {
                 value={formData.eventDate}
                 onChange={handleChange}
                 required
+                onKeyDown={(e) => e.preventDefault()}
                 style={{
                   width: '100%',
                   padding: '10px',
                   border: '1px solid #ced4da',
                   borderRadius: '4px',
-                  fontSize: '16px'
+                  fontSize: '16px',
+                  cursor: 'pointer'
                 }}
               />
             </div>
@@ -290,12 +323,14 @@ const CreateEventPage = () => {
                   value={formData.registrationStartDate}
                   onChange={handleChange}
                   required
+                  onKeyDown={(e) => e.preventDefault()}
                   style={{
                     width: '100%',
                     padding: '10px',
                     border: '1px solid #ced4da',
                     borderRadius: '4px',
-                    fontSize: '16px'
+                    fontSize: '16px',
+                    cursor: 'pointer'
                   }}
                 />
               </div>
@@ -329,12 +364,14 @@ const CreateEventPage = () => {
                   value={formData.registrationEndDate}
                   onChange={handleChange}
                   required
+                  onKeyDown={(e) => e.preventDefault()}
                   style={{
                     width: '100%',
                     padding: '10px',
                     border: '1px solid #ced4da',
                     borderRadius: '4px',
-                    fontSize: '16px'
+                    fontSize: '16px',
+                    cursor: 'pointer'
                   }}
                 />
               </div>
@@ -380,6 +417,7 @@ const CreateEventPage = () => {
             value={formData.maxAttendees || ''}
             onChange={handleChange}
             min="1"
+            max={selectedLocation?.maxCapacity}
             style={{
               width: '100%',
               padding: '10px',
@@ -389,11 +427,16 @@ const CreateEventPage = () => {
             }}
             placeholder="Leave empty for unlimited"
           />
+          {selectedLocation && selectedLocation.maxCapacity && (
+            <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+              Location capacity: {selectedLocation.maxCapacity} attendees
+            </div>
+          )}
         </div>
 
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-            Event Attachments (Optional)
+            Event Attachments *
           </label>
           <input
             type="file"
@@ -408,7 +451,7 @@ const CreateEventPage = () => {
             }}
           />
           <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
-            Accepted formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, WEBP, TXT (max 10MB each)
+            Accepted formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, WEBP, TXT (max 10MB each). <strong>At least one file is required.</strong>
           </div>
 
           {files.length > 0 && (

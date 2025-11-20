@@ -10,7 +10,7 @@ const LocationManagementPage = () => {
   const [success, setSuccess] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingLocation, setEditingLocation] = useState<Location | null>(null)
-  const [formData, setFormData] = useState({ name: '' })
+  const [formData, setFormData] = useState({ name: '', maxCapacity: '' })
   const { isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
 
@@ -47,7 +47,10 @@ const LocationManagementPage = () => {
 
   const handleOpenModal = (location?: Location) => {
     setEditingLocation(location || null)
-    setFormData({ name: location?.name || '' })
+    setFormData({
+      name: location?.name || '',
+      maxCapacity: location?.maxCapacity?.toString() || ''
+    })
     setIsModalOpen(true)
     setError('')
     setSuccess('')
@@ -56,7 +59,7 @@ const LocationManagementPage = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setEditingLocation(null)
-    setFormData({ name: '' })
+    setFormData({ name: '', maxCapacity: '' })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,12 +72,22 @@ const LocationManagementPage = () => {
       return
     }
 
+    if (formData.maxCapacity && parseInt(formData.maxCapacity) < 1) {
+      setError('Maximum capacity must be at least 1')
+      return
+    }
+
     try {
+      const locationData = {
+        name: formData.name,
+        maxCapacity: formData.maxCapacity ? parseInt(formData.maxCapacity) : undefined
+      }
+
       if (editingLocation) {
-        await locationApi.update(editingLocation.id, { name: formData.name })
+        await locationApi.update(editingLocation.id, locationData)
         setSuccess('Location updated successfully')
       } else {
-        await locationApi.create({ name: formData.name })
+        await locationApi.create(locationData)
         setSuccess('Location created successfully')
       }
       handleCloseModal()
@@ -191,6 +204,7 @@ const LocationManagementPage = () => {
             <thead>
               <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
                 <th style={{ padding: '12px', textAlign: 'left', color: '#495057' }}>Name</th>
+                <th style={{ padding: '12px', textAlign: 'left', color: '#495057' }}>Max Capacity</th>
                 <th style={{ padding: '12px', textAlign: 'left', color: '#495057' }}>Status</th>
                 <th style={{ padding: '12px', textAlign: 'left', color: '#495057' }}>Created</th>
                 <th style={{ padding: '12px', textAlign: 'center', color: '#495057' }}>Actions</th>
@@ -200,6 +214,9 @@ const LocationManagementPage = () => {
               {locations.map(location => (
                 <tr key={location.id} style={{ borderBottom: '1px solid #dee2e6' }}>
                   <td style={{ padding: '12px' }}>{location.name}</td>
+                  <td style={{ padding: '12px', color: '#6c757d', fontSize: '14px' }}>
+                    {location.maxCapacity || 'Unlimited'}
+                  </td>
                   <td style={{ padding: '12px' }}>
                     <span style={{
                       display: 'inline-block',
@@ -302,7 +319,7 @@ const LocationManagementPage = () => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ name: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Enter location name"
                   required
                   style={{
@@ -314,6 +331,30 @@ const LocationManagementPage = () => {
                     boxSizing: 'border-box'
                   }}
                 />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                  Maximum Capacity
+                </label>
+                <input
+                  type="number"
+                  value={formData.maxCapacity}
+                  onChange={(e) => setFormData({ ...formData, maxCapacity: e.target.value })}
+                  placeholder="Enter maximum capacity (optional)"
+                  min="1"
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '16px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                  Leave empty for no capacity limit
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>

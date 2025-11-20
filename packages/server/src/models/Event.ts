@@ -111,8 +111,26 @@ export interface ApprovalDto {
 
 // Validation helpers
 export function isValidEventDate(dateString: string): boolean {
+  // Check format
+  if (!dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return false;
+  }
+
+  // Parse the date
   const date = new Date(dateString);
-  return !isNaN(date.getTime()) && Boolean(dateString.match(/^\d{4}-\d{2}-\d{2}$/));
+
+  // Check if date is valid
+  if (isNaN(date.getTime())) {
+    return false;
+  }
+
+  // Ensure the parsed date matches the input (catches invalid dates like Feb 30)
+  const [year, month, day] = dateString.split('-').map(Number);
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&  // Month is 0-indexed
+    date.getDate() === day
+  );
 }
 
 export function isValidEventTime(timeString: string): boolean {

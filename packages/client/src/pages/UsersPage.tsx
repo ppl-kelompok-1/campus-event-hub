@@ -3,13 +3,16 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { userApi } from '../auth/api'
 import type { User } from '../auth/api'
+import Pagination from '../components/Pagination'
 
 const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [totalPages, setTotalPages] = useState(0)
+  const [totalItems, setTotalItems] = useState(0)
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -21,19 +24,29 @@ const UsersPage = () => {
     }
 
     fetchUsers()
-  }, [currentPage, user, navigate])
+  }, [currentPage, itemsPerPage, user, navigate])
 
   const fetchUsers = async () => {
     try {
       setLoading(true)
-      const response = await userApi.getUsers(currentPage)
+      const response = await userApi.getUsers(currentPage, itemsPerPage)
       setUsers(response.data)
       setTotalPages(response.pagination.totalPages)
+      setTotalItems(response.pagination.total)
     } catch (err: any) {
       setError(err.message || 'Failed to fetch users')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handleItemsPerPageChange = (items: number) => {
+    setItemsPerPage(items)
+    setCurrentPage(1) // Reset to first page when changing items per page
   }
 
   const handleDelete = async (id: number) => {
@@ -88,23 +101,19 @@ const UsersPage = () => {
         </tbody>
       </table>
 
-      <div style={{ marginTop: '20px' }}>
-        <button
-          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-          disabled={currentPage === 1}
-        >
-          Previous
-        </button>
-        <span style={{ margin: '0 20px' }}>
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-          disabled={currentPage === totalPages}
-        >
-          Next
-        </button>
-      </div>
+      {/* Pagination */}
+      {!loading && users.length > 0 && (
+        <div style={{ marginTop: '20px' }}>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+          />
+        </div>
+      )}
     </div>
   )
 }

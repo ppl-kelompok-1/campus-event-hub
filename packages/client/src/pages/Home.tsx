@@ -9,26 +9,41 @@ const Home = () => {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [totalPages, setTotalPages] = useState(0)
+  const [totalItems, setTotalItems] = useState(0)
   const { isAuthenticated } = useAuth()
 
   useEffect(() => {
     fetchEvents()
-  }, [isAuthenticated])
+  }, [isAuthenticated, currentPage, itemsPerPage])
 
   const fetchEvents = async () => {
     try {
       setLoading(true)
       setError('')
-      // Fetch all published events
+      // Fetch published events with pagination
       // Include auth if user is authenticated to get registration status
-      const response = await eventApi.getEvents(1, 100, isAuthenticated)
+      const response = await eventApi.getEvents(currentPage, itemsPerPage, isAuthenticated)
       setEvents(response.data)
+      setTotalPages(response.pagination.totalPages)
+      setTotalItems(response.pagination.total)
     } catch (err) {
       setError('Failed to load events. Please try again later.')
       console.error('Error fetching events:', err)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handleItemsPerPageChange = (items: number) => {
+    setItemsPerPage(items)
+    setCurrentPage(1) // Reset to first page when changing items per page
   }
 
   const handleJoinEvent = async (event: Event) => {
@@ -155,12 +170,20 @@ const Home = () => {
           loading={loading}
           error={error}
           showStatusFilters={true}
-          statusFilterOptions={['all', 'published', 'completed', 'cancelled']}
+          statusFilterOptions={['all', 'published', 'cancelled']}
           showDateFilters={true}
           showSearch={true}
           actions={tableActions}
           emptyMessage="No Events Found"
           emptyDescription="There are no published events at the moment. Check back later!"
+          pagination={{
+            currentPage,
+            totalPages,
+            totalItems,
+            itemsPerPage
+          }}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
         />
       </div>
     </div>

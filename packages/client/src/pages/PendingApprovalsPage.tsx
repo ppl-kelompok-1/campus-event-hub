@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { eventApi, type Event } from '../auth/api'
+import Pagination from '../components/Pagination'
 
 type StatusFilter = 'all' | 'pending_approval' | 'revision_requested' | 'published'
 
@@ -15,6 +16,10 @@ const PendingApprovalsPage = () => {
   const [revisionComments, setRevisionComments] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [totalPages, setTotalPages] = useState(0)
+  const [totalItems, setTotalItems] = useState(0)
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -30,7 +35,7 @@ const PendingApprovalsPage = () => {
 
   useEffect(() => {
     loadPendingEvents()
-  }, [])
+  }, [currentPage, itemsPerPage])
 
   useEffect(() => {
     filterEvents()
@@ -39,13 +44,60 @@ const PendingApprovalsPage = () => {
   const loadPendingEvents = async () => {
     try {
       setLoading(true)
-      const response = await eventApi.getPendingApprovalEvents()
-      setEvents(response.data)
+
+      // Debug: Log pagination parameters being sent
+      console.log('🔍 Fetching pending events - Page:', currentPage, 'Limit:', itemsPerPage)
+
+      const response = await eventApi.getPendingApprovalEvents(currentPage, itemsPerPage)
+
+      // Defensive: Check if response has expected structure
+      if (!response) {
+        throw new Error('Invalid response from server')
+      }
+
+      // Debug: Log what API actually returned
+      console.log('📦 API Response:')
+      console.log('  - Events returned:', response.data?.length || 0)
+      console.log('  - Pagination metadata:', response.pagination)
+      console.log('  - Expected limit:', itemsPerPage)
+
+      // Alert if backend returned more events than requested
+      if (response.data && response.data.length > itemsPerPage) {
+        console.warn('⚠️ Backend returned MORE events than requested!')
+        console.warn(`   Expected: ${itemsPerPage}, Got: ${response.data.length}`)
+        console.warn('   Backend pagination may not be working correctly.')
+      }
+
+      // Set events data
+      setEvents(response.data || [])
+
+      // Defensive: Use optional chaining and provide defaults
+      setTotalPages(response.pagination?.totalPages || 1)
+      setTotalItems(response.pagination?.total || 0)
+
+      // Log for debugging if pagination is missing
+      if (!response.pagination) {
+        console.warn('API response missing pagination metadata:', response)
+      }
     } catch (err: any) {
+      console.error('Error loading pending events:', err)
       setError(err.message || 'Failed to load events')
+      // Reset to safe defaults on error
+      setEvents([])
+      setTotalPages(1)
+      setTotalItems(0)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handleItemsPerPageChange = (items: number) => {
+    setItemsPerPage(items)
+    setCurrentPage(1) // Reset to first page when changing items per page
   }
 
   const filterEvents = () => {
@@ -408,6 +460,20 @@ const PendingApprovalsPage = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && filteredEvents.length > 0 && (
+        <div style={{ marginTop: '20px' }}>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+          />
         </div>
       )}
 
