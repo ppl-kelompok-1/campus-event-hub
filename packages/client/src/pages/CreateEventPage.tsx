@@ -270,12 +270,14 @@ const CreateEventPage = () => {
                 value={formData.eventDate}
                 onChange={handleChange}
                 required
+                onKeyDown={(e) => e.preventDefault()}
                 style={{
                   width: '100%',
                   padding: '10px',
                   border: '1px solid #ced4da',
                   borderRadius: '4px',
-                  fontSize: '16px'
+                  fontSize: '16px',
+                  cursor: 'pointer'
                 }}
               />
             </div>
@@ -321,12 +323,14 @@ const CreateEventPage = () => {
                   value={formData.registrationStartDate}
                   onChange={handleChange}
                   required
+                  onKeyDown={(e) => e.preventDefault()}
                   style={{
                     width: '100%',
                     padding: '10px',
                     border: '1px solid #ced4da',
                     borderRadius: '4px',
-                    fontSize: '16px'
+                    fontSize: '16px',
+                    cursor: 'pointer'
                   }}
                 />
               </div>
@@ -360,12 +364,14 @@ const CreateEventPage = () => {
                   value={formData.registrationEndDate}
                   onChange={handleChange}
                   required
+                  onKeyDown={(e) => e.preventDefault()}
                   style={{
                     width: '100%',
                     padding: '10px',
                     border: '1px solid #ced4da',
                     borderRadius: '4px',
-                    fontSize: '16px'
+                    fontSize: '16px',
+                    cursor: 'pointer'
                   }}
                 />
               </div>
