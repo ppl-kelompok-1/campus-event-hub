@@ -126,8 +126,7 @@ const EventDetailsPage = () => {
     const statusStyles: Record<string, React.CSSProperties> = {
       draft: { backgroundColor: '#6c757d', color: 'white' },
       published: { backgroundColor: '#28a745', color: 'white' },
-      cancelled: { backgroundColor: '#dc3545', color: 'white' },
-      completed: { backgroundColor: '#007bff', color: 'white' }
+      cancelled: { backgroundColor: '#dc3545', color: 'white' }
     }
 
     return (

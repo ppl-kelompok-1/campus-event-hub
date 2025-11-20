@@ -309,7 +309,7 @@ const PublicUserProfilePage = () => {
               events={createdEvents}
               loading={false}
               showStatusFilters={true}
-              statusFilterOptions={['all', 'draft', 'pending_approval', 'revision_requested', 'published', 'cancelled', 'completed']}
+              statusFilterOptions={['all', 'draft', 'pending_approval', 'revision_requested', 'published', 'cancelled']}
               showDateFilters={true}
               showSearch={true}
               actions={[]}

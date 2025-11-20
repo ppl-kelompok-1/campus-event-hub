@@ -35,7 +35,7 @@ const EventsTable: React.FC<EventsTableProps> = ({
   loading = false,
   error = '',
   showStatusFilters = false,
-  statusFilterOptions = ['all', 'draft', 'pending_approval', 'revision_requested', 'published', 'cancelled', 'completed'],
+  statusFilterOptions = ['all', 'draft', 'pending_approval', 'revision_requested', 'published', 'cancelled'],
   showDateFilters = false,
   showSearch = true,
   actions = [],
@@ -133,8 +133,7 @@ const EventsTable: React.FC<EventsTableProps> = ({
       pending_approval: { bg: '#fff3cd', color: '#856404', text: 'Pending', icon: '🟡' },
       revision_requested: { bg: '#ffe5cc', color: '#cc6600', text: 'Revision', icon: '🟠' },
       published: { bg: '#d4edda', color: '#155724', text: 'Published', icon: '✅' },
-      cancelled: { bg: '#f8d7da', color: '#721c24', text: 'Cancelled', icon: '❌' },
-      completed: { bg: '#cce5ff', color: '#004085', text: 'Completed', icon: '🏁' }
+      cancelled: { bg: '#f8d7da', color: '#721c24', text: 'Cancelled', icon: '❌' }
     }
 
     const config = statusConfig[status] || statusConfig.draft
@@ -224,8 +223,7 @@ const EventsTable: React.FC<EventsTableProps> = ({
       pending_approval: 'Pending',
       revision_requested: 'Revision',
       published: 'Published',
-      cancelled: 'Cancelled',
-      completed: 'Completed'
+      cancelled: 'Cancelled'
     }
     return labels[status] || status
   }

@@ -155,7 +155,7 @@ const EventsPage = () => {
           loading={loading}
           error={error}
           showStatusFilters={true}
-          statusFilterOptions={['all', 'published', 'completed', 'cancelled']}
+          statusFilterOptions={['all', 'published', 'cancelled']}
           showDateFilters={true}
           showSearch={true}
           actions={tableActions}
