@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { Event, EventStatus } from '../auth/api'
 import { getToken } from '../auth/storage'
 import { useAuth } from '../auth/AuthContext'
+import Pagination from './Pagination'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
 
@@ -28,6 +29,15 @@ export interface EventsTableProps {
   actions?: EventsTableAction[]
   emptyMessage?: string
   emptyDescription?: string
+  // Pagination props
+  pagination?: {
+    currentPage: number
+    totalPages: number
+    totalItems: number
+    itemsPerPage: number
+  }
+  onPageChange?: (page: number) => void
+  onItemsPerPageChange?: (itemsPerPage: number) => void
 }
 
 const EventsTable: React.FC<EventsTableProps> = ({
@@ -40,7 +50,10 @@ const EventsTable: React.FC<EventsTableProps> = ({
   showSearch = true,
   actions = [],
   emptyMessage = 'No Events Found',
-  emptyDescription = 'There are no events to display.'
+  emptyDescription = 'There are no events to display.',
+  pagination,
+  onPageChange,
+  onItemsPerPageChange
 }) => {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
@@ -862,6 +875,18 @@ const EventsTable: React.FC<EventsTableProps> = ({
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Pagination */}
+      {pagination && onPageChange && onItemsPerPageChange && !loading && filteredEvents.length > 0 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          itemsPerPage={pagination.itemsPerPage}
+          onPageChange={onPageChange}
+          onItemsPerPageChange={onItemsPerPageChange}
+        />
       )}
     </div>
   )

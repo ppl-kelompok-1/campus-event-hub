@@ -10,6 +10,10 @@ const MyEventsPage = () => {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [totalPages, setTotalPages] = useState(0)
+  const [totalItems, setTotalItems] = useState(0)
   const { isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
 
@@ -19,20 +23,31 @@ const MyEventsPage = () => {
       return
     }
     fetchMyEvents()
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate, currentPage, itemsPerPage])
 
   const fetchMyEvents = async () => {
     try {
       setLoading(true)
       setError('')
-      const response = await eventApi.getMyEvents()
+      const response = await eventApi.getMyEvents(currentPage, itemsPerPage)
       setEvents(response.data)
+      setTotalPages(response.pagination.totalPages)
+      setTotalItems(response.pagination.total)
     } catch (err) {
       setError('Failed to load your created events. Please try again later.')
       console.error('Error fetching my events:', err)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handleItemsPerPageChange = (items: number) => {
+    setItemsPerPage(items)
+    setCurrentPage(1) // Reset to first page when changing items per page
   }
 
   const handleEdit = (event: Event) => {
@@ -205,6 +220,14 @@ const MyEventsPage = () => {
           actions={tableActions}
           emptyMessage="No Created Events Yet"
           emptyDescription="You haven't created any events yet. Start by creating your first event!"
+          pagination={{
+            currentPage,
+            totalPages,
+            totalItems,
+            itemsPerPage
+          }}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
         />
       </div>
     </div>

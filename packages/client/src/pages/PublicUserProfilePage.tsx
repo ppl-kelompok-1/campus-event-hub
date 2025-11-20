@@ -13,6 +13,18 @@ const PublicUserProfilePage = () => {
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<'created' | 'joined'>('created')
 
+  // Pagination state for created events
+  const [createdCurrentPage, setCreatedCurrentPage] = useState(1)
+  const [createdItemsPerPage, setCreatedItemsPerPage] = useState(10)
+  const [createdTotalPages, setCreatedTotalPages] = useState(0)
+  const [createdTotalItems, setCreatedTotalItems] = useState(0)
+
+  // Pagination state for joined events
+  const [joinedCurrentPage, setJoinedCurrentPage] = useState(1)
+  const [joinedItemsPerPage, setJoinedItemsPerPage] = useState(10)
+  const [joinedTotalPages, setJoinedTotalPages] = useState(0)
+  const [joinedTotalItems, setJoinedTotalItems] = useState(0)
+
   useEffect(() => {
     if (!id || isNaN(Number(id))) {
       setError('Invalid user ID')
@@ -21,7 +33,7 @@ const PublicUserProfilePage = () => {
     }
 
     fetchUserProfile()
-  }, [id])
+  }, [id, createdCurrentPage, createdItemsPerPage, joinedCurrentPage, joinedItemsPerPage])
 
   const fetchUserProfile = async () => {
     try {
@@ -34,19 +46,43 @@ const PublicUserProfilePage = () => {
       const profileResponse = await userApi.getPublicProfile(userId)
       setProfile(profileResponse.data)
 
-      // Fetch created events
-      const createdResponse = await userApi.getUserCreatedEvents(userId)
+      // Fetch created events with pagination
+      const createdResponse = await userApi.getUserCreatedEvents(userId, createdCurrentPage, createdItemsPerPage)
       setCreatedEvents(createdResponse.data)
+      setCreatedTotalPages(createdResponse.pagination.totalPages)
+      setCreatedTotalItems(createdResponse.pagination.total)
 
-      // Fetch joined events
-      const joinedResponse = await userApi.getUserJoinedEvents(userId)
+      // Fetch joined events with pagination
+      const joinedResponse = await userApi.getUserJoinedEvents(userId, joinedCurrentPage, joinedItemsPerPage)
       setJoinedEvents(joinedResponse.data)
+      setJoinedTotalPages(joinedResponse.pagination.totalPages)
+      setJoinedTotalItems(joinedResponse.pagination.total)
     } catch (err: any) {
       setError(err.message || 'Failed to load user profile')
       console.error('Error fetching user profile:', err)
     } finally {
       setLoading(false)
     }
+  }
+
+  // Pagination handlers for created events
+  const handleCreatedPageChange = (page: number) => {
+    setCreatedCurrentPage(page)
+  }
+
+  const handleCreatedItemsPerPageChange = (items: number) => {
+    setCreatedItemsPerPage(items)
+    setCreatedCurrentPage(1)
+  }
+
+  // Pagination handlers for joined events
+  const handleJoinedPageChange = (page: number) => {
+    setJoinedCurrentPage(page)
+  }
+
+  const handleJoinedItemsPerPageChange = (items: number) => {
+    setJoinedItemsPerPage(items)
+    setJoinedCurrentPage(1)
   }
 
   const formatDate = (dateStr: string) => {
@@ -315,6 +351,14 @@ const PublicUserProfilePage = () => {
               actions={[]}
               emptyMessage="No Created Events"
               emptyDescription={`${profile.name} hasn't created any events yet.`}
+              pagination={{
+                currentPage: createdCurrentPage,
+                totalPages: createdTotalPages,
+                totalItems: createdTotalItems,
+                itemsPerPage: createdItemsPerPage
+              }}
+              onPageChange={handleCreatedPageChange}
+              onItemsPerPageChange={handleCreatedItemsPerPageChange}
             />
           )}
 
@@ -328,6 +372,14 @@ const PublicUserProfilePage = () => {
               actions={[]}
               emptyMessage="No Joined Events"
               emptyDescription={`${profile.name} hasn't joined any events yet.`}
+              pagination={{
+                currentPage: joinedCurrentPage,
+                totalPages: joinedTotalPages,
+                totalItems: joinedTotalItems,
+                itemsPerPage: joinedItemsPerPage
+              }}
+              onPageChange={handleJoinedPageChange}
+              onItemsPerPageChange={handleJoinedItemsPerPageChange}
             />
           )}
         </div>
