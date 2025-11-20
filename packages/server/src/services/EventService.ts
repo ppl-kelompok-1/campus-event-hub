@@ -2,6 +2,7 @@ import { IEventRepository } from '../repositories/IEventRepository';
 import { IUserRepository } from '../repositories/IUserRepository';
 import { IEventRegistrationRepository } from '../repositories/IEventRegistrationRepository';
 import { ILocationRepository } from '../repositories/ILocationRepository';
+import { IEventAttachmentRepository } from '../repositories/IEventAttachmentRepository';
 import { Event, CreateEventDto, UpdateEventDto, EventResponse, EventStatus, ApprovalDto, toEventResponse, isValidEventDate, isValidEventTime, isEventInPast, isValidRegistrationPeriod, isRegistrationOpen, hasRegistrationStarted, hasRegistrationEnded } from '../models/Event';
 import { UserRole } from '../models/User';
 import { RegistrationStatus } from '../models/EventRegistration';
@@ -13,7 +14,8 @@ export class EventService {
     private userRepository: IUserRepository,
     private locationRepository: ILocationRepository,
     private eventRegistrationRepository?: IEventRegistrationRepository,
-    private approvalHistoryService?: EventApprovalHistoryService
+    private approvalHistoryService?: EventApprovalHistoryService,
+    private eventAttachmentRepository?: IEventAttachmentRepository
   ) {}
 
   // Create a new event
@@ -266,6 +268,18 @@ export class EventService {
     }
   }
 
+  // Validate event has attachments
+  private async validateEventHasAttachments(eventId: number): Promise<void> {
+    if (!this.eventAttachmentRepository) {
+      return; // Skip validation if repository not available
+    }
+
+    const attachments = this.eventAttachmentRepository.findByEventId(eventId);
+    if (!attachments || attachments.length === 0) {
+      throw new Error('Events must have at least one attachment');
+    }
+  }
+
   // Submit event for approval (regular users only)
   async submitForApproval(eventId: number, userId: number, userRole: UserRole): Promise<boolean> {
     // Check if event exists
@@ -289,6 +303,9 @@ export class EventService {
     if (event.status !== EventStatus.DRAFT && event.status !== EventStatus.REVISION_REQUESTED) {
       throw new Error('Only draft or revision requested events can be submitted for approval');
     }
+
+    // Validate attachments exist before submitting for approval
+    await this.validateEventHasAttachments(eventId);
 
     const statusBefore = event.status;
     const result = await this.eventRepository.submitForApproval(eventId);
@@ -327,6 +344,9 @@ export class EventService {
     if (event.status !== EventStatus.PENDING_APPROVAL) {
       throw new Error('Only events pending approval can be approved');
     }
+
+    // Validate attachments exist before approving
+    await this.validateEventHasAttachments(eventId);
 
     // Check if event is in the past
     if (isEventInPast(event.eventDate, event.eventTime)) {
@@ -432,6 +452,9 @@ export class EventService {
     if (!canModify) {
       throw new Error('Insufficient permissions to publish this event');
     }
+
+    // Validate attachments exist before publishing
+    await this.validateEventHasAttachments(id);
 
     // Check if event is in the past
     if (isEventInPast(event.eventDate, event.eventTime)) {

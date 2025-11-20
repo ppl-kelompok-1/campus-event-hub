@@ -137,7 +137,8 @@ export class Container {
         this.getUserRepository(),
         this.getLocationRepository(),
         this.getEventRegistrationRepository(),
-        this.getEventApprovalHistoryService()
+        this.getEventApprovalHistoryService(),
+        this.getEventAttachmentRepository()
       );
     }
     return this.eventService;

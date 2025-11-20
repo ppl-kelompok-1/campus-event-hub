@@ -85,6 +85,11 @@ const CreateEventPage = () => {
       return 'Maximum attendees must be at least 1'
     }
 
+    // Validate attachments are required
+    if (files.length === 0) {
+      return 'At least one attachment is required'
+    }
+
     return null
   }
 
@@ -393,7 +398,7 @@ const CreateEventPage = () => {
 
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-            Event Attachments (Optional)
+            Event Attachments *
           </label>
           <input
             type="file"
@@ -408,7 +413,7 @@ const CreateEventPage = () => {
             }}
           />
           <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
-            Accepted formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, WEBP, TXT (max 10MB each)
+            Accepted formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, WEBP, TXT (max 10MB each). <strong>At least one file is required.</strong>
           </div>
 
           {files.length > 0 && (
