@@ -570,6 +570,7 @@ export const eventApi = {
 export interface Location {
   id: number
   name: string
+  maxCapacity?: number
   isActive: boolean
   createdAt: string
   updatedAt: string

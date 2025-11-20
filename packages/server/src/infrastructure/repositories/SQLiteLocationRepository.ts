@@ -7,12 +7,13 @@ export class SQLiteLocationRepository implements ILocationRepository {
 
   async create(locationData: CreateLocationDto): Promise<Location> {
     const query = `
-      INSERT INTO locations (name, is_active)
-      VALUES (?, ?)
+      INSERT INTO locations (name, max_capacity, is_active)
+      VALUES (?, ?, ?)
     `;
 
     const params = [
       locationData.name,
+      locationData.maxCapacity || null,
       1 // is_active defaults to true
     ];
 
@@ -104,6 +105,11 @@ export class SQLiteLocationRepository implements ILocationRepository {
       values.push(locationData.name);
     }
 
+    if (locationData.maxCapacity !== undefined) {
+      fields.push('max_capacity = ?');
+      values.push(locationData.maxCapacity || null);
+    }
+
     if (locationData.isActive !== undefined) {
       fields.push('is_active = ?');
       values.push(locationData.isActive ? 1 : 0);
@@ -169,6 +175,7 @@ export class SQLiteLocationRepository implements ILocationRepository {
     return {
       id: row.id,
       name: row.name,
+      maxCapacity: row.max_capacity !== null ? row.max_capacity : undefined,
       isActive: Boolean(row.is_active),
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)

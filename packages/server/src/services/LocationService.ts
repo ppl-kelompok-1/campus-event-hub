@@ -1,5 +1,5 @@
 import { ILocationRepository } from '../repositories/ILocationRepository';
-import { Location, CreateLocationDto, UpdateLocationDto, isValidLocationName } from '../models/Location';
+import { Location, CreateLocationDto, UpdateLocationDto, isValidLocationName, isValidMaxCapacity } from '../models/Location';
 
 export class LocationService {
   constructor(private locationRepository: ILocationRepository) {}
@@ -128,6 +128,10 @@ export class LocationService {
   private validateLocationData(locationData: CreateLocationDto): void {
     if (!locationData.name || !isValidLocationName(locationData.name)) {
       throw new Error('Location name must be non-empty and less than 255 characters');
+    }
+
+    if (!isValidMaxCapacity(locationData.maxCapacity)) {
+      throw new Error('Maximum capacity must be a positive integer');
     }
   }
 }

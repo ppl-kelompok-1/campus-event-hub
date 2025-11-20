@@ -233,6 +233,16 @@ export class EventService {
       throw new Error('Invalid location selected');
     }
 
+    // Validate maxAttendees doesn't exceed location capacity
+    if (eventData.maxAttendees !== undefined) {
+      const location = await this.locationRepository.findById(eventData.locationId);
+      if (location && location.maxCapacity !== undefined) {
+        if (eventData.maxAttendees > location.maxCapacity) {
+          throw new Error(`Maximum attendees (${eventData.maxAttendees}) cannot exceed location capacity (${location.maxCapacity})`);
+        }
+      }
+    }
+
     if (!isValidEventDate(eventData.eventDate)) {
       throw new Error('Invalid event date format. Use YYYY-MM-DD');
     }
