@@ -788,7 +788,7 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
   router.get('/:id/attendees',
     asyncHandler(async (req: Request, res: Response) => {
       const eventId = parseInt(req.params.id);
-      
+
       if (isNaN(eventId)) {
         return res.status(400).json({
           success: false,
@@ -798,17 +798,74 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
 
       try {
         const attendees = await eventRegistrationService.getEventAttendees(eventId);
-        
+
         res.json({
           success: true,
           data: attendees
         });
       } catch (error) {
         const statusCode = error instanceof Error && error.message.includes('not found') ? 404 : 500;
-        
+
         res.status(statusCode).json({
           success: false,
           error: error instanceof Error ? error.message : 'Failed to get event attendees'
+        });
+      }
+    })
+  );
+
+  // GET /api/v1/events/export/csv - Export events to CSV
+  router.get('/export/csv',
+    authenticate(authService),
+    asyncHandler(async (req: Request, res: Response) => {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+
+      try {
+        // Parse filters from query parameters
+        const filters: {
+          status?: EventStatus;
+          dateFrom?: string;
+          dateTo?: string;
+        } = {};
+
+        if (req.query.status) {
+          filters.status = req.query.status as EventStatus;
+        }
+        if (req.query.dateFrom) {
+          filters.dateFrom = req.query.dateFrom as string;
+        }
+        if (req.query.dateTo) {
+          filters.dateTo = req.query.dateTo as string;
+        }
+
+        // Generate CSV
+        const csvContent = await eventService.exportEventsToCSV(
+          req.user.userId,
+          req.user.role,
+          filters
+        );
+
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString()
+          .replace(/:/g, '-')
+          .replace(/\..+/, '')
+          .replace('T', '-');
+        const filename = `events-${timestamp}.csv`;
+
+        // Set response headers for CSV download
+        res.setHeader('Content-Type', 'text/csv;charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+        res.send(csvContent);
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to export events to CSV'
         });
       }
     })

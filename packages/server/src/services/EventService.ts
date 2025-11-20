@@ -545,4 +545,109 @@ export class EventService {
     }
     return enrichedEvents;
   }
+
+  // Helper function to escape CSV values
+  private escapeCSV(value: string | number | undefined | null): string {
+    if (value === null || value === undefined) return '';
+    const stringValue = String(value);
+    // If contains comma, quote, or newline, wrap in quotes and escape quotes
+    if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+      return `"${stringValue.replace(/"/g, '""')}"`;
+    }
+    return stringValue;
+  }
+
+  // Helper function to get human-readable status text
+  private getStatusText(status: string): string {
+    const statusMap: Record<string, string> = {
+      draft: 'Draft',
+      pending_approval: 'Pending Approval',
+      revision_requested: 'Revision Requested',
+      published: 'Published',
+      cancelled: 'Cancelled',
+      completed: 'Completed'
+    };
+    return statusMap[status] || status;
+  }
+
+  // Helper function to format date (YYYY-MM-DD format for CSV)
+  private formatDate(date: string | Date): string {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // Helper function to format date time (YYYY-MM-DD HH:mm:ss format for CSV)
+  private formatDateTime(date: string | Date): string {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
+
+  // Helper function to format attendees
+  private formatAttendees(currentAttendees: number | undefined, maxAttendees: number | undefined): string {
+    const current = currentAttendees || 0;
+    return maxAttendees ? `${current}/${maxAttendees}` : `${current}`;
+  }
+
+  // Export events to CSV
+  async exportEventsToCSV(userId: number, userRole: UserRole, filters?: {
+    status?: EventStatus;
+    dateFrom?: string;
+    dateTo?: string;
+  }): Promise<string> {
+    let events: EventResponse[];
+
+    // Fetch events based on user role
+    if (userRole === UserRole.ADMIN || userRole === UserRole.SUPERADMIN) {
+      // Admins can export all events
+      const result = await this.getEventsPaginated(1, 10000, filters?.status, userId);
+      events = result.events;
+    } else {
+      // Regular users and approvers can only export their own events
+      events = await this.getUserEvents(userId);
+
+      // Apply status filter if provided
+      if (filters?.status) {
+        events = events.filter(event => event.status === filters.status);
+      }
+    }
+
+    // Apply date range filter if provided
+    if (filters?.dateFrom) {
+      events = events.filter(event => event.eventDate >= filters.dateFrom!);
+    }
+    if (filters?.dateTo) {
+      events = events.filter(event => event.eventDate <= filters.dateTo!);
+    }
+
+    // CSV headers
+    const headers = ['Event Title', 'Creator', 'Status', 'Event Date', 'Location', 'Attendees', 'Last Updated'];
+
+    // Map events to CSV rows
+    const rows = events.map(event => [
+      this.escapeCSV(event.title),
+      this.escapeCSV(event.creatorName),
+      this.getStatusText(event.status),
+      this.formatDateTime(`${event.eventDate}T${event.eventTime}`),
+      this.escapeCSV(event.locationName),
+      this.formatAttendees(event.currentAttendees, event.maxAttendees),
+      this.formatDateTime(event.updatedAt)
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    return csvContent;
+  }
 }
