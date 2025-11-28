@@ -11,12 +11,16 @@ export class SQLiteEventRepository implements IEventRepository {
         title, description, event_date, event_time,
         registration_start_date, registration_start_time,
         registration_end_date, registration_end_time,
-        location_id, max_attendees, created_by, status
+        location_id, max_attendees, created_by, status, allowed_categories
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const status = eventData.status || EventStatus.DRAFT;
+    const allowedCategoriesJson = eventData.allowedCategories && eventData.allowedCategories.length > 0
+      ? JSON.stringify(eventData.allowedCategories)
+      : null;
+
     const params = [
       eventData.title,
       eventData.description || null,
@@ -29,7 +33,8 @@ export class SQLiteEventRepository implements IEventRepository {
       eventData.locationId,
       eventData.maxAttendees || null,
       createdBy,
-      status
+      status,
+      allowedCategoriesJson
     ];
 
     const result = await this.database.run(query, params);
@@ -171,6 +176,13 @@ export class SQLiteEventRepository implements IEventRepository {
       updates.push('status = ?');
       params.push(eventData.status);
     }
+    if (eventData.allowedCategories !== undefined) {
+      updates.push('allowed_categories = ?');
+      const categoriesJson = eventData.allowedCategories && eventData.allowedCategories.length > 0
+        ? JSON.stringify(eventData.allowedCategories)
+        : null;
+      params.push(categoriesJson);
+    }
 
     if (updates.length === 0) {
       return this.findById(id);
@@ -294,6 +306,7 @@ export class SQLiteEventRepository implements IEventRepository {
       approvedBy: row.approved_by,
       approvalDate: row.approval_date ? new Date(row.approval_date) : undefined,
       revisionComments: row.revision_comments,
+      allowedCategories: row.allowed_categories ? JSON.parse(row.allowed_categories) : undefined,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     };

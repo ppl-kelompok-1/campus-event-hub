@@ -1,5 +1,5 @@
 import { IUserRepository } from '../../repositories/IUserRepository';
-import { User, CreateUserDto, UpdateUserDto, UserRole } from '../../models/User';
+import { User, CreateUserDto, UpdateUserDto, UserRole, UserCategory } from '../../models/User';
 import { IDatabase } from '../database/IDatabase';
 
 export class SQLiteUserRepository implements IUserRepository {
@@ -7,63 +7,75 @@ export class SQLiteUserRepository implements IUserRepository {
 
   async findAll(): Promise<User[]> {
     const sql = `
-      SELECT id, name, email, password, role, created_at, updated_at 
-      FROM users 
+      SELECT id, name, email, password, role, category, created_at, updated_at
+      FROM users
       ORDER BY created_at DESC
     `;
-    
+
     const rows = this.db.query<any>(sql);
     return rows.map(this.mapToUser);
   }
 
   async findById(id: number): Promise<User | undefined> {
     const sql = `
-      SELECT id, name, email, password, role, created_at, updated_at 
-      FROM users 
+      SELECT id, name, email, password, role, category, created_at, updated_at
+      FROM users
       WHERE id = ?
     `;
-    
+
     const row = this.db.get<any>(sql, [id]);
     return row ? this.mapToUser(row) : undefined;
   }
 
   async findByEmail(email: string): Promise<User | undefined> {
     const sql = `
-      SELECT id, name, email, password, role, created_at, updated_at 
-      FROM users 
+      SELECT id, name, email, password, role, category, created_at, updated_at
+      FROM users
       WHERE email = ?
     `;
-    
+
     const row = this.db.get<any>(sql, [email]);
     return row ? this.mapToUser(row) : undefined;
   }
 
   async findByRole(role: UserRole): Promise<User[]> {
     const sql = `
-      SELECT id, name, email, password, role, created_at, updated_at 
-      FROM users 
+      SELECT id, name, email, password, role, category, created_at, updated_at
+      FROM users
       WHERE role = ?
       ORDER BY created_at DESC
     `;
-    
+
     const rows = this.db.query<any>(sql, [role]);
+    return rows.map(this.mapToUser);
+  }
+
+  async findByCategory(category: UserCategory): Promise<User[]> {
+    const sql = `
+      SELECT id, name, email, password, role, category, created_at, updated_at
+      FROM users
+      WHERE category = ?
+      ORDER BY created_at DESC
+    `;
+
+    const rows = this.db.query<any>(sql, [category]);
     return rows.map(this.mapToUser);
   }
 
   async create(user: CreateUserDto): Promise<User> {
     const sql = `
-      INSERT INTO users (name, email, password, role, created_at, updated_at) 
-      VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+      INSERT INTO users (name, email, password, role, category, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
     `;
-    
+
     const role = user.role || UserRole.USER;
-    const result = this.db.run(sql, [user.name, user.email, user.password, role]);
+    const result = this.db.run(sql, [user.name, user.email, user.password, role, user.category]);
     const newUser = await this.findById(Number(result.lastInsertRowid));
-    
+
     if (!newUser) {
       throw new Error('Failed to create user');
     }
-    
+
     return newUser;
   }
 
@@ -91,7 +103,12 @@ export class SQLiteUserRepository implements IUserRepository {
       updates.push('role = ?');
       params.push(user.role);
     }
-    
+
+    if (user.category !== undefined) {
+      updates.push('category = ?');
+      params.push(user.category);
+    }
+
     if (updates.length === 0) {
       return await this.findById(id);
     }
@@ -135,25 +152,25 @@ export class SQLiteUserRepository implements IUserRepository {
 
   async findPaginated(limit: number, offset: number): Promise<User[]> {
     const sql = `
-      SELECT id, name, email, password, role, created_at, updated_at 
-      FROM users 
-      ORDER BY created_at DESC 
+      SELECT id, name, email, password, role, category, created_at, updated_at
+      FROM users
+      ORDER BY created_at DESC
       LIMIT ? OFFSET ?
     `;
-    
+
     const rows = this.db.query<any>(sql, [limit, offset]);
     return rows.map(this.mapToUser);
   }
 
   async findPaginatedByRole(role: UserRole, limit: number, offset: number): Promise<User[]> {
     const sql = `
-      SELECT id, name, email, password, role, created_at, updated_at 
-      FROM users 
+      SELECT id, name, email, password, role, category, created_at, updated_at
+      FROM users
       WHERE role = ?
-      ORDER BY created_at DESC 
+      ORDER BY created_at DESC
       LIMIT ? OFFSET ?
     `;
-    
+
     const rows = this.db.query<any>(sql, [role, limit, offset]);
     return rows.map(this.mapToUser);
   }
@@ -166,6 +183,7 @@ export class SQLiteUserRepository implements IUserRepository {
       email: row.email,
       password: row.password,
       role: row.role as UserRole,
+      category: row.category as UserCategory,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     };

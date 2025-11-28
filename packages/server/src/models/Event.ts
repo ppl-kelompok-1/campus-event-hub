@@ -1,3 +1,5 @@
+import { UserCategory } from './User'
+
 // Event status enum
 export enum EventStatus {
   DRAFT = 'draft',
@@ -26,6 +28,7 @@ export interface Event {
   approvedBy?: number; // User ID of the approver
   approvalDate?: Date; // When the event was approved
   revisionComments?: string; // Comments from approver when requesting revision
+  allowedCategories?: UserCategory[]; // Categories allowed to register (empty/undefined means all)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,6 +54,7 @@ export interface EventResponse {
   approverName?: string; // Added for convenience
   approvalDate?: Date;
   revisionComments?: string;
+  allowedCategories?: UserCategory[]; // Categories allowed to register (empty/undefined means all)
   createdAt: Date;
   updatedAt: Date;
   // Registration information (populated when user is authenticated)
@@ -77,6 +81,7 @@ export interface CreateEventDto {
   locationId: number; // Foreign key to locations table
   maxAttendees?: number;
   status?: EventStatus; // Optional, defaults to DRAFT
+  allowedCategories?: UserCategory[]; // Optional - categories allowed to register
 }
 
 // DTO for updating an event
@@ -92,6 +97,7 @@ export interface UpdateEventDto {
   locationId?: number; // Foreign key to locations table
   maxAttendees?: number;
   status?: EventStatus;
+  allowedCategories?: UserCategory[]; // Optional - categories allowed to register
 }
 
 // Helper function to convert Event to EventResponse
@@ -198,4 +204,22 @@ export function isValidRegistrationPeriod(
   if (regEndDateTime > eventStartDateTime) return false;
 
   return true;
+}
+
+/**
+ * Validates if a user's category is allowed to register for an event
+ * @param userCategory - The user's category
+ * @param allowedCategories - The event's allowed categories (undefined/empty means all allowed)
+ * @returns true if user can register, false otherwise
+ */
+export function validateUserCategoryForEvent(
+  userCategory: UserCategory,
+  allowedCategories?: UserCategory[]
+): boolean {
+  // If no restrictions, allow all
+  if (!allowedCategories || allowedCategories.length === 0) {
+    return true;
+  }
+  // Check if user's category is in the allowed list
+  return allowedCategories.includes(userCategory);
 }

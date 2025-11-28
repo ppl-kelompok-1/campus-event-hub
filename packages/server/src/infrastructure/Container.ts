@@ -149,7 +149,8 @@ export class Container {
     if (!this.eventRegistrationService) {
       this.eventRegistrationService = new EventRegistrationService(
         this.getEventRegistrationRepository(),
-        this.getEventRepository()
+        this.getEventRepository(),
+        this.getUserRepository()
       );
     }
     return this.eventRegistrationService;

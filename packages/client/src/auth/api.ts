@@ -69,12 +69,14 @@ export async function fetchApi<T>(
 
 // Types
 export type UserRole = 'superadmin' | 'admin' | 'approver' | 'user'
+export type UserCategory = 'mahasiswa' | 'dosen' | 'staff'
 
 export interface User {
   id: number
   name: string
   email: string
   role: UserRole
+  category: UserCategory
   createdAt?: string
   updatedAt?: string
 }
@@ -108,6 +110,7 @@ export interface Event {
   approverName?: string
   approvalDate?: string
   revisionComments?: string
+  allowedCategories?: UserCategory[]
   createdAt: string
   updatedAt: string
   // Registration information
@@ -133,6 +136,7 @@ export interface CreateEventDto {
   locationId: number
   maxAttendees?: number
   status?: EventStatus
+  allowedCategories?: UserCategory[]
 }
 
 export interface UpdateEventDto {
@@ -147,6 +151,7 @@ export interface UpdateEventDto {
   locationId?: number
   maxAttendees?: number
   status?: EventStatus
+  allowedCategories?: UserCategory[]
 }
 
 // Event Attachment types
@@ -269,6 +274,7 @@ export const userApi = {
     email: string
     password: string
     role: UserRole
+    category: UserCategory
   }) => {
     return fetchApi<{
       success: boolean

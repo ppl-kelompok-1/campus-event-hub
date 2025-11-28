@@ -5,7 +5,7 @@
 import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { IUserRepository } from '../repositories/IUserRepository';
-import { User, UserRole, CreateUserDto } from '../models/User';
+import { User, UserRole, UserCategory, CreateUserDto } from '../models/User';
 import { LoginDto, RegisterDto, JwtPayload, AuthResponse } from '../models/Auth';
 import { AppError } from '../middleware/error';
 
@@ -37,7 +37,8 @@ export class AuthService {
       name: data.name,
       email: data.email,
       password: hashedPassword,
-      role: UserRole.USER
+      role: UserRole.USER,
+      category: UserCategory.MAHASISWA
     };
 
     const user = await this.userRepository.create(createUserDto);

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Event, EventStatus } from '../auth/api'
-import { useAuth } from '../auth/AuthContext'
 import Pagination from './Pagination'
 
 export type StatusFilterType = 'all' | EventStatus
@@ -53,7 +52,6 @@ const EventsTable: React.FC<EventsTableProps> = ({
   onItemsPerPageChange
 }) => {
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuth()
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>('all')
   const [dateFilter, setDateFilter] = useState<'all' | 'upcoming' | 'past'>('all')

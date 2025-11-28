@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { eventApi, locationApi } from '../auth/api'
-import type { CreateEventDto, Location } from '../auth/api'
+import type { CreateEventDto, Location, UserCategory } from '../auth/api'
 import { LocationDropdown } from '../components/LocationDropdown'
+import CategoryMultiSelect from '../components/CategoryMultiSelect'
 
 const CreateEventPage = () => {
   const [formData, setFormData] = useState<CreateEventDto>({
@@ -19,6 +20,7 @@ const CreateEventPage = () => {
     maxAttendees: undefined,
     status: 'draft'
   })
+  const [allowedCategories, setAllowedCategories] = useState<UserCategory[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [files, setFiles] = useState<File[]>([])
@@ -134,7 +136,8 @@ const CreateEventPage = () => {
 
       const eventData = {
         ...formData,
-        maxAttendees: formData.maxAttendees || undefined
+        maxAttendees: formData.maxAttendees || undefined,
+        allowedCategories: allowedCategories.length > 0 ? allowedCategories : undefined
       }
 
       // Create the event first
@@ -432,6 +435,13 @@ const CreateEventPage = () => {
               Location capacity: {selectedLocation.maxCapacity} attendees
             </div>
           )}
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <CategoryMultiSelect
+            value={allowedCategories}
+            onChange={setAllowedCategories}
+          />
         </div>
 
         <div style={{ marginBottom: '20px' }}>

@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { userApi } from '../auth/api'
+import { userApi, type UserCategory } from '../auth/api'
+import CategoryDropdown from '../components/CategoryDropdown'
 
 const EditUserPage = () => {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('')
+  const [category, setCategory] = useState<UserCategory>('mahasiswa')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -28,13 +30,14 @@ const EditUserPage = () => {
 
   const fetchUser = async () => {
     if (!id) return
-    
+
     try {
       setLoading(true)
       const response = await userApi.getUserById(parseInt(id))
       setName(response.data.name)
       setEmail(response.data.email)
       setRole(response.data.role)
+      setCategory(response.data.category)
     } catch (err: any) {
       setError(err.message || 'Failed to fetch user')
     } finally {
@@ -54,8 +57,9 @@ const EditUserPage = () => {
         name,
         email,
         role,
+        category,
       }
-      
+
       // Only include password if it's been changed
       if (password) {
         updateData.password = password
@@ -133,6 +137,14 @@ const EditUserPage = () => {
             {user?.role === 'superadmin' && <option value="admin">Admin</option>}
             {user?.role === 'superadmin' && <option value="superadmin">Superadmin</option>}
           </select>
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <CategoryDropdown
+            value={category}
+            onChange={setCategory}
+            required={true}
+          />
         </div>
 
         {error && (

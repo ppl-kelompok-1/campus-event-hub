@@ -1,5 +1,5 @@
 import { IUserRepository } from '../repositories/IUserRepository';
-import { User, CreateUserDto, UpdateUserDto, UpdateSelfDto, UserRole, UserResponse, PublicUserProfile, toUserResponse, toPublicUserProfile } from '../models/User';
+import { User, CreateUserDto, UpdateUserDto, UpdateSelfDto, UserRole, UserCategory, UserResponse, PublicUserProfile, toUserResponse, toPublicUserProfile } from '../models/User';
 import { AppError } from '../middleware/error';
 import { AuthService } from './AuthService';
 
@@ -70,6 +70,16 @@ export class UserService {
       throw new AppError('Email already in use', 409);
     }
 
+    // Validate category
+    if (!data.category) {
+      throw new AppError('Category is required', 400);
+    }
+
+    const validCategories = Object.values(UserCategory);
+    if (!validCategories.includes(data.category)) {
+      throw new AppError(`Invalid category. Must be one of: ${validCategories.join(', ')}`, 400);
+    }
+
     // Check role assignment permissions
     const roleToAssign = data.role || UserRole.USER;
     if (!this.authService.canAssignRole(currentUserRole, roleToAssign)) {
@@ -124,6 +134,14 @@ export class UserService {
     // Check role assignment permissions
     if (data.role && !this.authService.canAssignRole(currentUserRole, data.role)) {
       throw new AppError('Access denied. Cannot assign this role', 403);
+    }
+
+    // Validate category if being updated
+    if (data.category !== undefined) {
+      const validCategories = Object.values(UserCategory);
+      if (!validCategories.includes(data.category)) {
+        throw new AppError(`Invalid category. Must be one of: ${validCategories.join(', ')}`, 400);
+      }
     }
 
     const updatedUser = await this.userRepository.update(id, data);
@@ -217,6 +235,16 @@ export class UserService {
       page,
       totalPages
     };
+  }
+
+  // Get users by category (for admins)
+  async getUsersByCategory(category: UserCategory, currentUserRole: UserRole): Promise<UserResponse[]> {
+    if (currentUserRole !== UserRole.ADMIN && currentUserRole !== UserRole.SUPERADMIN) {
+      throw new AppError('Access denied. Insufficient permissions', 403);
+    }
+
+    const users = await this.userRepository.findByCategory(category);
+    return users.map(toUserResponse);
   }
 
   // Get public user profile (no authentication required)

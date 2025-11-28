@@ -800,6 +800,33 @@ const EventDetailsPage = () => {
               </div>
             </div>
           )}
+
+          {event.allowedCategories && event.allowedCategories.length > 0 && (
+            <div>
+              <div style={{ color: '#6c757d', fontSize: '0.875rem', marginBottom: '4px' }}>
+                👨‍🎓 Allowed Categories
+              </div>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                {event.allowedCategories.map((category) => (
+                  <span
+                    key={category}
+                    style={{
+                      display: 'inline-block',
+                      padding: '4px 12px',
+                      backgroundColor: '#e7f3ff',
+                      color: '#0056b3',
+                      borderRadius: '12px',
+                      fontSize: '0.813rem',
+                      fontWeight: '500',
+                      border: '1px solid #b3d9ff'
+                    }}
+                  >
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Event description */}
