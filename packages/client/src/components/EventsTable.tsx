@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Event, EventStatus } from '../auth/api'
-import { getToken } from '../auth/storage'
 import { useAuth } from '../auth/AuthContext'
 import Pagination from './Pagination'
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
 
 export type StatusFilterType = 'all' | EventStatus
 
@@ -177,51 +174,6 @@ const EventsTable: React.FC<EventsTableProps> = ({
       hour: 'numeric',
       minute: '2-digit'
     })
-  }
-
-  // Export to CSV by calling backend endpoint
-  const exportToCSV = async () => {
-    try {
-      const token = getToken()
-      if (!token) {
-        console.error('No authentication token found')
-        return
-      }
-
-      const response = await fetch(`${API_BASE_URL}/events/export/csv`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to export CSV')
-      }
-
-      // Get the CSV content
-      const csvContent = await response.text()
-
-      // Extract filename from Content-Disposition header or use default
-      const contentDisposition = response.headers.get('Content-Disposition')
-      let filename = 'events.csv'
-      if (contentDisposition) {
-        const matches = /filename="([^"]+)"/.exec(contentDisposition)
-        if (matches && matches[1]) {
-          filename = matches[1]
-        }
-      }
-
-      // Trigger download
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      const link = document.createElement('a')
-      link.href = URL.createObjectURL(blob)
-      link.download = filename
-      link.click()
-      URL.revokeObjectURL(link.href)
-    } catch (error) {
-      console.error('Error exporting CSV:', error)
-    }
   }
 
   const getCountForStatus = (status: StatusFilterType) => {
@@ -597,41 +549,6 @@ const EventsTable: React.FC<EventsTableProps> = ({
           border: '1px solid #f5c6cb'
         }}>
           {error}
-        </div>
-      )}
-
-      {/* Export Button */}
-      {events.length > 0 && isAuthenticated && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginBottom: '16px'
-        }}>
-          <button
-            onClick={exportToCSV}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#218838'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#28a745'
-            }}
-            style={{
-              backgroundColor: '#28a745',
-              color: 'white',
-              padding: '10px 20px',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'background-color 0.2s'
-            }}
-          >
-            📥 Export to CSV
-          </button>
         </div>
       )}
 

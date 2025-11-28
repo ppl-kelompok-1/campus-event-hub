@@ -4,6 +4,9 @@ import type { Event } from '../auth/api'
 import EventsTable from '../components/EventsTable'
 import type { EventsTableAction } from '../components/EventsTable'
 import { useAuth } from '../auth/AuthContext'
+import { getToken } from '../auth/storage'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
 
 const EventsPage = () => {
   const [events, setEvents] = useState<Event[]>([])
@@ -105,6 +108,54 @@ const EventsPage = () => {
     }
   }
 
+  const handleCreateEvent = () => {
+    window.location.href = '/events/create'
+  }
+
+  const exportToCSV = async () => {
+    try {
+      const token = getToken()
+      if (!token) {
+        console.error('No authentication token found')
+        return
+      }
+
+      const response = await fetch(`${API_BASE_URL}/events/export/csv`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to export CSV')
+      }
+
+      // Get the CSV content
+      const csvContent = await response.text()
+
+      // Extract filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = 'events.csv'
+      if (contentDisposition) {
+        const matches = /filename="([^"]+)"/.exec(contentDisposition)
+        if (matches && matches[1]) {
+          filename = matches[1]
+        }
+      }
+
+      // Trigger download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = filename
+      link.click()
+      URL.revokeObjectURL(link.href)
+    } catch (error) {
+      console.error('Error exporting CSV:', error)
+    }
+  }
+
   // Define table actions
   const tableActions: EventsTableAction[] = []
 
@@ -163,6 +214,105 @@ const EventsPage = () => {
 
       {/* Main Content */}
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 20px' }}>
+        {/* Action Buttons Row - When events exist */}
+        {isAuthenticated && events.length > 0 && (
+          <div style={{
+            marginBottom: '20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            {/* Create Event Button - Left */}
+            <button
+              onClick={handleCreateEvent}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#0056b3'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#007bff'
+              }}
+              style={{
+                backgroundColor: '#007bff',
+                color: 'white',
+                padding: '10px 20px',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background-color 0.2s'
+              }}
+            >
+              ➕ Create Event
+            </button>
+
+            {/* Export CSV Button - Right */}
+            <button
+              onClick={exportToCSV}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#218838'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#28a745'
+              }}
+              style={{
+                backgroundColor: '#28a745',
+                color: 'white',
+                padding: '10px 20px',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background-color 0.2s'
+              }}
+            >
+              📥 Export to CSV
+            </button>
+          </div>
+        )}
+
+        {/* Create Event Button Only - When no events */}
+        {isAuthenticated && events.length === 0 && (
+          <div style={{
+            marginBottom: '20px',
+            display: 'flex',
+            justifyContent: 'flex-start'
+          }}>
+            <button
+              onClick={handleCreateEvent}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#0056b3'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#007bff'
+              }}
+              style={{
+                backgroundColor: '#007bff',
+                color: 'white',
+                padding: '10px 20px',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background-color 0.2s'
+              }}
+            >
+              ➕ Create Event
+            </button>
+          </div>
+        )}
+
         <EventsTable
           events={events}
           loading={loading}
