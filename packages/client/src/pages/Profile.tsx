@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { authApi, eventApi } from '../auth/api'
-import type { Event } from '../auth/api'
+import type { Event, UserCategory } from '../auth/api'
 import EventsTable from '../components/EventsTable'
 import { useNavigate, useLocation } from 'react-router-dom'
 
@@ -16,6 +16,19 @@ interface JoinedEventRegistration {
   status: 'registered' | 'waitlisted' | 'cancelled'
   createdAt: string
   updatedAt: string
+}
+
+const getCategoryBadgeColor = (category: UserCategory): string => {
+  switch (category) {
+    case 'mahasiswa':
+      return '#007bff' // Blue
+    case 'dosen':
+      return '#28a745' // Green
+    case 'staff':
+      return '#ffc107' // Yellow/Gold
+    default:
+      return '#6c757d' // Gray
+  }
 }
 
 const Profile = () => {
@@ -439,16 +452,33 @@ const Profile = () => {
                 }}>
                   {user.name}
                 </h2>
-                <p style={{ 
+                <p style={{
                   margin: '0 0 8px 0',
                   color: '#6c757d',
                   fontSize: '16px'
                 }}>
                   {user.email}
                 </p>
-                <span style={{ 
-                  backgroundColor: user.role === 'superadmin' ? '#007bff' : 
-                                 user.role === 'admin' ? '#28a745' : 
+
+                {/* Category Badge */}
+                <div style={{ marginBottom: '8px' }}>
+                  <span style={{
+                    display: 'inline-block',
+                    backgroundColor: getCategoryBadgeColor(user.category),
+                    color: user.category === 'staff' ? '#212529' : 'white',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    textTransform: 'capitalize'
+                  }}>
+                    {user.category.charAt(0).toUpperCase() + user.category.slice(1)}
+                  </span>
+                </div>
+
+                <span style={{
+                  backgroundColor: user.role === 'superadmin' ? '#007bff' :
+                                 user.role === 'admin' ? '#28a745' :
                                  user.role === 'approver' ? '#ffc107' : '#6c757d',
                   color: user.role === 'approver' ? '#212529' : 'white',
                   padding: '6px 12px',
