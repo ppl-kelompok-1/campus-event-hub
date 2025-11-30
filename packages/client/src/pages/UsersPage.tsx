@@ -80,6 +80,7 @@ const UsersPage = () => {
             <th style={{ border: '1px solid #ddd', padding: '8px' }}>Name</th>
             <th style={{ border: '1px solid #ddd', padding: '8px' }}>Email</th>
             <th style={{ border: '1px solid #ddd', padding: '8px' }}>Role</th>
+            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Category</th>
             <th style={{ border: '1px solid #ddd', padding: '8px' }}>Actions</th>
           </tr>
         </thead>
@@ -90,6 +91,9 @@ const UsersPage = () => {
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{user.name}</td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{user.email}</td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{user.role}</td>
+              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                {user.category.charAt(0).toUpperCase() + user.category.slice(1)}
+              </td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>
                 <Link to={`/users/edit/${user.id}`}>
                   <button style={{ marginRight: '5px' }}>Edit</button>

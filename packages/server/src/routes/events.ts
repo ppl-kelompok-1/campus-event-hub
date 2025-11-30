@@ -112,7 +112,8 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
         registrationEndTime: req.body.registrationEndTime,
         locationId: req.body.locationId,
         maxAttendees: req.body.maxAttendees,
-        status: req.body.status || EventStatus.DRAFT
+        status: req.body.status || EventStatus.DRAFT,
+        allowedCategories: req.body.allowedCategories
       };
 
       try {

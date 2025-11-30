@@ -193,6 +193,55 @@ const CreateEventPage = () => {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
   }
 
+  const fillDummyData = () => {
+    // Calculate valid dates for testing
+    const now = new Date()
+
+    // Registration started yesterday
+    const regStart = new Date(now)
+    regStart.setDate(regStart.getDate() - 1)
+    regStart.setHours(9, 0, 0, 0)
+
+    // Registration closes tomorrow
+    const regEnd = new Date(now)
+    regEnd.setDate(regEnd.getDate() + 1)
+    regEnd.setHours(23, 59, 0, 0)
+
+    // Event happens day after tomorrow
+    const eventDate = new Date(now)
+    eventDate.setDate(eventDate.getDate() + 2)
+    eventDate.setHours(14, 0, 0, 0)
+
+    // Format dates as YYYY-MM-DD
+    const formatDate = (date: Date) => {
+      return date.toISOString().split('T')[0]
+    }
+
+    // Format times as HH:MM
+    const formatTime = (date: Date) => {
+      return date.toTimeString().slice(0, 5)
+    }
+
+    setFormData({
+      title: 'Sample Campus Event - Tech Workshop',
+      description: 'This is a test event for development purposes. Join us for an exciting workshop on modern web development technologies including React, TypeScript, and backend APIs. Learn best practices and hands-on coding experience.',
+      eventDate: formatDate(eventDate),
+      eventTime: formatTime(eventDate),
+      registrationStartDate: formatDate(regStart),
+      registrationStartTime: formatTime(regStart),
+      registrationEndDate: formatDate(regEnd),
+      registrationEndTime: formatTime(regEnd),
+      locationId: 1, // Assuming location ID 1 exists
+      maxAttendees: 50,
+      status: 'draft'
+    })
+
+    // Set some allowed categories for testing
+    setAllowedCategories(['mahasiswa', 'dosen'])
+
+    setError('')
+  }
+
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
       <div style={{ marginBottom: '30px' }}>
@@ -200,6 +249,23 @@ const CreateEventPage = () => {
         <p style={{ margin: '0', color: '#6c757d' }}>
           Fill in the details for your new campus event
         </p>
+        <button
+          type="button"
+          onClick={fillDummyData}
+          style={{
+            marginTop: '8px',
+            padding: '4px 8px',
+            fontSize: '12px',
+            color: '#007bff',
+            backgroundColor: 'transparent',
+            border: '1px solid #007bff',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            textDecoration: 'none'
+          }}
+        >
+          🔧 Insert Dummy Data (Testing)
+        </button>
       </div>
 
       {error && (

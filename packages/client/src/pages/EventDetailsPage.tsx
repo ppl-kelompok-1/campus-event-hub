@@ -42,6 +42,10 @@ const EventDetailsPage = () => {
     fetchEvent()
   }, [id])
 
+  useEffect(() => {
+      console.log(event);
+  }, [event])
+
   const fetchEvent = async () => {
     try {
       setLoading(true)
@@ -664,7 +668,7 @@ const EventDetailsPage = () => {
               {user.id !== event.createdBy && event.status === 'published' && (
                 <>
                   {/* Register Button */}
-                  {!event.isUserRegistered && event.canRegister && event.hasRegistrationStarted && !event.isFull && (
+                  {!event.isUserRegistered && event.canRegister && event.hasRegistrationStarted && !event.isFull && (!event.allowedCategories || event.allowedCategories.length === 0 || (user && event.allowedCategories.includes(user.category))) && (
                     <button
                       onClick={handleJoinEvent}
                       disabled={actionLoading}
@@ -705,6 +709,25 @@ const EventDetailsPage = () => {
                     </button>
                   )}
                 </>
+              )}
+
+              {/* Category Restriction Warning */}
+              {user && event.allowedCategories && event.allowedCategories.length > 0 && !event.allowedCategories.includes(user.category) && (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '12px',
+                  backgroundColor: '#fff3cd',
+                  color: '#856404',
+                  borderRadius: '4px',
+                  border: '1px solid #ffeeba',
+                  fontSize: '14px'
+                }}>
+                  <strong>⚠️ Registration Restricted:</strong>
+                  <div style={{ marginTop: '4px' }}>
+                    This event is only open to {event.allowedCategories.join(', ')} categories.
+                    Your category ({user.category}) cannot register for this event.
+                  </div>
+                </div>
               )}
             </div>
 

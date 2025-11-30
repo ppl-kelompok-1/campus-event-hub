@@ -214,6 +214,7 @@ export const authApi = {
           name: string
           email: string
           role: UserRole
+          category: UserCategory
         }
         token: string
       }
@@ -233,6 +234,7 @@ export const authApi = {
         name: string
         email: string
         role: UserRole
+        category: UserCategory
       }
     }>('/auth/profile')
   },
@@ -293,6 +295,7 @@ export const userApi = {
       email?: string
       password?: string
       role?: string
+      category?: UserCategory
     }
   ) => {
     return fetchApi<{
