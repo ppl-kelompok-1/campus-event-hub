@@ -2,13 +2,15 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { userApi, type UserRole } from '../auth/api'
+import { userApi, type UserRole, type UserCategory } from '../auth/api'
+import CategoryDropdown from '../components/CategoryDropdown'
 
 const CreateUserPage = () => {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState<UserRole>('user')
+  const [category, setCategory] = useState<UserCategory>('mahasiswa')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const { user } = useAuth()
@@ -31,6 +33,7 @@ const CreateUserPage = () => {
         email,
         password,
         role,
+        category,
       })
       navigate('/users')
     } catch (err: any) {
@@ -101,6 +104,14 @@ const CreateUserPage = () => {
             {(user?.role === 'admin' || user?.role === 'superadmin') && <option value="approver">Approver</option>}
             {user?.role === 'superadmin' && <option value="admin">Admin</option>}
           </select>
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <CategoryDropdown
+            value={category}
+            onChange={setCategory}
+            required={true}
+          />
         </div>
 
         {error && (

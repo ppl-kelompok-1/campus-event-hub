@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { eventApi } from '../auth/api'
-import type { Event, UpdateEventDto } from '../auth/api'
+import type { Event, UpdateEventDto, UserCategory } from '../auth/api'
 import { LocationDropdown } from '../components/LocationDropdown'
+import CategoryMultiSelect from '../components/CategoryMultiSelect'
 
 const EditEventPage = () => {
   const [event, setEvent] = useState<Event | null>(null)
@@ -20,6 +21,7 @@ const EditEventPage = () => {
     maxAttendees: undefined,
     status: 'draft'
   })
+  const [allowedCategories, setAllowedCategories] = useState<UserCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -64,6 +66,7 @@ const EditEventPage = () => {
         maxAttendees: eventData.maxAttendees,
         status: eventData.status
       })
+      setAllowedCategories(eventData.allowedCategories || [])
     } catch (err) {
       setError('Failed to load event. You may not have permission to edit this event.')
       console.error('Error fetching event:', err)
@@ -141,8 +144,13 @@ const EditEventPage = () => {
     try {
       setSaving(true)
       setError('')
-      
-      await eventApi.updateEvent(Number(id), formData)
+
+      const updateData = {
+        ...formData,
+        allowedCategories: allowedCategories.length > 0 ? allowedCategories : undefined
+      }
+
+      await eventApi.updateEvent(Number(id), updateData)
       navigate('/profile?tab=created')
     } catch (err) {
       setError('Failed to update event. Please try again.')
@@ -428,6 +436,13 @@ const EditEventPage = () => {
               fontSize: '16px'
             }}
             placeholder="Leave empty for unlimited"
+          />
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <CategoryMultiSelect
+            value={allowedCategories}
+            onChange={setAllowedCategories}
           />
         </div>
 

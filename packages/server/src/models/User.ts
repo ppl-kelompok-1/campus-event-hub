@@ -6,6 +6,13 @@ export enum UserRole {
   USER = 'user'
 }
 
+// Category enum for user categories
+export enum UserCategory {
+  MAHASISWA = 'mahasiswa',
+  DOSEN = 'dosen',
+  STAFF = 'staff'
+}
+
 // Domain model for User entity
 export interface User {
   id: number;
@@ -13,6 +20,7 @@ export interface User {
   email: string;
   password: string;
   role: UserRole;
+  category: UserCategory;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +31,7 @@ export interface UserResponse {
   name: string;
   email: string;
   role: UserRole;
+  category: UserCategory;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +42,7 @@ export interface CreateUserDto {
   email: string;
   password: string;
   role?: UserRole; // Optional, defaults to USER
+  category: UserCategory; // Required
 }
 
 // DTO for updating a user
@@ -41,6 +51,7 @@ export interface UpdateUserDto {
   email?: string;
   password?: string;
   role?: UserRole;
+  category?: UserCategory;
 }
 
 // DTO for user self-update (limited fields)

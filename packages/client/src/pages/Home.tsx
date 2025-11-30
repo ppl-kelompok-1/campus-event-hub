@@ -1,190 +1,194 @@
-import { useState, useEffect } from 'react'
-import { eventApi } from '../auth/api'
-import type { Event } from '../auth/api'
-import EventsTable from '../components/EventsTable'
-import type { EventsTableAction } from '../components/EventsTable'
+import { useNavigate } from 'react-router-dom'
+import { useSettings } from '../contexts/SettingsContext'
 import { useAuth } from '../auth/AuthContext'
 
 const Home = () => {
-  const [events, setEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
-  const [totalPages, setTotalPages] = useState(0)
-  const [totalItems, setTotalItems] = useState(0)
-  const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+  const { settings } = useSettings()
+  const { isAuthenticated, user } = useAuth()
 
-  useEffect(() => {
-    fetchEvents()
-  }, [isAuthenticated, currentPage, itemsPerPage])
-
-  const fetchEvents = async () => {
-    try {
-      setLoading(true)
-      setError('')
-      // Fetch published events with pagination
-      // Include auth if user is authenticated to get registration status
-      const response = await eventApi.getEvents(currentPage, itemsPerPage, isAuthenticated)
-      setEvents(response.data)
-      setTotalPages(response.pagination.totalPages)
-      setTotalItems(response.pagination.total)
-    } catch (err) {
-      setError('Failed to load events. Please try again later.')
-      console.error('Error fetching events:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
-
-  const handleItemsPerPageChange = (items: number) => {
-    setItemsPerPage(items)
-    setCurrentPage(1) // Reset to first page when changing items per page
-  }
-
-  const handleJoinEvent = async (event: Event) => {
-    try {
-      const response = await eventApi.joinEvent(event.id)
-
-      // Update the event in the local state with new registration info
-      setEvents(prevEvents =>
-        prevEvents.map(e =>
-          e.id === event.id
-            ? {
-                ...e,
-                isUserRegistered: true,
-                userRegistrationStatus: response.data.status as 'registered' | 'waitlisted' | 'cancelled',
-                currentAttendees: response.data.status === 'registered'
-                  ? (e.currentAttendees || 0) + 1
-                  : e.currentAttendees,
-                isFull: e.maxAttendees ? ((e.currentAttendees || 0) + (response.data.status === 'registered' ? 1 : 0)) >= e.maxAttendees : false
-              }
-            : e
-        )
-      )
-
-      // Show success message
-      if (response.data.status === 'registered') {
-        console.log('Successfully joined event:', event.title)
-      } else if (response.data.status === 'waitlisted') {
-        console.log('Added to waitlist for event:', event.title)
-      }
-    } catch (err) {
-      console.error('Failed to join event:', err)
-      setError('Failed to join event. Please try again.')
-    }
-  }
-
-  const handleLeaveEvent = async (event: Event) => {
-    try {
-      await eventApi.leaveEvent(event.id)
-
-      // Update the event in the local state
-      setEvents(prevEvents =>
-        prevEvents.map(e =>
-          e.id === event.id
-            ? {
-                ...e,
-                isUserRegistered: false,
-                userRegistrationStatus: undefined,
-                currentAttendees: e.userRegistrationStatus === 'registered'
-                  ? Math.max((e.currentAttendees || 1) - 1, 0)
-                  : e.currentAttendees,
-                isFull: false // If user left, it's no longer full
-              }
-            : e
-        )
-      )
-
-      console.log('Successfully left event:', event.title)
-    } catch (err) {
-      console.error('Failed to leave event:', err)
-      setError('Failed to leave event. Please try again.')
-    }
-  }
-
-  // Define table actions
-  const tableActions: EventsTableAction[] = []
-
-  if (isAuthenticated) {
-    tableActions.push({
-      type: 'register',
-      label: 'Register',
-      color: '#007bff',
-      hoverColor: '#0056b3',
-      condition: (event) =>
-        !event.isUserRegistered &&
-        !!event.canRegister &&
-        !!event.hasRegistrationStarted &&
-        !event.isFull,
-      handler: handleJoinEvent
-    })
-
-    tableActions.push({
-      type: 'leave',
-      label: 'Leave',
-      color: '#dc3545',
-      condition: (event) => event.isUserRegistered === true,
-      handler: handleLeaveEvent
-    })
+  const handleExploreEvents = () => {
+    navigate('/events')
   }
 
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#f8f9fa'
+      backgroundColor: '#f8f9fa',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px'
     }}>
-      {/* Header */}
       <div style={{
-        backgroundColor: 'white',
-        borderBottom: '1px solid #e9ecef',
-        padding: '24px 0'
+        maxWidth: '900px',
+        width: '100%',
+        textAlign: 'center'
       }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+        {/* Hero Section */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '60px 40px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+          border: '1px solid #e9ecef',
+          marginBottom: '30px'
+        }}>
+          {/* Welcome Message */}
           <h1 style={{
-            margin: '0 0 8px 0',
+            fontSize: '48px',
+            fontWeight: '700',
             color: '#2c3e50',
-            fontSize: '32px',
-            fontWeight: '700'
+            marginBottom: '16px',
+            lineHeight: '1.2'
           }}>
-            Campus Events
+            Welcome to {settings?.siteTitle || 'Campus Event Hub'}
           </h1>
-          <p style={{
-            margin: '0',
-            color: '#6c757d',
-            fontSize: '16px'
-          }}>
-            Discover and join exciting events happening on campus
-          </p>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 20px' }}>
-        <EventsTable
-          events={events}
-          loading={loading}
-          error={error}
-          showStatusFilters={true}
-          statusFilterOptions={['all', 'published', 'cancelled']}
-          showDateFilters={true}
-          showSearch={true}
-          actions={tableActions}
-          emptyMessage="No Events Found"
-          emptyDescription="There are no published events at the moment. Check back later!"
-          pagination={{
-            currentPage,
-            totalPages,
-            totalItems,
-            itemsPerPage
-          }}
-          onPageChange={handlePageChange}
-          onItemsPerPageChange={handleItemsPerPageChange}
-        />
+          {/* Personalized Greeting for Authenticated Users */}
+          {isAuthenticated && user && (
+            <p style={{
+              fontSize: '20px',
+              color: '#007bff',
+              marginBottom: '24px',
+              fontWeight: '500'
+            }}>
+              Hello, {user.name}! 👋
+            </p>
+          )}
+
+          {/* Description */}
+          <p style={{
+            fontSize: '18px',
+            color: '#6c757d',
+            marginBottom: '40px',
+            lineHeight: '1.6',
+            maxWidth: '700px',
+            margin: '0 auto 40px'
+          }}>
+            Discover and join exciting events happening on campus. Connect with your community,
+            explore new opportunities, and make the most of your campus experience.
+          </p>
+
+          {/* CTA Button */}
+          <button
+            onClick={handleExploreEvents}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#0056b3'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,123,255,0.3)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#007bff'
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,123,255,0.2)'
+            }}
+            style={{
+              backgroundColor: '#007bff',
+              color: 'white',
+              padding: '16px 40px',
+              fontSize: '18px',
+              fontWeight: '600',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 8px rgba(0,123,255,0.2)'
+            }}
+          >
+            Explore Events →
+          </button>
+        </div>
+
+        {/* Feature Highlights */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: '20px'
+        }}>
+          {/* Feature 1 */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            padding: '30px 20px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+            border: '1px solid #e9ecef'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#2c3e50',
+              marginBottom: '12px'
+            }}>
+              Browse Events
+            </h3>
+            <p style={{
+              fontSize: '14px',
+              color: '#6c757d',
+              lineHeight: '1.5',
+              margin: 0
+            }}>
+              Discover a wide range of events tailored to your interests and schedule
+            </p>
+          </div>
+
+          {/* Feature 2 */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            padding: '30px 20px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+            border: '1px solid #e9ecef'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎯</div>
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#2c3e50',
+              marginBottom: '12px'
+            }}>
+              Easy Registration
+            </h3>
+            <p style={{
+              fontSize: '14px',
+              color: '#6c757d',
+              lineHeight: '1.5',
+              margin: 0
+            }}>
+              Register for events with just a click and manage your attendance seamlessly
+            </p>
+          </div>
+
+          {/* Feature 3 */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            padding: '30px 20px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+            border: '1px solid #e9ecef'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🌟</div>
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#2c3e50',
+              marginBottom: '12px'
+            }}>
+              {isAuthenticated ? 'Create Events' : 'Stay Connected'}
+            </h3>
+            <p style={{
+              fontSize: '14px',
+              color: '#6c757d',
+              lineHeight: '1.5',
+              margin: 0
+            }}>
+              {isAuthenticated
+                ? 'Organize your own events and bring your community together'
+                : 'Never miss out on exciting opportunities happening around campus'}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )

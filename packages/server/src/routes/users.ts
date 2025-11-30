@@ -178,7 +178,8 @@ export const createUserRouter = (userService: UserService, authService: AuthServ
         name: req.body.name,
         email: req.body.email,
         password: req.body.password,
-        role: req.body.role
+        role: req.body.role,
+        category: req.body.category
       };
 
       if (!req.user) {
@@ -224,7 +225,8 @@ export const createUserRouter = (userService: UserService, authService: AuthServ
         name: req.body.name,
         email: req.body.email,
         password: req.body.password,
-        role: req.body.role
+        role: req.body.role,
+        category: req.body.category
       };
 
       const user = await userService.updateUser(id, updateUserDto, req.user.role, req.user.userId);

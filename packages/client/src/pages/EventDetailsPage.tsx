@@ -42,6 +42,10 @@ const EventDetailsPage = () => {
     fetchEvent()
   }, [id])
 
+  useEffect(() => {
+      console.log(event);
+  }, [event])
+
   const fetchEvent = async () => {
     try {
       setLoading(true)
@@ -664,7 +668,7 @@ const EventDetailsPage = () => {
               {user.id !== event.createdBy && event.status === 'published' && (
                 <>
                   {/* Register Button */}
-                  {!event.isUserRegistered && event.canRegister && event.hasRegistrationStarted && !event.isFull && (
+                  {!event.isUserRegistered && event.canRegister && event.hasRegistrationStarted && !event.isFull && (!event.allowedCategories || event.allowedCategories.length === 0 || (user && event.allowedCategories.includes(user.category))) && (
                     <button
                       onClick={handleJoinEvent}
                       disabled={actionLoading}
@@ -705,6 +709,25 @@ const EventDetailsPage = () => {
                     </button>
                   )}
                 </>
+              )}
+
+              {/* Category Restriction Warning */}
+              {user && event.allowedCategories && event.allowedCategories.length > 0 && !event.allowedCategories.includes(user.category) && (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '12px',
+                  backgroundColor: '#fff3cd',
+                  color: '#856404',
+                  borderRadius: '4px',
+                  border: '1px solid #ffeeba',
+                  fontSize: '14px'
+                }}>
+                  <strong>⚠️ Registration Restricted:</strong>
+                  <div style={{ marginTop: '4px' }}>
+                    This event is only open to {event.allowedCategories.join(', ')} categories.
+                    Your category ({user.category}) cannot register for this event.
+                  </div>
+                </div>
               )}
             </div>
 
@@ -797,6 +820,33 @@ const EventDetailsPage = () => {
               </div>
               <div style={{ fontWeight: '500' }}>
                 {event.maxAttendees}
+              </div>
+            </div>
+          )}
+
+          {event.allowedCategories && event.allowedCategories.length > 0 && (
+            <div>
+              <div style={{ color: '#6c757d', fontSize: '0.875rem', marginBottom: '4px' }}>
+                👨‍🎓 Allowed Categories
+              </div>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                {event.allowedCategories.map((category) => (
+                  <span
+                    key={category}
+                    style={{
+                      display: 'inline-block',
+                      padding: '4px 12px',
+                      backgroundColor: '#e7f3ff',
+                      color: '#0056b3',
+                      borderRadius: '12px',
+                      fontSize: '0.813rem',
+                      fontWeight: '500',
+                      border: '1px solid #b3d9ff'
+                    }}
+                  >
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </span>
+                ))}
               </div>
             </div>
           )}

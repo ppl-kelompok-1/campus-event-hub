@@ -1,4 +1,4 @@
-import type { UserRole } from './api'
+import type { UserRole, UserCategory } from './api'
 
 const TOKEN_KEY = 'campus_event_hub_token'
 const USER_KEY = 'campus_event_hub_user'
@@ -8,6 +8,7 @@ export interface User {
   name: string
   email: string
   role: UserRole
+  category: UserCategory
 }
 
 // Token management

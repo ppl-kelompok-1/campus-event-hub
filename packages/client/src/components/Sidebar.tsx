@@ -12,11 +12,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { settings } = useSettings()
   const location = useLocation()
   
-  const isActive = (path: string) => location.pathname === path ||
-    (path === '/users' && location.pathname.startsWith('/users')) ||
-    (path === '/events/create' && location.pathname.startsWith('/events/create')) ||
-    (path === '/approvals' && location.pathname.startsWith('/approvals')) ||
-    (path === '/locations' && location.pathname.startsWith('/locations'))
+  const isActive = (path: string) => {
+    // Exact match for home and events to prevent conflicts
+    if (path === '/') {
+      return location.pathname === '/'
+    }
+    if (path === '/events') {
+      return location.pathname === '/events'
+    }
+    // Other routes with prefix matching
+    return location.pathname === path ||
+      (path === '/users' && location.pathname.startsWith('/users')) ||
+      (path === '/events/create' && location.pathname.startsWith('/events/create')) ||
+      (path === '/approvals' && location.pathname.startsWith('/approvals')) ||
+      (path === '/locations' && location.pathname.startsWith('/locations'))
+  }
 
   const handleNavigation = () => {
     // Auto-close sidebar on mobile after navigation
@@ -70,13 +80,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           {/* General Section */}
           <div className="nav-section">
             <div className="nav-section-title">General</div>
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className={`nav-item ${isActive('/') ? 'nav-item-active' : ''}`}
               onClick={handleNavigation}
             >
               <span className="nav-icon">🏠</span>
               <span className="nav-text">Home</span>
+            </Link>
+            <Link
+              to="/events"
+              className={`nav-item ${isActive('/events') ? 'nav-item-active' : ''}`}
+              onClick={handleNavigation}
+            >
+              <span className="nav-icon">📅</span>
+              <span className="nav-text">Events</span>
             </Link>
             {isAuthenticated && (
               <Link 
@@ -99,21 +117,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               </Link>
             )}
           </div>
-
-          {/* Events Section */}
-          {isAuthenticated && (
-            <div className="nav-section">
-              <div className="nav-section-title">Events</div>
-              <Link 
-                to="/events/create" 
-                className={`nav-item ${isActive('/events/create') ? 'nav-item-active' : ''}`}
-                onClick={handleNavigation}
-              >
-                <span className="nav-icon">➕</span>
-                <span className="nav-text">Create Event</span>
-              </Link>
-            </div>
-          )}
 
           {/* Approval Section - Approver/Admin/Superadmin only */}
           {isAuthenticated && (user?.role === 'approver' || user?.role === 'admin' || user?.role === 'superadmin') && (

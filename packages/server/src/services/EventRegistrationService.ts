@@ -1,20 +1,42 @@
 import { IEventRegistrationRepository } from '../repositories/IEventRegistrationRepository';
 import { IEventRepository } from '../repositories/IEventRepository';
+import { IUserRepository } from '../repositories/IUserRepository';
 import { EventRegistration, CreateRegistrationDto, UpdateRegistrationDto, EventRegistrationResponse, RegistrationStatus, toEventRegistrationResponse, canRegisterForEvent, shouldWaitlist } from '../models/EventRegistration';
-import { EventStatus, isEventInPast } from '../models/Event';
+import { EventStatus, isEventInPast, validateUserCategoryForEvent } from '../models/Event';
 import { UserRole } from '../models/User';
 
 export class EventRegistrationService {
   constructor(
     private eventRegistrationRepository: IEventRegistrationRepository,
-    private eventRepository: IEventRepository
+    private eventRepository: IEventRepository,
+    private userRepository: IUserRepository
   ) {}
 
   // Register a user for an event
   async registerForEvent(eventId: number, userId: number, userRole: UserRole): Promise<EventRegistrationResponse> {
     // Validate that the event exists and is available for registration
     await this.validateEventForRegistration(eventId);
-    
+
+    // Get event to check category restrictions
+    const event = await this.eventRepository.findById(eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    // Get user to check category
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Validate user category for event
+    if (!validateUserCategoryForEvent(user.category, event.allowedCategories)) {
+      const allowedCats = event.allowedCategories?.join(', ') || 'none';
+      throw new Error(
+        `This event is restricted to ${allowedCats} categories. Your category (${user.category}) is not allowed to register.`
+      );
+    }
+
     // Check if user is already registered
     const existingRegistration = await this.eventRegistrationRepository.findByEventAndUser(eventId, userId);
     if (existingRegistration) {
@@ -35,11 +57,6 @@ export class EventRegistrationService {
     }
 
     // Check event capacity and determine registration status
-    const event = await this.eventRepository.findById(eventId);
-    if (!event) {
-      throw new Error('Event not found');
-    }
-
     const currentAttendees = await this.eventRegistrationRepository.getRegistrationCountByStatus(eventId, RegistrationStatus.REGISTERED);
     
     let registrationStatus = RegistrationStatus.REGISTERED;
