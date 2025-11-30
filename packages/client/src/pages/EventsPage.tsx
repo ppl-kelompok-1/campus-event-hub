@@ -16,7 +16,7 @@ const EventsPage = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [totalPages, setTotalPages] = useState(0)
   const [totalItems, setTotalItems] = useState(0)
-  const { isAuthenticated } = useAuth()
+  const { user, isAuthenticated } = useAuth()
 
   useEffect(() => {
     fetchEvents()
@@ -165,11 +165,17 @@ const EventsPage = () => {
       label: 'Register',
       color: '#007bff',
       hoverColor: '#0056b3',
-      condition: (event) =>
-        !event.isUserRegistered &&
-        !!event.canRegister &&
-        !!event.hasRegistrationStarted &&
-        !event.isFull,
+      condition: (event) => {
+        const categoryAllowed = !event.allowedCategories ||
+          event.allowedCategories.length === 0 ||
+          (user ? event.allowedCategories.includes(user.category) : false)
+
+        return !event.isUserRegistered &&
+          !!event.canRegister &&
+          !!event.hasRegistrationStarted &&
+          !event.isFull &&
+          categoryAllowed
+      },
       handler: handleJoinEvent
     })
 
