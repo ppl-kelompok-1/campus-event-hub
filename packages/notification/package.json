@@ -1,0 +1,26 @@
+{
+  "name": "@campus-event-hub/notification",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node src/index.ts",
+    "format": "prettier --write ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/minimist": "^1.2.5",
+    "@types/node": "^20.14.10",
+    "@types/nodemailer": "^7.0.4",
+    "prettier": "^3.3.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "minimist": "^1.2.8",
+    "nodemailer": "^7.0.11"
+  }
+}
