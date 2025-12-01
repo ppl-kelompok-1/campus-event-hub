@@ -186,6 +186,25 @@ export interface ApprovalDto {
   revisionComments?: string
 }
 
+// Event Message types
+export interface EventMessage {
+  id: number
+  eventId: number
+  senderId: number
+  senderName: string
+  eventTitle: string
+  subject: string
+  message: string
+  recipientCount: number
+  sentAt: string
+  createdAt: string
+}
+
+export interface CreateEventMessageDto {
+  subject: string
+  message: string
+}
+
 export interface PaginatedResponse<T> {
   success: boolean
   data: T[]
@@ -604,6 +623,19 @@ export const eventApi = {
     return fetchApi<ApiResponse<EventApprovalHistory[]>>(
       `/events/${eventId}/approval-history`
     )
+  },
+
+  // Send message to event attendees (creator or admin only)
+  sendMessage: async (eventId: number, messageData: CreateEventMessageDto) => {
+    return fetchApi<ApiResponse<EventMessage>>(`/events/${eventId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(messageData),
+    })
+  },
+
+  // Get message history for event (creator or admin only)
+  getEventMessages: async (eventId: number) => {
+    return fetchApi<ApiResponse<EventMessage[]>>(`/events/${eventId}/messages`)
   },
 }
 

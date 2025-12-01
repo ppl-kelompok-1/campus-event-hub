@@ -3,12 +3,14 @@ import { EventService } from '../services/EventService';
 import { EventRegistrationService } from '../services/EventRegistrationService';
 import { AuthService } from '../services/AuthService';
 import { EventApprovalHistoryService } from '../services/EventApprovalHistoryService';
+import { EventMessageService } from '../services/EventMessageService';
 import { asyncHandler } from '../middleware/error';
 import { authenticate, authorize } from '../middleware/auth';
 import { CreateEventDto, UpdateEventDto, EventStatus, ApprovalDto } from '../models/Event';
+import { CreateEventMessageDto } from '../models/EventMessage';
 import { UserRole } from '../models/User';
 
-export const createEventRouter = (eventService: EventService, eventRegistrationService: EventRegistrationService, authService: AuthService, approvalHistoryService: EventApprovalHistoryService): Router => {
+export const createEventRouter = (eventService: EventService, eventRegistrationService: EventRegistrationService, authService: AuthService, approvalHistoryService: EventApprovalHistoryService, eventMessageService: EventMessageService): Router => {
   const router = Router();
 
   // GET /api/v1/events - Get all published events (public access)
@@ -878,6 +880,102 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
         res.status(500).json({
           success: false,
           error: error instanceof Error ? error.message : 'Failed to export events to CSV'
+        });
+      }
+    })
+  );
+
+  // Event Messaging Endpoints
+
+  // POST /api/v1/events/:id/messages - Send message to registered attendees (creator or admin)
+  router.post('/:id/messages',
+    authenticate(authService),
+    asyncHandler(async (req: Request, res: Response) => {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+
+      const eventId = parseInt(req.params.id);
+
+      if (isNaN(eventId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid event ID'
+        });
+      }
+
+      const messageData: CreateEventMessageDto = {
+        subject: req.body.subject,
+        message: req.body.message
+      };
+
+      try {
+        const sentMessage = await eventMessageService.sendMessageToAttendees(
+          eventId,
+          req.user.userId,
+          req.user.role,
+          messageData
+        );
+
+        res.status(201).json({
+          success: true,
+          data: sentMessage,
+          message: `Message sent to ${sentMessage.recipientCount} attendee(s)`
+        });
+      } catch (error) {
+        const statusCode = error instanceof Error && error.message.includes('not found') ? 404 :
+                          error instanceof Error && error.message.includes('permissions') ? 403 :
+                          error instanceof Error && error.message.includes('No registered attendees') ? 400 : 400;
+
+        res.status(statusCode).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to send message'
+        });
+      }
+    })
+  );
+
+  // GET /api/v1/events/:id/messages - Get message history for event (creator or admin)
+  router.get('/:id/messages',
+    authenticate(authService),
+    asyncHandler(async (req: Request, res: Response) => {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+
+      const eventId = parseInt(req.params.id);
+
+      if (isNaN(eventId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid event ID'
+        });
+      }
+
+      try {
+        const messages = await eventMessageService.getEventMessages(
+          eventId,
+          req.user.userId,
+          req.user.role
+        );
+
+        res.json({
+          success: true,
+          data: messages
+        });
+      } catch (error) {
+        const statusCode = error instanceof Error && error.message.includes('not found') ? 404 :
+                          error instanceof Error && error.message.includes('permissions') ? 403 : 500;
+
+        res.status(statusCode).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to get message history'
         });
       }
     })

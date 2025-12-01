@@ -3,6 +3,7 @@ import { eventApprovedTemplate } from '../infrastructure/email/templates/eventAp
 import { registrationConfirmedTemplate } from '../infrastructure/email/templates/registrationConfirmed';
 import { eventReminderTemplate } from '../infrastructure/email/templates/eventReminder';
 import { passwordResetTemplate } from '../infrastructure/email/templates/passwordReset';
+import { eventMessageTemplate } from '../infrastructure/email/templates/eventMessage';
 import { IEventRepository } from '../repositories/IEventRepository';
 import { IUserRepository } from '../repositories/IUserRepository';
 import { ILocationRepository } from '../repositories/ILocationRepository';
@@ -135,6 +136,55 @@ export class NotificationService {
           </html>
         `
       });
+    }
+  }
+
+  async sendEventMessageToAttendees(
+    eventId: number,
+    subject: string,
+    message: string,
+    senderName: string,
+    userIds: number[]
+  ): Promise<void> {
+    // Get event details
+    const event = await this.eventRepository.findById(eventId);
+    if (!event) {
+      console.error(`Event ${eventId} not found for message sending`);
+      return;
+    }
+
+    // Get location details
+    const location = event.locationId
+      ? await this.locationRepository.findById(event.locationId)
+      : null;
+
+    // Send individual emails to each attendee
+    for (const userId of userIds) {
+      try {
+        const user = await this.userRepository.findById(userId);
+        if (!user) {
+          console.warn(`User ${userId} not found, skipping email`);
+          continue;
+        }
+
+        await sendEmail({
+          to: user.email,
+          subject: `[${event.title}] ${subject}`,
+          html: eventMessageTemplate({
+            userName: user.name,
+            eventTitle: event.title,
+            subject: subject,
+            message: message,
+            senderName: senderName,
+            eventDate: event.eventDate,
+            eventTime: event.eventTime,
+            locationName: location?.name || 'TBA'
+          })
+        });
+      } catch (error) {
+        console.error(`Failed to send message email to user ${userId}:`, error);
+        // Continue with other users even if one fails
+      }
     }
   }
 
