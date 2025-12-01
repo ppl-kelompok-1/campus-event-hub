@@ -4,13 +4,14 @@ import { EventRegistrationService } from '../services/EventRegistrationService';
 import { AuthService } from '../services/AuthService';
 import { EventApprovalHistoryService } from '../services/EventApprovalHistoryService';
 import { EventMessageService } from '../services/EventMessageService';
+import { NotificationService } from '../services/NotificationService';
 import { asyncHandler } from '../middleware/error';
 import { authenticate, authorize } from '../middleware/auth';
 import { CreateEventDto, UpdateEventDto, EventStatus, ApprovalDto } from '../models/Event';
 import { CreateEventMessageDto } from '../models/EventMessage';
 import { UserRole } from '../models/User';
 
-export const createEventRouter = (eventService: EventService, eventRegistrationService: EventRegistrationService, authService: AuthService, approvalHistoryService: EventApprovalHistoryService, eventMessageService: EventMessageService): Router => {
+export const createEventRouter = (eventService: EventService, eventRegistrationService: EventRegistrationService, authService: AuthService, approvalHistoryService: EventApprovalHistoryService, eventMessageService: EventMessageService, notificationService: NotificationService): Router => {
   const router = Router();
 
   // GET /api/v1/events - Get all published events (public access)
@@ -470,13 +471,20 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
 
       try {
         const cancelled = await eventService.cancelEvent(eventId, req.user.userId, req.user.role);
-        
+
         if (!cancelled) {
           return res.status(400).json({
             success: false,
             error: 'Failed to cancel event'
           });
         }
+
+        // Send cancellation emails asynchronously (don't wait)
+        // Email failures won't affect the cancellation response
+        notificationService.sendEventCancelledEmail(eventId)
+          .catch(error => {
+            console.error(`[EventRouter] Failed to send cancellation emails for event ${eventId}:`, error);
+          });
 
         res.json({
           success: true,

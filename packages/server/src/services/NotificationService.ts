@@ -4,6 +4,8 @@ import { registrationConfirmedTemplate } from '../infrastructure/email/templates
 import { eventReminderTemplate } from '../infrastructure/email/templates/eventReminder';
 import { passwordResetTemplate } from '../infrastructure/email/templates/passwordReset';
 import { eventMessageTemplate } from '../infrastructure/email/templates/eventMessage';
+import { eventCancelledTemplate, EventCancelledData } from '../infrastructure/email/templates/eventCancelled';
+import { RegistrationStatus } from '../models/EventRegistration';
 import { IEventRepository } from '../repositories/IEventRepository';
 import { IUserRepository } from '../repositories/IUserRepository';
 import { ILocationRepository } from '../repositories/ILocationRepository';
@@ -103,39 +105,64 @@ export class NotificationService {
   }
 
   async sendEventCancelledEmail(eventId: number): Promise<void> {
-    const event = await this.eventRepository.findById(eventId);
-    if (!event) return;
+    try {
+      // Get event details
+      const event = await this.eventRepository.findById(eventId);
+      if (!event) {
+        console.error(`[NotificationService] Event ${eventId} not found`);
+        return;
+      }
 
-    const registrations = await this.registrationRepository.findByEventId(eventId);
+      // Get location details
+      const location = event.locationId
+        ? await this.locationRepository.findById(event.locationId)
+        : null;
 
-    for (const registration of registrations) {
-      const user = await this.userRepository.findById(registration.userId);
-      if (!user) continue;
+      // Get ALL registrations for the event
+      const registrations = await this.registrationRepository.findByEventId(eventId);
 
-      await sendEmail({
-        to: user.email,
-        subject: `Event Cancelled: ${event.title}`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              h1 { color: #dc3545; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h1>Event Cancelled</h1>
-              <p>Hi ${user.name},</p>
-              <p>Unfortunately, the event "<strong>${event.title}</strong>" scheduled for ${event.eventDate} has been cancelled.</p>
-              <p>We apologize for any inconvenience.</p>
-            </div>
-          </body>
-          </html>
-        `
+      // Filter to ONLY registered users (exclude waitlisted and already cancelled)
+      const registeredUsers = registrations.filter(
+        reg => reg.status === RegistrationStatus.REGISTERED
+      );
+
+      console.log(`[NotificationService] Sending cancellation emails to ${registeredUsers.length} registered attendees for event ${eventId}`);
+
+      // Send emails in parallel with error isolation
+      const emailPromises = registeredUsers.map(async (registration) => {
+        try {
+          const user = await this.userRepository.findById(registration.userId);
+          if (!user) {
+            console.warn(`[NotificationService] User ${registration.userId} not found, skipping email`);
+            return;
+          }
+
+          await sendEmail({
+            to: user.email,
+            subject: `Event Cancelled: ${event.title}`,
+            html: eventCancelledTemplate({
+              userName: user.name,
+              eventTitle: event.title,
+              eventDate: event.eventDate,
+              eventTime: event.eventTime,
+              locationName: location?.name || 'TBA'
+            })
+          });
+
+          console.log(`[NotificationService] Sent cancellation email to ${user.email}`);
+        } catch (error) {
+          // Log but don't throw - individual email failures shouldn't affect others
+          console.error(`[NotificationService] Failed to send email to user ${registration.userId}:`, error);
+        }
       });
+
+      // Wait for all emails to complete
+      await Promise.allSettled(emailPromises);
+
+      console.log(`[NotificationService] Completed sending cancellation emails for event ${eventId}`);
+    } catch (error) {
+      // Log the error but don't throw - email failures shouldn't block event cancellation
+      console.error(`[NotificationService] Error in sendEventCancelledEmail for event ${eventId}:`, error);
     }
   }
 
