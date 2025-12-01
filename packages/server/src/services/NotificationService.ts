@@ -2,6 +2,7 @@ import { sendEmail } from '../infrastructure/email/mailer';
 import { eventApprovedTemplate } from '../infrastructure/email/templates/eventApproved';
 import { registrationConfirmedTemplate } from '../infrastructure/email/templates/registrationConfirmed';
 import { eventReminderTemplate } from '../infrastructure/email/templates/eventReminder';
+import { passwordResetTemplate } from '../infrastructure/email/templates/passwordReset';
 import { IEventRepository } from '../repositories/IEventRepository';
 import { IUserRepository } from '../repositories/IUserRepository';
 import { ILocationRepository } from '../repositories/ILocationRepository';
@@ -135,5 +136,38 @@ export class NotificationService {
         `
       });
     }
+  }
+
+  async sendPasswordResetEmail(userId: number, token: string): Promise<void> {
+    // 1. Fetch user
+    const user = await this.userRepository.findById(userId);
+    if (!user) throw new Error('User not found');
+
+    // 2. Generate reset link (use environment variable for base URL)
+    const baseUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const resetLink = `${baseUrl}/reset-password?token=${token}`;
+
+    // 3. Calculate human-readable expiry time (24 hours from now)
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+    const expiresAtFormatted = expiresAt.toLocaleString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+
+    // 4. Send email
+    await sendEmail({
+      to: user.email,
+      subject: 'Reset Your Password - Campus Event Hub',
+      html: passwordResetTemplate({
+        userName: user.name,
+        resetLink,
+        expiresAt: expiresAtFormatted
+      })
+    });
   }
 }

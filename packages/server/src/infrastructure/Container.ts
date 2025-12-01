@@ -118,7 +118,7 @@ export class Container {
   // Auth service (singleton)
   getAuthService(): AuthService {
     if (!this.authService) {
-      this.authService = new AuthService(this.getUserRepository());
+      this.authService = new AuthService(this.getUserRepository(), this.getDatabase());
     }
     return this.authService;
   }

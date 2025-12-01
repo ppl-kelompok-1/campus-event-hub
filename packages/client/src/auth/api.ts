@@ -254,6 +254,38 @@ export const authApi = {
       body: JSON.stringify({ name, password }),
     })
   },
+
+  forgotPassword: async (email: string) => {
+    return fetchApi<{
+      success: boolean
+      message: string
+    }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+      requireAuth: false,
+    })
+  },
+
+  resetPassword: async (token: string, newPassword: string) => {
+    return fetchApi<{
+      success: boolean
+      data: {
+        message: string
+        token: string
+        user: {
+          id: number
+          name: string
+          email: string
+          role: UserRole
+          category: UserCategory
+        }
+      }
+    }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+      requireAuth: false,
+    })
+  },
 }
 
 // User management API calls

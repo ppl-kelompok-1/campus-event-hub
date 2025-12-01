@@ -5,6 +5,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import Login from './pages/Login'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import Profile from './pages/Profile'
 import PublicUserProfilePage from './pages/PublicUserProfilePage'
 import UsersPage from './pages/UsersPage'
@@ -27,7 +29,9 @@ function App() {
           <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
-          
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+
           {/* Event routes - public */}
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:id" element={<EventDetailsPage />} />
