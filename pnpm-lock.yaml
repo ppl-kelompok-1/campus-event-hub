@@ -134,6 +134,9 @@ importers:
       newman-reporter-htmlextra:
         specifier: ^1.23.1
         version: 1.23.1(newman@6.2.1)
+      nodemailer:
+        specifier: ^7.0.11
+        version: 7.0.11
     devDependencies:
       '@types/bcryptjs':
         specifier: ^3.0.0
@@ -156,6 +159,9 @@ importers:
       '@types/node':
         specifier: ^20.14.10
         version: 20.19.11
+      '@types/nodemailer':
+        specifier: ^7.0.4
+        version: 7.0.4
       nodemon:
         specifier: ^3.1.10
         version: 3.1.10
