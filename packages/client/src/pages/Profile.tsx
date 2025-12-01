@@ -5,6 +5,7 @@ import { authApi, eventApi } from '../auth/api'
 import type { Event, UserCategory } from '../auth/api'
 import EventsTable from '../components/EventsTable'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { setUser } from '../auth/storage'
 
 interface JoinedEventRegistration {
   id: number
@@ -174,13 +175,19 @@ const Profile = () => {
 
       // Only make API call if there are changes
       if (Object.keys(updateData).length > 0) {
-        await authApi.updateProfile(updateData.name, updateData.password)
+        const response = await authApi.updateProfile(updateData.name, updateData.password)
+
+        // Update localStorage with complete user data including category
+        setUser(response.data)
+
         setSuccess('Profile updated successfully')
         setPassword('')
         setConfirmPassword('')
         setTimeout(() => {
           setIsEditing(false)
           setSuccess('')
+          // Reload page to refresh user data in AuthContext
+          window.location.reload()
         }, 2000)
       } else {
         setError('No changes to update')
@@ -440,7 +447,7 @@ const Profile = () => {
                 fontWeight: '600',
                 flexShrink: 0
               }}>
-                {user.name.charAt(0).toUpperCase()}
+                {user.name?.charAt(0)?.toUpperCase() || '?'}
               </div>
               
               {/* User Info */}
@@ -461,20 +468,22 @@ const Profile = () => {
                 </p>
 
                 {/* Category Badge */}
-                <div style={{ marginBottom: '8px' }}>
-                  <span style={{
-                    display: 'inline-block',
-                    backgroundColor: getCategoryBadgeColor(user.category),
-                    color: user.category === 'staff' ? '#212529' : 'white',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    textTransform: 'capitalize'
-                  }}>
-                    {user.category.charAt(0).toUpperCase() + user.category.slice(1)}
-                  </span>
-                </div>
+                {user.category && (
+                  <div style={{ marginBottom: '8px' }}>
+                    <span style={{
+                      display: 'inline-block',
+                      backgroundColor: getCategoryBadgeColor(user.category),
+                      color: user.category === 'staff' ? '#212529' : 'white',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      textTransform: 'capitalize'
+                    }}>
+                      {user.category.charAt(0).toUpperCase() + user.category.slice(1)}
+                    </span>
+                  </div>
+                )}
 
                 <span style={{
                   backgroundColor: user.role === 'superadmin' ? '#007bff' :

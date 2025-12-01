@@ -5,6 +5,7 @@ import { asyncHandler } from '../middleware/error';
 import { authenticate } from '../middleware/auth';
 import { LoginDto, RegisterDto } from '../models/Auth';
 import { UpdateSelfDto } from '../models/User';
+import { container } from '../infrastructure/Container';
 
 export const createAuthRouter = (authService: AuthService, userService: UserService): Router => {
   const router = Router();
@@ -59,11 +60,109 @@ export const createAuthRouter = (authService: AuthService, userService: UserServ
     };
 
     const user = await userService.updateSelf(req.user.userId, updateDto, req.user.userId);
-    
+
     res.json({
       success: true,
       data: user,
       message: 'Profile updated successfully'
+    });
+  }));
+
+  // POST /api/v1/auth/forgot-password - Request password reset
+  router.post('/forgot-password', asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    // Validate email format
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Valid email required'
+      });
+    }
+
+    const userRepository = container.getUserRepository();
+    const notificationService = container.getNotificationService();
+
+    // Check if user exists
+    const user = await userRepository.findByEmail(email);
+
+    // Always return success (security: don't reveal if email exists)
+    if (!user) {
+      return res.json({
+        success: true,
+        message: 'If this email exists in our system, a reset link has been sent'
+      });
+    }
+
+    // Generate token
+    const token = await authService.generatePasswordResetToken(email);
+
+    // Send email
+    await notificationService.sendPasswordResetEmail(user.id, token);
+
+    res.json({
+      success: true,
+      message: 'If this email exists in our system, a reset link has been sent'
+    });
+  }));
+
+  // POST /api/v1/auth/reset-password - Reset password with token
+  router.post('/reset-password', asyncHandler(async (req: Request, res: Response) => {
+    const { token, newPassword } = req.body;
+
+    // Validate inputs
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Token is required'
+      });
+    }
+
+    if (!newPassword || typeof newPassword !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'New password is required'
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 8 characters long'
+      });
+    }
+
+    const userRepository = container.getUserRepository();
+
+    // Reset password and get JWT
+    const { userId, token: jwtToken } = await authService.resetPassword(
+      token,
+      newPassword
+    );
+
+    // Get user data
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      return res.status(500).json({
+        success: false,
+        error: 'User not found after password reset'
+      });
+    }
+
+    // Return success with JWT for auto-login
+    res.json({
+      success: true,
+      data: {
+        message: 'Password reset successful',
+        token: jwtToken,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          category: user.category
+        }
+      }
     });
   }));
 

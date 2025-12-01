@@ -5,6 +5,8 @@ import type { Event, EventAttachment, EventApprovalHistory } from '../auth/api'
 import { FileUpload } from '../components/FileUpload'
 import { AttachmentList } from '../components/AttachmentList'
 import EventApprovalHistoryComponent from '../components/EventApprovalHistory'
+import EventMessageForm from '../components/EventMessageForm'
+import EventMessageHistory from '../components/EventMessageHistory'
 import { useAuth } from '../auth/AuthContext'
 import { getToken } from '../auth/storage'
 
@@ -28,6 +30,7 @@ const EventDetailsPage = () => {
   const [actionLoading, setActionLoading] = useState(false)
   const [showRevisionModal, setShowRevisionModal] = useState(false)
   const [revisionComments, setRevisionComments] = useState('')
+  const [messageRefreshTrigger, setMessageRefreshTrigger] = useState(0)
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -1045,6 +1048,29 @@ const EventDetailsPage = () => {
             ) : (
               <EventApprovalHistoryComponent history={approvalHistory} />
             )}
+          </div>
+        )}
+
+        {/* Event Messaging Section - Only visible to event creator and admins */}
+        {user && (
+          user.id === event.createdBy ||
+          user.role === 'admin' ||
+          user.role === 'superadmin'
+        ) && event.status === 'published' && (
+          <div style={{ marginTop: '30px' }}>
+            <EventMessageForm
+              eventId={event.id}
+              onMessageSent={() => {
+                // Trigger refresh of message history
+                setMessageRefreshTrigger(prev => prev + 1)
+              }}
+            />
+            <div style={{ marginTop: '24px' }}>
+              <EventMessageHistory
+                eventId={event.id}
+                refreshTrigger={messageRefreshTrigger}
+              />
+            </div>
           </div>
         )}
 

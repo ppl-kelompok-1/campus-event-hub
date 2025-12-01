@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 
 const Login = () => {
@@ -53,6 +54,19 @@ const Login = () => {
             required
             style={{ width: '100%', padding: '8px' }}
           />
+        </div>
+
+        <div style={{ marginBottom: '15px', textAlign: 'right' }}>
+          <Link
+            to="/forgot-password"
+            style={{
+              color: '#007bff',
+              textDecoration: 'none',
+              fontSize: '14px'
+            }}
+          >
+            Forgot Password?
+          </Link>
         </div>
 
         {error && (

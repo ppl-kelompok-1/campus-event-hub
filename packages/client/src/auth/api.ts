@@ -186,6 +186,25 @@ export interface ApprovalDto {
   revisionComments?: string
 }
 
+// Event Message types
+export interface EventMessage {
+  id: number
+  eventId: number
+  senderId: number
+  senderName: string
+  eventTitle: string
+  subject: string
+  message: string
+  recipientCount: number
+  sentAt: string
+  createdAt: string
+}
+
+export interface CreateEventMessageDto {
+  subject: string
+  message: string
+}
+
 export interface PaginatedResponse<T> {
   success: boolean
   data: T[]
@@ -247,11 +266,44 @@ export const authApi = {
         name: string
         email: string
         role: UserRole
+        category: UserCategory
       }
       message: string
     }>('/auth/profile', {
       method: 'PUT',
       body: JSON.stringify({ name, password }),
+    })
+  },
+
+  forgotPassword: async (email: string) => {
+    return fetchApi<{
+      success: boolean
+      message: string
+    }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+      requireAuth: false,
+    })
+  },
+
+  resetPassword: async (token: string, newPassword: string) => {
+    return fetchApi<{
+      success: boolean
+      data: {
+        message: string
+        token: string
+        user: {
+          id: number
+          name: string
+          email: string
+          role: UserRole
+          category: UserCategory
+        }
+      }
+    }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+      requireAuth: false,
     })
   },
 }
@@ -572,6 +624,19 @@ export const eventApi = {
     return fetchApi<ApiResponse<EventApprovalHistory[]>>(
       `/events/${eventId}/approval-history`
     )
+  },
+
+  // Send message to event attendees (creator or admin only)
+  sendMessage: async (eventId: number, messageData: CreateEventMessageDto) => {
+    return fetchApi<ApiResponse<EventMessage>>(`/events/${eventId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(messageData),
+    })
+  },
+
+  // Get message history for event (creator or admin only)
+  getEventMessages: async (eventId: number) => {
+    return fetchApi<ApiResponse<EventMessage[]>>(`/events/${eventId}/messages`)
   },
 }
 
