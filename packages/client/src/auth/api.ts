@@ -266,6 +266,7 @@ export const authApi = {
         name: string
         email: string
         role: UserRole
+        category: UserCategory
       }
       message: string
     }>('/auth/profile', {
