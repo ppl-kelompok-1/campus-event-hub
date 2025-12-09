@@ -25,7 +25,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       (path === '/users' && location.pathname.startsWith('/users')) ||
       (path === '/events/create' && location.pathname.startsWith('/events/create')) ||
       (path === '/approvals' && location.pathname.startsWith('/approvals')) ||
-      (path === '/locations' && location.pathname.startsWith('/locations'))
+      (path === '/locations' && location.pathname.startsWith('/locations')) ||
+      (path === '/user-manual' && location.pathname === '/user-manual')
   }
 
   const handleNavigation = () => {
@@ -95,6 +96,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             >
               <span className="nav-icon">📅</span>
               <span className="nav-text">Events</span>
+            </Link>
+            <Link
+              to="/user-manual"
+              className={`nav-item ${isActive('/user-manual') ? 'nav-item-active' : ''}`}
+              onClick={handleNavigation}
+            >
+              <span className="nav-icon">📖</span>
+              <span className="nav-text">User Manual</span>
             </Link>
             {isAuthenticated && (
               <Link 

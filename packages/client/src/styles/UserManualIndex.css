@@ -1,0 +1,266 @@
+/* User Manual Index Page Styles */
+
+.user-manual-index {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Header Section */
+.user-manual-index-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.user-manual-index-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a1a);
+  margin-bottom: 1rem;
+}
+
+.user-manual-index-subtitle {
+  font-size: 1.125rem;
+  color: var(--text-secondary, #666);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Sections Container */
+.user-manual-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+/* Role Section */
+.user-manual-role-section {
+  background: var(--bg-secondary, #f9fafb);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  padding: 2rem;
+  transition: box-shadow 0.3s ease;
+}
+
+.user-manual-role-section:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Role Section Header */
+.role-section-header {
+  margin-bottom: 1.5rem;
+}
+
+.role-section-header h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.role-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.role-description {
+  font-size: 1rem;
+  color: var(--text-secondary, #666);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Page Cards Grid */
+.role-page-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+/* Individual Page Card */
+.page-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: white;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text-primary, #1a1a1a);
+  transition: all 0.2s ease;
+  gap: 1rem;
+}
+
+.page-card:hover {
+  border-color: var(--primary-color, #3b82f6);
+  background: var(--primary-light, #eff6ff);
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.page-card:active {
+  transform: translateX(2px);
+}
+
+.page-card-title {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.page-card-arrow {
+  font-size: 1.25rem;
+  color: var(--primary-color, #3b82f6);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.page-card:hover .page-card-arrow {
+  transform: translateX(4px);
+}
+
+/* Footer */
+.user-manual-index-footer {
+  margin-top: 4rem;
+  padding: 2rem;
+  background: var(--bg-tertiary, #f3f4f6);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.user-manual-index-footer p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--text-secondary, #666);
+  line-height: 1.6;
+}
+
+.user-manual-index-footer strong {
+  color: var(--text-primary, #1a1a1a);
+  font-weight: 600;
+}
+
+/* Responsive Design */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .user-manual-index {
+    padding: 1.5rem;
+  }
+
+  .user-manual-index-header h1 {
+    font-size: 2rem;
+  }
+
+  .user-manual-index-subtitle {
+    font-size: 1rem;
+  }
+
+  .user-manual-sections {
+    gap: 2rem;
+  }
+
+  .user-manual-role-section {
+    padding: 1.5rem;
+  }
+
+  .role-section-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .role-page-cards {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+
+  .user-manual-index-footer {
+    margin-top: 3rem;
+    padding: 1.5rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .user-manual-index {
+    padding: 1rem;
+  }
+
+  .user-manual-index-header {
+    margin-bottom: 2rem;
+  }
+
+  .user-manual-index-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .user-manual-index-subtitle {
+    font-size: 0.9375rem;
+  }
+
+  .user-manual-sections {
+    gap: 1.5rem;
+  }
+
+  .user-manual-role-section {
+    padding: 1.25rem;
+  }
+
+  .role-section-header h2 {
+    font-size: 1.25rem;
+    gap: 0.5rem;
+  }
+
+  .role-icon {
+    font-size: 1.25rem;
+  }
+
+  .role-description {
+    font-size: 0.9375rem;
+  }
+
+  .role-page-cards {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .page-card {
+    padding: 0.875rem 1rem;
+  }
+
+  .page-card-title {
+    font-size: 0.875rem;
+  }
+
+  .user-manual-index-footer {
+    margin-top: 2rem;
+    padding: 1.25rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .user-manual-index {
+    max-width: 100%;
+  }
+
+  .user-manual-role-section {
+    page-break-inside: avoid;
+    box-shadow: none;
+  }
+
+  .page-card {
+    border: 1px solid #e5e7eb;
+    box-shadow: none;
+  }
+
+  .page-card:hover {
+    transform: none;
+    background: white;
+  }
+}

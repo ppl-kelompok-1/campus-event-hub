@@ -19,6 +19,25 @@ import EventDetailsPage from './pages/EventDetailsPage'
 import PendingApprovalsPage from './pages/PendingApprovalsPage'
 import LocationManagementPage from './pages/LocationManagementPage'
 import SettingsPage from './pages/SettingsPage'
+import UserManualIndexPage from './pages/UserManualIndexPage'
+import LoginGuidePage from './pages/user-manual/getting-started/LoginGuidePage'
+import ViewingProfilePage from './pages/user-manual/users/ViewingProfilePage'
+import UpdatingProfilePage from './pages/user-manual/users/UpdatingProfilePage'
+import RegisteringEventsPage from './pages/user-manual/users/RegisteringEventsPage'
+import UnregisteringEventsPage from './pages/user-manual/users/UnregisteringEventsPage'
+import CreatingEventPage from './pages/user-manual/event-creators/CreatingEventPage'
+import SubmittingEventPage from './pages/user-manual/event-creators/SubmittingEventPage'
+import EditingEventPage from './pages/user-manual/event-creators/EditingEventPage'
+import DeletingEventPage from './pages/user-manual/event-creators/DeletingEventPage'
+import CancelingEventPage from './pages/user-manual/event-creators/CancelingEventPage'
+import ApprovingEventPage from './pages/user-manual/approvers/ApprovingEventPage'
+import RequestingRevisionPage from './pages/user-manual/approvers/RequestingRevisionPage'
+import PublishingDirectlyPage from './pages/user-manual/approvers/PublishingDirectlyPage'
+import CreatingUserPage from './pages/user-manual/administrators/CreatingUserPage'
+import CreatingLocationPage from './pages/user-manual/administrators/CreatingLocationPage'
+import TogglingLocationPage from './pages/user-manual/administrators/TogglingLocationPage'
+import UpdatingSettingsPage from './pages/user-manual/superadministrators/UpdatingSettingsPage'
+import UploadingLogoPage from './pages/user-manual/superadministrators/UploadingLogoPage'
 import './App.css'
 
 function App() {
@@ -38,7 +57,28 @@ function App() {
           
           {/* Public user profile routes */}
           <Route path="/users/:id/profile" element={<PublicUserProfilePage />} />
-          
+
+          {/* User Manual - public */}
+          <Route path="/user-manual" element={<UserManualIndexPage />} />
+          <Route path="/user-manual/getting-started/login" element={<LoginGuidePage />} />
+          <Route path="/user-manual/users/viewing-profile" element={<ViewingProfilePage />} />
+          <Route path="/user-manual/users/updating-profile" element={<UpdatingProfilePage />} />
+          <Route path="/user-manual/users/registering-events" element={<RegisteringEventsPage />} />
+          <Route path="/user-manual/users/unregistering-events" element={<UnregisteringEventsPage />} />
+          <Route path="/user-manual/event-creators/creating-event" element={<CreatingEventPage />} />
+          <Route path="/user-manual/event-creators/submitting-event" element={<SubmittingEventPage />} />
+          <Route path="/user-manual/event-creators/editing-event" element={<EditingEventPage />} />
+          <Route path="/user-manual/event-creators/deleting-event" element={<DeletingEventPage />} />
+          <Route path="/user-manual/event-creators/canceling-event" element={<CancelingEventPage />} />
+          <Route path="/user-manual/approvers/approving-event" element={<ApprovingEventPage />} />
+          <Route path="/user-manual/approvers/requesting-revision" element={<RequestingRevisionPage />} />
+          <Route path="/user-manual/approvers/publishing-directly" element={<PublishingDirectlyPage />} />
+          <Route path="/user-manual/administrators/creating-user" element={<CreatingUserPage />} />
+          <Route path="/user-manual/administrators/creating-location" element={<CreatingLocationPage />} />
+          <Route path="/user-manual/administrators/toggling-location" element={<TogglingLocationPage />} />
+          <Route path="/user-manual/superadministrators/updating-settings" element={<UpdatingSettingsPage />} />
+          <Route path="/user-manual/superadministrators/uploading-logo" element={<UploadingLogoPage />} />
+
           {/* Protected routes */}
           <Route
             path="/profile"
