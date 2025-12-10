@@ -20,16 +20,16 @@ Users with "Admin" or "Superadmin" role
 
 **Screenshots:**
 
-![Create Location Form](placeholder-gambar-1.png)
+![Create Location Form](/docs/user-manual/administrators/images/creating-location-1.png)
 *Figure 1: Create location form with location name*
 
-![Success Notification](placeholder-gambar-2.png)
+![Success Notification](/docs/user-manual/administrators/images/creating-location-2.png)
 *Figure 2: Success notification after creating location*
 
-![Locations List](placeholder-gambar-3.png)
+![Locations List](/docs/user-manual/administrators/images/creating-location-3.png)
 *Figure 3: New location appearing in the locations list*
 
-![Event Form Dropdown](placeholder-gambar-4.png)
+![Event Form Dropdown](/docs/user-manual/administrators/images/creating-location-4.png)
 *Figure 4: Location available in event creation form dropdown*
 
 **Tips:**

@@ -20,13 +20,16 @@ Users with "Approver" role or higher
 
 **Screenshots:**
 
-![Create Event Form with Publish Option](placeholder-gambar-1.png)
+![Create Event Form with Publish Option](/docs/user-manual/approvers/images/publishing-directly-1.png)
+
 *Figure 1: Create event form showing "Publish" button for approvers*
 
-![Published Event](placeholder-gambar-2.png)
+![Published Event](/docs/user-manual/approvers/images/publishing-directly-2.png)
+
 *Figure 2: Event created with "Published" status*
 
-![Public Events Page](placeholder-gambar-3.png)
+![Public Events Page](/docs/user-manual/approvers/images/publishing-directly-3.png)
+
 *Figure 3: Event immediately visible on public events page*
 
 **Tips:**

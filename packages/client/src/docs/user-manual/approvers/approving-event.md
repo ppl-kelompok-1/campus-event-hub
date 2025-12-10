@@ -23,19 +23,23 @@ Users with "Approver" role or higher
 
 **Screenshots:**
 
-![Pending Approvals List](placeholder-gambar-1.png)
+![Pending Approvals List](/docs/user-manual/approvers/images/approving-event-1.png)
 *Figure 1: List of events pending approval*
 
-![Event Detail with Approve Button](placeholder-gambar-2.png)
+![Event Detail with Approve Button](/docs/user-manual/approvers/images/approving-event-2.png)
+
 *Figure 2: Event detail page showing "Approve" button*
 
-![Success Notification](placeholder-gambar-3.png)
+![Success Notification](/docs/user-manual/approvers/images/approving-event-3.png)
+
 *Figure 3: Success notification after approval*
 
-![Published Status](placeholder-gambar-4.png)
+![Published Status](/docs/user-manual/approvers/images/approving-event-4.png)
+
 *Figure 4: Event now showing "Published" status*
 
-![Public Events Page](placeholder-gambar-5.png)
+![Public Events Page](/docs/user-manual/approvers/images/approving-event-5.png)
+
 *Figure 5: Approved event appearing on public events page*
 
 **Tips:**

@@ -21,13 +21,13 @@ Users with "Admin" or "Superadmin" role
 
 **Screenshots:**
 
-![Location with Toggle Button](placeholder-gambar-1.png)
+![Location with Toggle Button](/docs/user-manual/administrators/images/toggling-location-1.png)
 *Figure 1: Location management showing toggle buttons*
 
-![Success Message and Updated Status](placeholder-gambar-2-3.png)
+![Success Message and Updated Status](/docs/user-manual/administrators/images/toggling-location-2.png)
 *Figure 2-3: Success message and updated status indicator*
 
-![Event Form Showing Only Active Locations](placeholder-gambar-4.png)
+![Event Form Showing Only Active Locations](/docs/user-manual/administrators/images/toggling-location-3.png)
 *Figure 4: Event creation form dropdown showing only active locations*
 
 **Tips:**
