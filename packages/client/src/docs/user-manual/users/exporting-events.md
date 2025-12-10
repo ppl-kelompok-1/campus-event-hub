@@ -33,11 +33,9 @@
 - File automatically downloaded to your default downloads folder
 - All published events from the system
 
-![Export to CSV button on Events page](placeholder-gambar-1.png)
+![Export to CSV button on Events page and downloaded .csv file](/docs/user-manual/users/images/exporting-events-1,2.png)
 
-![Downloaded events.csv file](placeholder-gambar-2.png)
-
-![CSV file opened in Excel showing events list](placeholder-gambar-3.png)
+![CSV file opened in Excel showing events list](/docs/user-manual/users/images/exporting-events-3.png)
 
 **CSV File Contents:**
 - **ID:** Event ID number

@@ -19,13 +19,13 @@ Users who are registered for an event
 
 **Screenshots:**
 
-![Leave Button](placeholder-gambar-1.png)
+![Leave Button](/docs/user-manual/users/images/unregistering-events-1.png)
 *Figure 1: Event detail showing "Leave" button for registered users*
 
-![After Unregistration](placeholder-gambar-3-5.png)
+![After Unregistration](/docs/user-manual/users/images/unregistering-events-2.png)
 *Figure 2: Button changed back to "Register" with decreased count*
 
-![Updated Attendees List](placeholder-gambar-4.png)
+![Updated Attendees List](/docs/user-manual/users/images/unregistering-events-3.png)
 *Figure 3: Your name removed from attendees list*
 
 **Tips:**
