@@ -1,0 +1,312 @@
+test_id,test_case_id,category,test_interface,feature_function,endpoint,http_method,test_type,test_scenario,test_data,expected_result,screenshot_instructions,actual_result,status,tester_name,test_date,notes
+65,TC-FORGOT-PW-001,Authentication & Authorization,Frontend UI,Forgot Password,,,Positive,User requests password reset with valid registered email,"Email: user@campus-event-hub.local","- Success message displayed
+- Message: ""Password reset link sent to your email""
+- Email sent with reset link
+- User redirected or shown confirmation","1. Forgot password page with email input
+2. Success message displayed
+3. Email inbox showing reset email",,,,
+66,TC-FORGOT-PW-002,Authentication & Authorization,Frontend UI,Forgot Password,,,Negative,User enters invalid email format,"Email: invalid-email","- Validation error shown
+- Message: ""Please enter a valid email address""
+- Form not submitted
+- No API call made","1. Form with invalid email
+2. Validation error under email field",,,,
+67,TC-FORGOT-PW-003,Authentication & Authorization,Frontend UI,Forgot Password,,,Positive,User enters non-existent email,"Email: nonexistent@test.com","- Success message displayed (security best practice)
+- Message: ""If email exists password reset link will be sent""
+- No indication whether email exists
+- Prevents user enumeration","1. Form with non-existent email
+2. Generic success message shown",,,,Security best practice: don't reveal if email exists
+68,TC-FORGOT-PW-004,Authentication & Authorization,Frontend UI,Forgot Password,,,Negative,User submits empty email field,"Email: [empty]","- Validation error shown
+- Message: ""Email is required""
+- Form not submitted","1. Empty email field
+2. Required field error displayed",,,,
+69,TC-API-FORGOT-PW-001,Authentication & Authorization,Backend API,Forgot Password,/auth/forgot-password,POST,Positive,Request password reset with valid email via API,"{
+  ""email"": ""user@campus-event-hub.local""
+}","- HTTP 200 OK
+- Response: { ""success"": true ""message"": ""Password reset email sent"" }
+- Reset token generated and stored
+- Email sent with reset link
+- Token valid for 24 hours","1. POST request with valid email
+2. 200 response
+3. Success message
+4. Database showing reset token
+5. Email inbox",,,,
+70,TC-API-FORGOT-PW-002,Authentication & Authorization,Backend API,Forgot Password,/auth/forgot-password,POST,Positive,Request password reset with non-existent email via API,"{
+  ""email"": ""nonexistent@test.com""
+}","- HTTP 200 OK (security best practice)
+- Same response as valid email
+- No token generated
+- No email sent
+- Prevents user enumeration","1. POST request with non-existent email
+2. 200 response (same as valid)
+3. No token in database",,,,Security: don't reveal if email exists
+71,TC-RESET-PW-001,Authentication & Authorization,Frontend UI,Reset Password,,,Positive,User resets password with valid token and strong password,"Token: [valid-reset-token]
+New Password: NewSecure123!
+Confirm Password: NewSecure123!","- Password reset successfully
+- Success message displayed
+- User can login with new password
+- Old password no longer works
+- Token invalidated after use","1. Reset password form with valid token
+2. Success notification
+3. Redirect to login page
+4. Successful login with new password",,,,
+72,TC-RESET-PW-002,Authentication & Authorization,Frontend UI,Reset Password,,,Negative,User enters weak password (less than 8 characters),"New Password: Pass123
+Confirm Password: Pass123","- Validation error shown
+- Message: ""Password must be at least 8 characters""
+- Form not submitted
+- Password not changed","1. Form with weak password
+2. Validation error under password field",,,,
+73,TC-RESET-PW-003,Authentication & Authorization,Frontend UI,Reset Password,,,Negative,Password and confirm password don't match,"New Password: Password123!
+Confirm Password: Different123!","- Validation error shown
+- Message: ""Passwords do not match""
+- Form not submitted
+- Password not changed","1. Form with mismatched passwords
+2. Validation error displayed",,,,
+74,TC-RESET-PW-004,Authentication & Authorization,Frontend UI,Reset Password,,,Negative,User tries to reset password with expired token,"Token: [expired-token]
+New Password: NewSecure123!","- Error message displayed
+- Message: ""Reset link has expired"" or ""Invalid token""
+- Password not changed
+- User directed to request new reset link","1. Form with expired token
+2. Error message
+3. Link to forgot password page",,,,
+75,TC-API-RESET-PW-001,Authentication & Authorization,Backend API,Reset Password,/auth/reset-password,POST,Positive,Reset password with valid token via API,"{
+  ""token"": ""valid-reset-token""
+  ""newPassword"": ""NewSecure123!""
+}","- HTTP 200 OK
+- Response: { ""success"": true ""message"": ""Password reset successful"" }
+- Password updated in database
+- Token invalidated
+- User can login with new password","1. POST request with valid token
+2. 200 response
+3. Database showing updated password
+4. Token marked as used",,,,
+76,TC-API-RESET-PW-002,Authentication & Authorization,Backend API,Reset Password,/auth/reset-password,POST,Negative,Reset password with invalid or expired token via API,"{
+  ""token"": ""invalid-or-expired-token""
+  ""newPassword"": ""NewSecure123!""
+}","- HTTP 400 Bad Request
+- Error: ""Invalid or expired reset token""
+- Password not changed
+- No database update","1. POST request with invalid token
+2. 400 response
+3. Error message
+4. Database unchanged",,,,
+77,TC-API-RESET-PW-003,Authentication & Authorization,Backend API,Reset Password,/auth/reset-password,POST,Negative,Reset password with weak password via API,"{
+  ""token"": ""valid-token""
+  ""newPassword"": ""weak""
+}","- HTTP 400 Bad Request
+- Error: ""Password must be at least 8 characters""
+- Password not changed
+- Validation error returned","1. POST request with weak password
+2. 400 response
+3. Validation error details",,,,
+78,TC-EVENT-MSG-001,Event Management,Frontend UI,Manual Event Message,,,Positive,Event creator sends message to attendees with valid data,"Logged in as: Event Creator
+Subject: Important Update (under 200 chars)
+Message: Valid message content (under 2000 chars)","- Message sent successfully
+- Success notification showing number of recipients
+- All registered attendees receive email
+- Message recorded in system","1. Event message form
+2. Success notification with recipient count
+3. Email inbox of attendee
+4. Message history in system",,,,
+79,TC-EVENT-MSG-002,Event Management,Frontend UI,Manual Event Message,,,Negative,User enters subject exceeding 200 characters,"Subject: [text with 201+ characters]","- Validation error shown
+- Message: ""Subject must be 200 characters or less""
+- Character counter shows exceeded limit
+- Form not submitted","1. Form with long subject
+2. Character counter showing excess
+3. Validation error message",,,,
+80,TC-EVENT-MSG-003,Event Management,Frontend UI,Manual Event Message,,,Negative,User enters message exceeding 2000 characters,"Message: [text with 2001+ characters]","- Validation error shown
+- Message: ""Message must be 2000 characters or less""
+- Character counter shows exceeded limit
+- Form not submitted","1. Form with long message
+2. Character counter showing excess
+3. Validation error message",,,,
+81,TC-EVENT-MSG-004,Event Management,Frontend UI,Manual Event Message,,,Negative,Non-creator tries to access message form,"Logged in as: Regular User (not event creator)
+Event: Created by another user","- Message form not visible
+- Send message button not shown
+- If accessed directly: 403 error or redirect","1. Event details page showing no message button
+2. 403 error if attempted via URL",,,,
+82,TC-API-EVENT-MSG-001,Event Management,Backend API,Manual Event Message,/events/:id/send-message,POST,Positive,Event creator sends message via API,"Headers:
+Authorization: Bearer [CREATOR_TOKEN]
+
+Path: /events/[EVENT_ID]/send-message
+
+Body:
+{
+  ""subject"": ""Important Update""
+  ""message"": ""Meeting location has changed""
+}","- HTTP 200 OK
+- Response: { ""success"": true ""recipientCount"": number }
+- Emails sent to all registered attendees
+- Message recorded in database","1. POST request with valid data
+2. 200 response with recipient count
+3. Database message record
+4. Email sent confirmation",,,,
+83,TC-API-EVENT-MSG-002,Event Management,Backend API,Manual Event Message,/events/:id/send-message,POST,Negative,Non-creator tries to send message via API,"Headers:
+Authorization: Bearer [NON_CREATOR_TOKEN]
+
+Path: /events/[EVENT_ID]/send-message
+
+Body:
+{
+  ""subject"": ""Unauthorized Message""
+  ""message"": ""Should not send""
+}","- HTTP 403 Forbidden
+- Error: ""Only event creator can send messages to attendees""
+- No emails sent
+- No database record","1. Request with non-creator token
+2. 403 response
+3. Permission error
+4. No emails sent",,,,
+84,TC-API-EVENT-MSG-003,Event Management,Backend API,Manual Event Message,/events/:id/send-message,POST,Negative,Send message with empty subject or message via API,"Body:
+{
+  ""subject"": """"
+  ""message"": """"
+}","- HTTP 400 Bad Request
+- Error: ""Subject and message are required""
+- No emails sent
+- Validation error returned","1. Request with empty fields
+2. 400 response
+3. Validation error details",,,,
+85,TC-EVENT-ATTACH-001,Event Management,Frontend UI,Event Attachment Validation,,,Positive,User creates event with valid attachments,"Logged in as: User
+Files: 1 or more valid files (PDF JPG etc.)
+File sizes: All < 10MB","- Event created successfully
+- Attachments uploaded and saved
+- Files visible in event details
+- Download links available","1. Create event form with file uploads
+2. Success notification
+3. Event details showing attachments
+4. Downloadable attachment links",,,,
+86,TC-EVENT-ATTACH-002,Event Management,Frontend UI,Event Attachment Validation,,,Negative,User tries to submit event without attachments,"Logged in as: User
+Files: [none selected]","- Validation error shown
+- Message: ""At least one attachment is required""
+- Form not submitted
+- Event not created
+- Error highlighted in red","1. Create event form with no files
+2. Validation error message
+3. Form state showing error",,,,
+87,TC-EVENT-ATTACH-003,Event Management,Frontend UI,Event Attachment Validation,,,Negative,User tries to upload file larger than 10MB,"File: large-file.pdf (>10MB)","- Validation error shown
+- Message: ""File size must be less than 10MB"" or similar
+- File not uploaded
+- Form shows error
+- File rejected","1. File upload attempt with large file
+2. Error message displayed
+3. File not added to upload list",,,,
+88,TC-EVENT-CAPACITY-001,Event Management,Frontend UI,Building Capacity Validation,,,Positive,User sets max attendees within location capacity,"Logged in as: User
+Location: Main Hall (capacity: 200)
+Max Attendees: 150","- Event created successfully
+- Max attendees accepted
+- No validation error
+- Capacity hint shown: ""Location capacity: 200""","1. Create event form
+2. Location selected showing capacity
+3. Max attendees within limit
+4. Success notification",,,,
+89,TC-EVENT-CAPACITY-002,Event Management,Frontend UI,Building Capacity Validation,,,Negative,User sets max attendees exceeding location capacity,"Logged in as: User
+Location: Small Room (capacity: 50)
+Max Attendees: 100","- Validation error shown
+- Message: ""Maximum attendees cannot exceed location capacity""
+- Form not submitted
+- Error highlighted
+- Capacity hint shown","1. Create event form
+2. Max attendees exceeding location capacity
+3. Validation error message in red
+4. Capacity hint: ""Location capacity: 50""",,,,
+90,TC-EVENT-CAPACITY-003,Event Management,Frontend UI,Building Capacity Validation,,,Negative,User enters max attendees of 150 for location with capacity 100,"Location: Conference Room (capacity: 100)
+Max Attendees: 150","- Validation error displayed
+- Message: ""Maximum attendees cannot exceed location capacity (100)""
+- Input field shows error state
+- Form submission blocked","1. Form with capacity mismatch
+2. Error message with capacity shown
+3. Red border on input field",,,,
+91,TC-EXPORT-ATTENDEES-001,Event Management,Frontend UI,Export Attendees,,,Positive,Event creator exports attendees list with registrations,"Logged in as: Event Creator
+Event: Has registered attendees","- CSV file downloaded successfully
+- Filename: [event-title]-attendees.csv
+- Contains attendee data: name email registration status
+- File opens correctly in Excel/Sheets","1. Event details page with Export button
+2. File download dialog
+3. CSV file content in Excel/Sheets",,,,
+92,TC-EXPORT-ATTENDEES-002,Event Management,Frontend UI,Export Attendees,,,Positive,Export attendees for event with no registrations,"Logged in as: Event Creator
+Event: No registered attendees","- Appropriate message or empty CSV
+- User notified of no attendees
+- Or CSV with headers only","1. Event with no attendees
+2. Export button clicked
+3. Message or empty CSV result",,,,
+93,TC-EXPORT-ATTENDEES-003,Event Management,Frontend UI,Export Attendees,,,Negative,Non-creator tries to export attendees,"Logged in as: Regular User
+Event: Created by another user","- Export button not visible
+- If accessed directly: 403 error
+- No CSV generated","1. Event details showing no export button
+2. 403 error if attempted",,,,
+94,TC-API-EXPORT-ATTENDEES-001,Event Management,Backend API,Export Attendees,/events/:id/attendees/export/csv,GET,Positive,Export attendees CSV via API,"Headers:
+Authorization: Bearer [CREATOR_TOKEN]
+
+Path: /events/[EVENT_ID]/attendees/export/csv","- HTTP 200 OK
+- Response headers: Content-Type: text/csv
+- CSV file returned with attendee data
+- Proper CSV formatting
+- Contains: name email status registration_date","1. GET request
+2. 200 response
+3. CSV Content-Type header
+4. Valid CSV data",,,,
+95,TC-API-EXPORT-ATTENDEES-002,Event Management,Backend API,Export Attendees,/events/:id/attendees/export/csv,GET,Negative,Non-creator tries to export attendees via API,"Headers:
+Authorization: Bearer [NON_CREATOR_TOKEN]
+
+Path: /events/[EVENT_ID]/attendees/export/csv","- HTTP 403 Forbidden
+- Error: ""Only event creator can export attendees""
+- No CSV generated","1. Request with non-creator token
+2. 403 response
+3. Permission error",,,,
+96,TC-EXPORT-EVENTS-001,Event Management,Frontend UI,Export Events,,,Positive,Authenticated user exports all events to CSV,"Logged in as: User/Admin/Approver","- CSV file downloaded successfully
+- Filename: events-export.csv
+- Contains event data: title date location status
+- File opens correctly","1. Events page with Export button
+2. File download dialog
+3. CSV content in Excel/Sheets",,,,
+97,TC-EXPORT-EVENTS-002,Event Management,Frontend UI,Export Events,,,Negative,Guest user tries to export events,"Not logged in","- Export button not visible
+- Feature requires authentication","1. Events page as guest
+2. No export button shown",,,,
+98,TC-API-EXPORT-EVENTS-001,Event Management,Backend API,Export Events,/events/export/csv,GET,Positive,Export all events CSV via API,"Headers:
+Authorization: Bearer [VALID_TOKEN]","- HTTP 200 OK
+- Response headers: Content-Type: text/csv
+- CSV file with all events
+- Contains: id title eventDate eventTime location status creator
+- Proper CSV formatting","1. GET request with auth
+2. 200 response
+3. CSV Content-Type
+4. Valid CSV data with events",,,,
+99,TC-API-EXPORT-EVENTS-002,Event Management,Backend API,Export Events,/events/export/csv,GET,Negative,Export events without authentication via API,"Headers:
+[No Authorization header]","- HTTP 401 Unauthorized
+- Error: ""Authentication required""
+- No CSV generated","1. Request without auth token
+2. 401 response
+3. Auth error message",,,,
+100,TC-PAGINATION-001,User Interface,Frontend UI,Pagination,,,Positive,User navigates between pages using next/previous buttons,"Page: 1 of 10
+Items per page: 10","- Clicking Next loads page 2
+- Data updates to show items 11-20
+- Page indicator updates
+- Previous button becomes enabled
+- URL may update with page parameter","1. List page showing page 1
+2. Next button clicked
+3. Page 2 data displayed
+4. Updated pagination controls",,,,
+101,TC-PAGINATION-002,User Interface,Frontend UI,Pagination,,,Positive,User changes items per page from dropdown,"Current: 10 items per page
+Change to: 50 items per page","- Page reloads with 50 items
+- Pagination controls update
+- Shows: ""Showing 1-50 of X results""
+- Total pages reduced
+- Returns to page 1","1. Items per page dropdown
+2. Select 50 option
+3. Page showing 50 items
+4. Updated pagination info",,,,
+102,TC-PAGINATION-003,User Interface,Frontend UI,Pagination,,,Positive,User clicks specific page number,"Total pages: 10
+Click: Page 5","- Page 5 loads
+- Shows items 41-50 (if 10 per page)
+- Page 5 highlighted in pagination
+- Correct data range displayed
+- URL updates to ?page=5","1. Pagination showing page numbers
+2. Click page 5
+3. Page 5 data shown
+4. Page 5 highlighted",,,,
+103,TC-PAGINATION-004,User Interface,Frontend UI,Pagination,,,Negative,User is on last page and tries to click Next,"Current page: Last page (10 of 10)","- Next button is disabled
+- No action occurs on click
+- User remains on last page
+- Visual indication (grayed out button)","1. Last page of results
+2. Next button disabled/grayed
+3. No page change on attempt",,,,

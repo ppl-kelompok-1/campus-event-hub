@@ -48,15 +48,15 @@ const PublicUserProfilePage = () => {
 
       // Fetch created events with pagination
       const createdResponse = await userApi.getUserCreatedEvents(userId, createdCurrentPage, createdItemsPerPage)
-      setCreatedEvents(createdResponse.data)
-      setCreatedTotalPages(createdResponse.pagination.totalPages)
-      setCreatedTotalItems(createdResponse.pagination.total)
+      setCreatedEvents(createdResponse.data || [])
+      setCreatedTotalPages(createdResponse.pagination?.totalPages || 0)
+      setCreatedTotalItems(createdResponse.pagination?.total || 0)
 
       // Fetch joined events with pagination
       const joinedResponse = await userApi.getUserJoinedEvents(userId, joinedCurrentPage, joinedItemsPerPage)
-      setJoinedEvents(joinedResponse.data)
-      setJoinedTotalPages(joinedResponse.pagination.totalPages)
-      setJoinedTotalItems(joinedResponse.pagination.total)
+      setJoinedEvents(joinedResponse.data || [])
+      setJoinedTotalPages(joinedResponse.pagination?.totalPages || 0)
+      setJoinedTotalItems(joinedResponse.pagination?.total || 0)
     } catch (err: any) {
       setError(err.message || 'Failed to load user profile')
       console.error('Error fetching user profile:', err)

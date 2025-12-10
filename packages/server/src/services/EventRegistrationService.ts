@@ -213,6 +213,42 @@ export class EventRegistrationService {
     }));
   }
 
+  async exportAttendeesToCSV(eventId: number): Promise<string> {
+    // Verify event exists
+    const event = await this.eventRepository.findById(eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    // Get all registrations for this event
+    const registrations = await this.eventRegistrationRepository.findByEventId(eventId);
+
+    if (!registrations || registrations.length === 0) {
+      // Return empty CSV with headers
+      return 'User ID,Name,Email,Registered At,Status\n';
+    }
+
+    // Create CSV content
+    const header = 'User ID,Name,Email,Registered At,Status\n';
+
+    const rows = await Promise.all(registrations.map(async (reg) => {
+      // Get user details
+      const user = await this.userRepository.findById(reg.userId);
+      if (!user) {
+        return null; // Skip if user not found
+      }
+
+      const name = user.name.replace(/"/g, '""'); // Escape quotes
+      const email = user.email.replace(/"/g, '""');
+      const registeredAt = reg.registrationDate.toLocaleString();
+      return `${user.id},"${name}","${email}","${registeredAt}",${reg.status}`;
+    }));
+
+    // Filter out nulls and join
+    const validRows = rows.filter(row => row !== null);
+    return header + validRows.join('\n');
+  }
+
   // Private helper methods
 
   private async validateEventForRegistration(eventId: number): Promise<void> {

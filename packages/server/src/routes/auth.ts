@@ -166,5 +166,32 @@ export const createAuthRouter = (authService: AuthService, userService: UserServ
     });
   }));
 
+  // GET /api/v1/auth/validate-reset-token - Validate password reset token
+  router.get('/validate-reset-token', asyncHandler(async (req: Request, res: Response) => {
+    const { token } = req.query;
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({
+        success: false,
+        data: { valid: false, message: 'Token is required' }
+      });
+    }
+
+    // Validate token using existing AuthService method
+    const userId = await authService.validateResetToken(token);
+
+    if (userId === null) {
+      return res.json({
+        success: true,
+        data: { valid: false, message: 'Token is invalid or expired' }
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: { valid: true }
+    });
+  }));
+
   return router;
 };

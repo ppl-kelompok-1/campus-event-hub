@@ -806,6 +806,48 @@ export const createEventRouter = (eventService: EventService, eventRegistrationS
     })
   );
 
+  // GET /api/v1/events/:id/attendees/export/csv - Export event attendees to CSV
+  router.get('/:id/attendees/export/csv', authenticate(authService), asyncHandler(async (req: Request, res: Response) => {
+    const eventId = Number(req.params.id)
+
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      })
+    }
+
+    // Get event details to check ownership
+    const event = await eventService.getEventById(eventId)
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      })
+    }
+
+    // Check if user has permission (event creator or admin/superadmin)
+    const isCreator = event.createdBy === req.user.userId
+    const isAdmin = ['admin', 'superadmin'].includes(req.user.role)
+
+    if (!isCreator && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only event creators and administrators can export attendees'
+      })
+    }
+
+    // Export attendees
+    const csv = await eventRegistrationService.exportAttendeesToCSV(eventId)
+
+    // Set headers for CSV download
+    res.setHeader('Content-Type', 'text/csv')
+    res.setHeader('Content-Disposition', `attachment; filename="event-${eventId}-attendees.csv"`)
+
+    res.send(csv)
+  }))
+
   // GET /api/v1/events/:id/attendees - Get public attendee list (names only)
   router.get('/:id/attendees',
     asyncHandler(async (req: Request, res: Response) => {

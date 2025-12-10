@@ -21,15 +21,23 @@ import LocationManagementPage from './pages/LocationManagementPage'
 import SettingsPage from './pages/SettingsPage'
 import UserManualIndexPage from './pages/UserManualIndexPage'
 import LoginGuidePage from './pages/user-manual/getting-started/LoginGuidePage'
+import ForgotPasswordGuidePage from './pages/user-manual/getting-started/ForgotPasswordPage'
+import ResetPasswordGuidePage from './pages/user-manual/getting-started/ResetPasswordPage'
+import UsingPaginationPage from './pages/user-manual/getting-started/UsingPaginationPage'
 import ViewingProfilePage from './pages/user-manual/users/ViewingProfilePage'
 import UpdatingProfilePage from './pages/user-manual/users/UpdatingProfilePage'
 import RegisteringEventsPage from './pages/user-manual/users/RegisteringEventsPage'
 import UnregisteringEventsPage from './pages/user-manual/users/UnregisteringEventsPage'
+import ExportingEventsPage from './pages/user-manual/users/ExportingEventsPage'
 import CreatingEventPage from './pages/user-manual/event-creators/CreatingEventPage'
+import UploadingAttachmentsPage from './pages/user-manual/event-creators/UploadingAttachmentsPage'
+import ManagingCapacityPage from './pages/user-manual/event-creators/ManagingCapacityPage'
 import SubmittingEventPage from './pages/user-manual/event-creators/SubmittingEventPage'
 import EditingEventPage from './pages/user-manual/event-creators/EditingEventPage'
 import DeletingEventPage from './pages/user-manual/event-creators/DeletingEventPage'
 import CancelingEventPage from './pages/user-manual/event-creators/CancelingEventPage'
+import SendingMessagesPage from './pages/user-manual/event-creators/SendingMessagesPage'
+import ExportingAttendeesPage from './pages/user-manual/event-creators/ExportingAttendeesPage'
 import ApprovingEventPage from './pages/user-manual/approvers/ApprovingEventPage'
 import RequestingRevisionPage from './pages/user-manual/approvers/RequestingRevisionPage'
 import PublishingDirectlyPage from './pages/user-manual/approvers/PublishingDirectlyPage'
@@ -61,15 +69,23 @@ function App() {
           {/* User Manual - public */}
           <Route path="/user-manual" element={<UserManualIndexPage />} />
           <Route path="/user-manual/getting-started/login" element={<LoginGuidePage />} />
+          <Route path="/user-manual/getting-started/forgot-password" element={<ForgotPasswordGuidePage />} />
+          <Route path="/user-manual/getting-started/reset-password" element={<ResetPasswordGuidePage />} />
+          <Route path="/user-manual/getting-started/using-pagination" element={<UsingPaginationPage />} />
           <Route path="/user-manual/users/viewing-profile" element={<ViewingProfilePage />} />
           <Route path="/user-manual/users/updating-profile" element={<UpdatingProfilePage />} />
           <Route path="/user-manual/users/registering-events" element={<RegisteringEventsPage />} />
           <Route path="/user-manual/users/unregistering-events" element={<UnregisteringEventsPage />} />
+          <Route path="/user-manual/users/exporting-events" element={<ExportingEventsPage />} />
           <Route path="/user-manual/event-creators/creating-event" element={<CreatingEventPage />} />
+          <Route path="/user-manual/event-creators/uploading-attachments" element={<UploadingAttachmentsPage />} />
+          <Route path="/user-manual/event-creators/managing-capacity" element={<ManagingCapacityPage />} />
           <Route path="/user-manual/event-creators/submitting-event" element={<SubmittingEventPage />} />
           <Route path="/user-manual/event-creators/editing-event" element={<EditingEventPage />} />
           <Route path="/user-manual/event-creators/deleting-event" element={<DeletingEventPage />} />
           <Route path="/user-manual/event-creators/canceling-event" element={<CancelingEventPage />} />
+          <Route path="/user-manual/event-creators/sending-messages" element={<SendingMessagesPage />} />
+          <Route path="/user-manual/event-creators/exporting-attendees" element={<ExportingAttendeesPage />} />
           <Route path="/user-manual/approvers/approving-event" element={<ApprovingEventPage />} />
           <Route path="/user-manual/approvers/requesting-revision" element={<RequestingRevisionPage />} />
           <Route path="/user-manual/approvers/publishing-directly" element={<PublishingDirectlyPage />} />
