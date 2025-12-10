@@ -1,0 +1,950 @@
+test_id,test_case_id,category,test_interface,feature_function,endpoint,http_method,test_type,test_scenario,test_data,expected_result,screenshot_instructions,actual_result,status,tester_name,test_date,notes
+1,TC-LOGIN-001,Authentication & Authorization,Frontend UI,Login,,,Positive,User logs in with valid email and password,"Email: user@campus-event-hub.local
+Password: User123!","- User is successfully logged in
+- Redirected to dashboard/home page
+- User name displayed in header
+- JWT token stored in browser","1. Login form filled with test data
+2. Dashboard after successful login showing user name
+3. Browser DevTools → Application → Local Storage showing token","Gambar 1 
+Gambar 2 
+Gambar 3",Passed ✅,Arkan Rizkiadi,07 November 2025,
+2,TC-LOGIN-002,Authentication & Authorization,Frontend UI,Login,,,Negative,Login with correct email but wrong password,"Email: user@campus-event-hub.local
+Password: WrongPass123!","- Login fails
+- Error message displayed: ""Invalid credentials"" or similar
+- User remains on login page
+- No token stored
+- HTTP 401 status","1. Login form with wrong password
+2. Error message displayed in red
+3. Network tab showing 401 response","Gambar 1 
+Gambar 2 & 3",Passed ✅,Arkan Rizkiadi,07 November 2025,
+3,TC-LOGIN-003,Authentication & Authorization,Frontend UI,Login,,,Negative,Login with invalid email format,"Email: invalidemail
+Password: Password123!","- Validation error shown
+- Message: ""Please enter a valid email address""
+- Submit button disabled or validation prevents submission
+- No API call made","1. Form showing invalid email
+2. Validation error message under email field
+3. Network tab showing no API request","Gambar 1 
+Gambar 2 & 3 ",Passed ✅,Arkan Rizkiadi,07 November 2025,2. tidak ada pesan invalid email (hanya missing @)
+4,TC-LOGIN-004,Authentication & Authorization,Frontend UI,Login,,,Negative,Login with empty fields,"Email: [empty]
+Password: [empty]","- Validation errors for both fields
+- Message: ""Email is required""
+- Message: ""Password is required""
+- Form not submitted","1. Empty login form
+2. Required field errors displayed
+3. Submit button state","Gambar 1 
+Gambar 2 & 3 ",Passed ✅,Arkan Rizkiadi,07 November 2025,"2. required field error muncul hanya di email saja, di password tidak muncul"
+5,TC-LOGIN-005,Authentication & Authorization,Frontend UI,Login,,,Negative,Login with non-existent email,"Email: nonexistent@test.com
+Password: Password123!","- Login fails
+- Error message: ""Invalid credentials""
+- HTTP 401 status
+- No token generated","1. Login form with non-existent email
+2. Error message displayed
+3. Network response showing 401","Gambar 1 
+Gambar 2 & 3 ",Passed ✅,Arkan Rizkiadi,07 November 2025,
+6,TC-API-LOGIN-001,Authentication & Authorization,Backend API,Login,/auth/login,POST,Positive,Login with valid credentials via API,"{
+  ""email"": ""user@campus-event-hub.local"",
+  ""password"": ""User123!""
+}","- HTTP 200 OK
+- Response contains:
+  {
+    ""success"": true,
+    ""data"": {
+      ""user"": {
+        ""id"": number,
+        ""name"": string,
+        ""email"": string,
+        ""role"": string
+      },
+      ""token"": ""JWT_TOKEN""
+    }
+  }
+- Response time < 1s","Use Postman/Thunder Client:
+1. Request body with test data
+2. Response showing 200 status
+3. Response body with user and token","Gambar 1 
+Gambar 2 & 3 ",Passed ✅,Arkan Rizkiadi,07 November 2025,
+7,TC-API-LOGIN-002,Authentication & Authorization,Backend API,Login,/auth/login,POST,Negative,Login with wrong password via API,"{
+  ""email"": ""user@campus-event-hub.local"",
+  ""password"": ""WrongPassword123!""
+}","- HTTP 401 Unauthorized
+- Response:
+  {
+    ""success"": false,
+    ""error"": ""Invalid credentials""
+  }
+- No token returned","1. Request with wrong password
+2. 401 response status
+3. Error message in response","Gambar 1 
+Gambar 2 & 3 ",Passed ✅,Arkan Rizkiadi,07 November 2025,
+8,TC-API-PROFILE-001,Authentication & Authorization,Backend API,Profile,/auth/profile,GET,Positive,Get current user profile with valid token,"Headers:
+Authorization: Bearer [VALID_TOKEN]","- HTTP 200 OK
+- Response contains user data without password:
+  {
+    ""success"": true,
+    ""data"": {
+      ""id"": number,
+      ""name"": string,
+      ""email"": string,
+      ""role"": string,
+      ""createdAt"": string
+    }
+  }","1. Request with Authorization header
+2. 200 response
+3. User data without password field","Gambar 1 
+Gambar 2 & 3 ",Passed ✅,Arkan Rizkiadi,07 November 2025,
+9,TC-API-PROFILE-002,Authentication & Authorization,Backend API,Profile,/auth/profile,GET,Negative,Get profile without authentication token,"Headers:
+[No Authorization header]","- HTTP 401 Unauthorized
+- Error message: ""No token provided"" or ""Authentication required""
+- No user data returned","1. Request without Authorization header
+2. 401 response
+3. Error message","Gambar 1 
+Gambar 2 & 3 ",Passed ✅,Arkan Rizkiadi,07 November 2025,
+10,TC-API-PROFILE-003,Authentication & Authorization,Backend API,Profile,/auth/profile,PUT,Negative,Update profile with password less than 8 characters,"Headers:
+Authorization: Bearer [VALID_TOKEN]
+
+Body:
+{
+  ""password"": ""Pass1""
+}","- HTTP 400 Bad Request
+- Error: ""Password must be at least 8 characters""
+- Profile not updated","1. Request with short password
+2. 400 response
+3. Validation error message","Gambar 1 
+Gambar 2 & 3 ",Passed ✅,Arkan Rizkiadi,07 November 2025,
+11,TC-USER-CREATE-001,User Management,Frontend UI,Create User,,,Positive,Admin creates new user with valid data,"Logged in as: Admin
+
+Name: New User
+Email: newuser@test.com
+Password: Password123!
+Role: user","- User created successfully
+- Success message displayed
+- New user appears in users list
+- User can login with credentials","1. Create user form (Admin logged in)
+2. Success notification
+3. Users list showing new user
+4. Successful login as new user","Gambar 1 
+Gambar 2 & 3 
+Gambar 4 ",Passed ✅,Arkan Rizkiadi,07 November 2025,2. succes notification tidak muncul
+12,TC-USER-CREATE-002,User Management,Frontend UI,Create User,,,Negative,Create user with duplicate email,"Logged in as: Admin
+
+Email: newuser@test.com (already exists)","- User creation fails
+- Error message: ""Email already exists"" or ""Email must be unique""
+- HTTP 409 Conflict
+- No duplicate user created","1. Form with duplicate email
+2. Error message displayed
+3. Network tab showing 409 response
+4. Database check (users list unchanged)","Gambar 1 
+Gambar 2 & 3 
+Gambar 4 ",Passed ✅,Arkan Rizkiadi,07 November 2025,
+13,TC-USER-CREATE-003,User Management,Frontend UI,Create User,,,Negative,Admin tries to create Superadmin user,"Logged in as: Admin
+
+Role: superadmin","- Action forbidden
+- Error: ""You cannot assign this role"" or role dropdown doesn't show superadmin
+- HTTP 403 Forbidden if API called
+- No superadmin user created","1. Role dropdown showing available roles
+2. Error message if attempted
+3. Permission denied notification","Gambar 1, 2 & 3 ",Passed ✅,Arkan Rizkiadi,07 November 2025,"2. Tidak ada role superadmin, sehingga tidak ada error
+3. Tidak ada role superadmin, sehingga tidak ada Permission denied notification"
+14,TC-USER-UPDATE-001,User Management,Frontend UI,Update User,,,Positive,User updates own profile (name),"Logged in as: User
+
+New Name: Updated Name","- Profile updated successfully
+- New name displayed in UI
+- Success message shown
+- Updated name persists after page refresh","1. Profile edit form
+2. Success notification
+3. Header showing updated name
+4. Profile page after refresh","Gambar 1 
+Gambar 2 
+Gambar 3 & 4 ",Passed ✅,Arkan Rizkiadi,07 November 2025,"2. Success notification hanya sebentar munculnya, langsung pindah ke page profile"
+15,TC-USER-DELETE-001,User Management,Frontend UI,Delete User,,,Negative,Admin tries to delete themselves,"Logged in as: Admin
+
+Target: Current logged-in admin user","- Delete action blocked
+- Error message: ""You cannot delete your own account""
+- HTTP 400/403
+- User remains in database","1. Users list with current user
+2. Delete button disabled or error shown
+3. Error notification
+4. User still exists in list",,,Arkan Rizkiadi,07 November 2025,"Tidak ada daftar user dengan role admin di user management, daftar user dengan role admin dapat terlihat jika login dengan superadmin"
+16,TC-API-USER-LIST-001,User Management,Backend API,List Users,/users,GET,Positive,Admin retrieves paginated user list,"Headers:
+Authorization: Bearer [ADMIN_TOKEN]
+
+Query:
+?page=1&limit=10","- HTTP 200 OK
+- Response:
+  {
+    ""success"": true,
+    ""data"": {
+      ""users"": [array],
+      ""pagination"": {
+        ""page"": 1,
+        ""limit"": 10,
+        ""total"": number
+      }
+    }
+  }
+- Users array ≤ 10 items","1. Request with Admin token and pagination
+2. 200 response
+3. Users array and pagination object","Gambar 1.1 
+Gambar 1.2 
+Gambar 2 & 3_1 
+Gambar 2 & 3_2 ",Passed ✅,Arkan Rizkiadi,07 November 2025,
+17,TC-API-USER-LIST-002,User Management,Backend API,List Users,/users,GET,Negative,Regular user tries to list all users,"Headers:
+Authorization: Bearer [USER_TOKEN]","- HTTP 403 Forbidden
+- Error: ""Access denied"" or ""Insufficient permissions""
+- No user data returned","1. Request with USER role token
+2. 403 response
+3. Forbidden error message","Gambar 1
+Gambar 2 dan 3",Passed ✅,Dimas,07 November 2025,
+18,TC-API-USER-CREATE-001,User Management,Backend API,Create User,/users,POST,Positive,Admin creates user with valid data,"Headers:
+Authorization: Bearer [ADMIN_TOKEN]
+
+Body:
+{
+  ""name"": ""API Test User"",
+  ""email"": ""apitest@test.com"",
+  ""password"": ""SecurePass123!"",
+  ""role"": ""user""
+}","- HTTP 201 Created
+- Response contains new user (without password)
+- User can login
+- User exists in database","1. POST request with user data
+2. 201 response
+3. Created user object
+4. Database query showing new user","Gambar 1
+Gambar 2 dan 3
+Gambar 4",Passed ✅,Dimas,07 November 2025,
+19,TC-API-USER-CREATE-002,User Management,Backend API,Create User,/users,POST,Negative,Create user with invalid email format,"Headers:
+Authorization: Bearer [ADMIN_TOKEN]
+
+Body:
+{
+  ""name"": ""Test User"",
+  ""email"": ""invalid-email"",
+  ""password"": ""Password123!""
+}","- HTTP 400 Bad Request
+- Error: ""Invalid email format""
+- No user created","1. Request with invalid email
+2. 400 response
+3. Validation error details","Gambar 1
+Gambar 2 dan 3",Passed ✅,Dimas,07 November 2025,
+20,TC-API-USER-CREATE-003,User Management,Backend API,Create User,/users,POST,Negative,Admin tries to create user with superadmin role,"Headers:
+Authorization: Bearer [ADMIN_TOKEN]
+
+Body:
+{
+  ""name"": ""Fake Superadmin"",
+  ""email"": ""fakesuperadmin@test.com"",
+  ""password"": ""Password123!"",
+  ""role"": ""superadmin""
+}","- HTTP 403 Forbidden
+- Error: ""You cannot assign this role""
+- No superadmin user created
+- Role hierarchy enforced","1. Request with superadmin role
+2. 403 response
+3. Permission denied message
+4. Database check (no new superadmin)","Gambar 1
+Gambar 2 dan 3
+Gambar 4",Passed ✅,Dimas,07 November 2025,
+21,TC-API-USER-UPDATE-001,User Management,Backend API,Update User,/users/:id,PUT,Negative,User tries to update another user's profile,"Headers:
+Authorization: Bearer [USER1_TOKEN]
+
+Path:
+/users/[USER2_ID]
+
+Body:
+{
+  ""name"": ""Hacked Name""
+}","- HTTP 403 Forbidden
+- Error: ""You can only update your own profile""
+- Target user's data unchanged","1. Request to update different user
+2. 403 response
+3. Error message
+4. Database showing unchanged data","Gambar 1 , 2, 3
+Gambar 4",Passed ✅,Dimas,07 November 2025,
+22,TC-API-USER-DELETE-001,User Management,Backend API,Delete User,/users/:id,DELETE,Negative,Admin tries to delete self,"Headers:
+Authorization: Bearer [ADMIN_TOKEN]
+
+Path:
+/users/[ADMIN_OWN_ID]","- HTTP 400 Bad Request
+- Error: ""You cannot delete your own account""
+- Admin user remains in database","1. DELETE request to own user ID
+2. 400 response
+3. Error message
+4. Database check (user still exists)","Gambar 1-2-3
+Gambar 4",Passed ✅,Dimas,07 November 2025,
+23,TC-EVENT-CREATE-001,Event Management,Frontend UI,Create Event,,,Positive,User creates event with valid data,"Logged in as: User
+
+Title: Test Event
+Description: Test Description
+Event Date: 2025-12-31
+Event Time: 14:00
+Reg Start: 2025-11-01 09:00
+Reg End: 2025-12-30 17:00
+Location: Main Auditorium
+Max Attendees: 100","- Event created successfully
+- Status: ""draft""
+- Success message displayed
+- Event appears in ""My Events""
+- All data saved correctly","1. Create event form filled
+2. Success notification
+3. Event in ""My Events"" with draft status
+4. Event detail page","Gambar 1
+Gambar 3
+Gambar 4",Passed ✅,Dimas,07 November 2025,
+24,TC-EVENT-CREATE-002,Event Management,Frontend UI,Create Event,,,Negative,Create event with invalid date format,"Event Date: 31/12/2025 (wrong format)
+Expected: YYYY-MM-DD","- Validation error shown
+- Message: ""Date must be in YYYY-MM-DD format""
+- Form not submitted
+- No event created","1. Form with invalid date
+2. Validation error under date field
+3. Submit button state/behavior",,,Dimas,07 November 2025,using date picker always correct format
+25,TC-EVENT-CREATE-003,Event Management,Frontend UI,Create Event,,,Negative,Create event with registration end after event date,"Event Date: 2025-12-31
+Reg End Date: 2026-01-01","- Validation error
+- Message: ""Registration must end before event date""
+- Form submission blocked","1. Form showing date conflict
+2. Error message displayed
+3. Highlighted error fields",Gambar 1-2-3,Passed ✅,Dimas,07 November 2025,
+26,TC-EVENT-CREATE-004,Event Management,Frontend UI,Create Event,,,Negative,Create event with registration start after registration end,"Reg Start: 2025-12-01
+Reg End: 2025-11-30","- Validation error
+- Message: ""Registration start must be before registration end""
+- Form not submitted","1. Form with date order error
+2. Validation message
+3. Form state",Gambar 1-2-3,Passed ✅,Dimas,07 November 2025,
+27,TC-EVENT-SUBMIT-001,Event Management,Frontend UI,Submit for Approval,,,Positive,USER submits draft event for approval,"Logged in as: User
+Event Status: Draft","- Event status changes to ""Pending Approval""
+- Success message: ""Event submitted for approval""
+- Submit button no longer visible
+- Event appears in approver's pending list","1. Draft event detail page
+2. Submit for approval button
+3. Success message
+4. Updated status showing ""Pending Approval""
+5. Event in approver's queue","Gambar 1
+Gambar 2-3-4
+Gambar 5",Passed ✅,Dimas,07 November 2025,
+28,TC-EVENT-APPROVE-001,Event Management,Frontend UI,Approve Event,,,Positive,APPROVER approves pending event,"Logged in as: Approver
+Event Status: Pending Approval","- Event status changes to ""Published""
+- Event visible on public events page
+- Approval recorded in history
+- Creator notified (if applicable)","1. Pending approvals list
+2. Event detail with approve button
+3. Success notification
+4. Event now showing ""Published""
+5. Public events page showing event","Gambar 1
+Gambar 2
+Gambar 3
+Gambar 4
+Gambar 5",Passed ✅,Dimas,07 November 2025,
+29,TC-EVENT-APPROVE-002,Event Management,Frontend UI,Approve Event,,,Negative,USER tries to approve event,"Logged in as: User
+Event Status: Pending Approval","- Approve button not visible
+- If API called directly: 403 Forbidden
+- Event status unchanged","1. Event detail page as USER
+2. No approve/reject buttons visible
+3. 403 response if attempted via API",Gambar,Passed ✅,Dimas,07 November 2025,
+30,TC-EVENT-REVISION-001,Event Management,Frontend UI,Request Revision,,,Positive,APPROVER requests revision with comments,"Logged in as: Approver
+Comments: Please add more details to description","- Event status changes to ""Revision Requested""
+- Comments saved and visible to creator
+- Creator can edit and resubmit
+- Action logged in approval history","1. Request revision form with comments
+2. Updated status
+3. Comments visible to creator
+4. Approval history entry","Gambar 1
+Gambar 2-3-4",Passed ✅,Dimas,07 November 2025,
+31,TC-EVENT-PUBLISH-001,Event Management,Frontend UI,Publish Event,,,Positive,APPROVER publishes event directly (bypass approval),"Logged in as: Approver
+Event Status: Draft (created by approver)","- Event published immediately
+- Status: ""Published""
+- Visible on public events page
+- No approval workflow needed","1. Create event form with publish option
+2. Published event
+3. Public page showing event","Gambar 1
+Gambar 2
+Gambar 3",Passed ✅,Dimas,07 November 2025,
+32,TC-EVENT-EDIT-001,Event Management,Frontend UI,Edit Event,,,Positive,Creator edits own draft event,"Logged in as: Event Creator
+Event Status: Draft
+Update: Title to Updated Event Title","- Event updated successfully
+- Changes saved and displayed
+- Status remains ""Draft""
+- Updated timestamp changed","1. Edit form with changes
+2. Success message
+3. Updated event details
+4. Updated timestamp","Gambar 1
+Gambar 2",Passed ✅,Dimas,07 November 2025,
+33,TC-EVENT-EDIT-002,Event Management,Frontend UI,Edit Event,,,Negative,User tries to edit another user's event,"Logged in as: User A
+Target: Event created by User B","- Edit button not visible
+- If accessed directly: 403 Forbidden
+- Event data unchanged","1. Event detail showing no edit button
+2. 403 error if attempted
+3. Database unchanged","Gambar 1
+Gambar 2
+Gambar 3",Not Passed ❌,Eduardus,07 November 2025,"User biasa masih bisa ubah status ke draft, published, cancelled, completed waktu edit event
+Edit event masih bisa diakses langsung oleh user lain lewat tembak url, belum forbidden"
+34,TC-EVENT-DELETE-001,Event Management,Frontend UI,Delete Event,,,Positive,Creator deletes own draft event,"Logged in as: Event Creator
+Event Status: Draft","- Confirmation dialog shown
+- Event deleted successfully
+- Removed from ""My Events""
+- No longer in database","1. Delete confirmation dialog
+2. Success message
+3. Event removed from list
+4. Database query showing deletion","Gambar 1 
+Gambar 3
+Gambar 4",Not Passed ❌,Eduardus,07 November 2025,Belum ada success message setelah delete event
+35,TC-EVENT-CANCEL-001,Event Management,Frontend UI,Cancel Event,,,Positive,Creator cancels published event,"Logged in as: Event Creator
+Event Status: Published","- Event status changes to ""Cancelled""
+- Still visible but marked as cancelled
+- Registrations preserved
+- No new registrations allowed","1. Cancel confirmation
+2. Cancelled status displayed
+3. Event showing cancelled badge
+4. Registration button disabled","Gambar 1 
+Gambar 2,3
+Gambar 4 ",Passed ✅,Eduardus,07 November 2025,Cancelled event is not shown instead
+36,TC-API-EVENT-CREATE-001,Event Management,Backend API,Create Event,/events,POST,Positive,Create event with valid data,"Headers:
+Authorization: Bearer [USER_TOKEN]
+
+Body:
+{
+  ""title"": ""API Test Event"",
+  ""description"": ""Event via API"",
+  ""eventDate"": ""2025-12-31"",
+  ""eventTime"": ""14:00"",
+  ""registrationStartDate"": ""2025-11-01"",
+  ""registrationStartTime"": ""09:00"",
+  ""registrationEndDate"": ""2025-12-30"",
+  ""registrationEndTime"": ""17:00"",
+  ""locationId"": 1,
+  ""maxAttendees"": 100
+}","- HTTP 201 Created
+- Response contains event object
+- Status: ""draft"" (for USER role)
+- Event saved in database
+- Response time < 1s","1. POST request body
+2. 201 response
+3. Event object with generated ID
+4. Database record","Gambar 1
+Gambar 2,3
+Gambar 4
+",Passed ✅,Eduardus,07 November 2025,
+37,TC-API-EVENT-CREATE-002,Event Management,Backend API,Create Event,/events,POST,Negative,Create event with invalid date format,"Body:
+{
+  ""title"": ""Invalid Event"",
+  ""eventDate"": ""31-12-2025"",
+  ...
+}","- HTTP 400 Bad Request
+- Error: ""Event date must be in YYYY-MM-DD format""
+- No event created","1. Request with invalid date
+2. 400 response
+3. Validation error details","Gambar 1
+Gambar 2,3
+",Passed ✅,Eduardus,07 November 2025,
+38,TC-API-EVENT-CREATE-003,Event Management,Backend API,Create Event,/events,POST,Negative,Create event with non-existent location ID,"Body:
+{
+  ...,
+  ""locationId"": 99999
+}","- HTTP 400/404
+- Error: ""Location not found""
+- No event created","1. Request with invalid locationId
+2. Error response
+3. Error message","Gambar 1
+Gambar 2,3",Passed ✅,Eduardus,07 November 2025,
+39,TC-API-EVENT-SUBMIT-001,Event Management,Backend API,Submit for Approval,/events/:id/submit-for-approval,POST,Positive,USER submits draft event,"Headers:
+Authorization: Bearer [USER_TOKEN]
+
+Path:
+/events/[DRAFT_EVENT_ID]/submit-for-approval","- HTTP 200 OK
+- Event status updated to ""pending_approval""
+- Approval history created
+- Response confirms submission","1. POST request
+2. 200 response
+3. Updated event status
+4. Approval history entry","Gambar 1
+Gambar 2
+Gambar 3
+Gambar 4",Passed ✅,Eduardus,07 November 2025,
+40,TC-API-EVENT-APPROVE-001,Event Management,Backend API,Approve Event,/events/:id/approve,POST,Negative,USER tries to approve event,"Headers:
+Authorization: Bearer [USER_TOKEN]
+
+Path:
+/events/[PENDING_EVENT_ID]/approve","- HTTP 403 Forbidden
+- Error: ""Insufficient permissions"" or ""Only approvers can approve events""
+- Event status unchanged","1. Request with USER token
+2. 403 response
+3. Permission denied error
+4. Event status still pending","Gambar 1
+Gambar 2,3
+Gambar 4
+",Passed ✅,Eduardus,07 November 2025,
+41,TC-REG-001,Event Registration,Frontend UI,Register for Event,,,Positive,User registers for published event within registration period,"Logged in as: User
+Event: Published
+Current Date: Within registration period
+Available Slots: > 0","- Registration successful
+- Success message displayed
+- Register button changes to ""Unregister""
+- User appears in attendees list
+- Registration count increased","1. Event detail with Register button
+2. Success notification
+3. Button now showing ""Unregister""
+4. User in attendees list
+5. Updated registration count","Gambar 1 
+Gambar 3,5
+Gambar 4",Not Passed ❌,Eduardus,07 November 2025,"No success notification after registering
+Button shows 'leave' instead of 'unregister'"
+42,TC-REG-002,Event Registration,Frontend UI,Register for Event,,,Negative,User tries to register for event twice,"Logged in as: User (already registered)
+Event: Same published event","- Registration blocked
+- Error: ""You are already registered for this event""
+- HTTP 409 Conflict
+- No duplicate registration","1. Event showing ""Unregister"" button
+2. Error message if clicked
+3. Network showing 409 response
+4. Single registration in database","Gambar 1
+Gambar 4",Passed ✅,Eduardus,07 November 2025,"Not possible to register twice through frontend, 
+hence not possible to get error message"
+43,TC-REG-003,Event Registration,Frontend UI,Register for Event,,,Negative,User tries to register after registration period ended,Current Date: After registration end date,"- Register button disabled or hidden
+- Message: ""Registration period has ended""
+- No registration allowed","1. Event detail showing expired registration
+2. Disabled/hidden register button
+3. Expiry message displayed",Gambar 2,Not Passed ❌,Eduardus,07 November 2025,"Event detail not showing expired registration
+No expiry message displayed"
+44,TC-REG-004,Event Registration,Frontend UI,Register for Event,,,Negative,User tries to register for event at max capacity,"Max Attendees: 10
+Current Registrations: 10","- Registration blocked or added to waitlist
+- Message: ""Event is full"" or ""Added to waitlist""
+- Status: ""waitlisted"" if waitlist enabled
+- Available slots: 0","1. Event showing full capacity
+2. Disabled register or waitlist button
+","Gambar 1,2",Passed ✅,Eduardus,07 November 2025,
+45,TC-REG-UNREG-001,Event Registration,Frontend UI,Unregister from Event,,,Positive,User unregisters from event,"Logged in as: User (registered)
+Event: Published","- Confirmation dialog shown
+- Unregistration successful
+- Button changes back to ""Register""
+- User removed from attendees
+- Registration count decreased","1. Unregister confirmation dialog
+2. Success message
+3. Button showing ""Register"" again
+4. Updated attendee list
+5. Decreased count","Gambar 1 
+Gambar 3,5 
+Gambar 4",Not Passed ❌,Eduardus,07 November 2025,"No unregister confirmation dialog
+No success message"
+46,TC-API-REG-001,Event Registration,Backend API,Register for Event,/events/:id/register,POST,Positive,Register for published event,"Headers:
+Authorization: Bearer [USER_TOKEN]
+
+Path:
+/events/[PUBLISHED_EVENT_ID]/register","- HTTP 201 Created
+- Response:
+  {
+    ""success"": true,
+    ""data"": {
+      ""registration"": {
+        ""id"": number,
+        ""eventId"": number,
+        ""userId"": number,
+        ""status"": ""registered"",
+        ""registrationDate"": ""ISO date""
+      }
+    }
+  }
+- Registration saved in database","1. POST request
+2. 201 response
+3. Registration object
+4. Database record","Gambar 1
+Gambar 2,3
+Gambar 4",Passed ✅,Eduardus,07 November 2025,
+47,TC-API-REG-002,Event Registration,Backend API,Register for Event,/events/:id/register,POST,Negative,Register for draft event (not published),"Path:
+/events/[DRAFT_EVENT_ID]/register","- HTTP 400 Bad Request
+- Error: ""Event is not published"" or ""Cannot register for this event""
+- No registration created","1. Request to draft event
+2. 400 response
+3. Error message
+4. No database record","Gambar 1
+Gambar 2,3
+Gambar 4",Passed ✅,Eduardus,07 November 2025,
+48,TC-API-REG-003,Event Registration,Backend API,Register for Event,/events/:id/register,POST,Negative,Register twice for same event,"Prerequisites: User already registered
+
+Path:
+/events/[EVENT_ID]/register","- HTTP 409 Conflict
+- Error: ""You are already registered for this event""
+- No duplicate registration","1. Second registration attempt
+2. 409 response
+3. Conflict error message
+4. Single registration in database","Gambar 1
+Gambar 2,3 
+Gambar 4",Passed ✅,Eduardus,07 November 2025,
+49,TC-API-REG-004,Event Registration,Backend API,Register for Event,/events/:id/register,POST,Negative,Register without authentication,"Headers:
+[No Authorization header]
+
+Path:
+/events/[EVENT_ID]/register","- HTTP 401 Unauthorized
+- Error: ""Authentication required""
+- No registration created","1. Request without token
+2. 401 response
+3. Auth error message","Gambar 1
+Gambar 2,3",Passed ✅,Vigo ,07 November 2025,
+50,TC-API-REG-005,Event Registration,Backend API,Unregister from Event,/events/:id/register,DELETE,Positive,Unregister from event,"Headers:
+Authorization: Bearer [USER_TOKEN]
+
+Path:
+/events/[EVENT_ID]/register
+
+Prerequisites: User is registered","- HTTP 200 OK
+- Success message
+- Registration removed from database
+- Registration status may be updated to ""cancelled""","1. DELETE request
+2. 200 response
+3. Success message
+4. Database showing removal/cancellation","Gambar 1
+Gambar 2,3
+Gambar 4",Passed ✅,Vigo ,07 November 2025,
+51,TC-LOC-CREATE-001,Location Management,Frontend UI,Create Location,,,Positive,Admin creates new location,"Logged in as: Admin
+
+Name: Gedung Test Script","- Location created successfully
+- Success message shown
+- Location appears in locations list
+- Available in event creation dropdown","1. Create location form
+2. Success notification
+3. Location in list
+4. Location in event form dropdown","Gambar 1
+Gambar 2
+Gambar 3
+Gambar 4",Passed ✅,Vigo ,07 November 2025,
+52,TC-LOC-CREATE-002,Location Management,Frontend UI,Create Location,,,Negative,Create location with duplicate name,Name: Main Auditorium (already exists),"- Creation fails
+- Error: ""Location name already exists""
+- HTTP 409 Conflict
+- No duplicate created","1. Form with duplicate name
+2. Error message
+3. 409 response in network tab
+4. Locations list unchanged","Gambar 1,2,3,4",Not Passed ❌,Vigo ,07 November 2025,3. Responsenya masih 500 (internal server error)
+53,TC-LOC-CREATE-003,Location Management,Frontend UI,Create Location,,,Negative,Regular user tries to create location,Logged in as: User,"- Create location page/button not accessible
+- If attempted: HTTP 403 Forbidden
+- No location created","1. UI showing no create option for user
+2. 403 error if attempted
+3. Permission denied message","Gambar 1
+Gambar 2,3",Not Passed ❌,Vigo ,07 November 2025,"2. Belum ada error 403
+3. Belum ada message"
+54,TC-LOC-TOGGLE-001,Location Management,Frontend UI,Toggle Location,,,Positive,Admin toggles location status (active ↔ inactive),"Logged in as: Admin
+Location: Active location","- Status toggled successfully
+- Inactive locations don't appear in event form dropdowns
+- Still visible in admin locations list
+- Toggle button updates","1. Location with toggle button
+2. Success message
+3. Updated status indicator
+4. Event form showing only active locations","Gambar 1
+Gambar 2,3
+Gambar 4",Passed ✅,Vigo ,07 November 2025,
+55,TC-API-LOC-LIST-001,Location Management,Backend API,List Locations,/locations/active,GET,Positive,Get active locations (public access),"Headers:
+[No auth required]","- HTTP 200 OK
+- Response contains only locations with isActive: true
+- Array of location objects","1. GET request without auth
+2. 200 response
+3. Active locations array
+4. All have isActive: true","Gambar 1
+Gambar 2,3,4",Passed ✅,Vigo ,07 November 2025,
+56,TC-API-LOC-CREATE-001,Location Management,Backend API,Create Location,/locations,POST,Positive,Admin creates location,"Headers:
+Authorization: Bearer [ADMIN_TOKEN]
+
+Body:
+{
+  ""name"": ""API Test Location""
+}","- HTTP 201 Created
+- Response contains location object with generated ID
+- Location in database
+- Default isActive: true","1. POST request with admin token
+2. 201 response
+3. Created location object
+4. Database record","Gambar 1 2,3 
+Gambar 3
+Gambar 4",Passed ✅,Vigo ,07 November 2025,
+57,TC-API-LOC-CREATE-002,Location Management,Backend API,Create Location,/locations,POST,Negative,User tries to create location,"Headers:
+Authorization: Bearer [USER_TOKEN]
+
+Body:
+{
+  ""name"": ""Unauthorized Location""
+}","- HTTP 403 Forbidden
+- Error: ""Access denied"" or ""Admin privileges required""
+- No location created","1. Request with user token
+2. 403 response
+3. Permission error
+4. No database record","Gambar 1 
+Gambar 2,3
+Gambar 4",Passed ✅,Vigo ,07 November 2025,
+58,TC-API-LOC-DELETE-001,Location Management,Backend API,Delete Location,/locations/:id,DELETE,Negative,Delete location used by events,"Headers:
+Authorization: Bearer [ADMIN_TOKEN]
+
+Path:
+/locations/[LOCATION_IN_USE_ID]","- HTTP 400 Bad Request
+- Error: ""Cannot delete location that is used by events""
+- Location remains in database
+- Referential integrity preserved","1. DELETE request
+2. 400 response
+3. Error message about existing references
+4. Location still exists in database","Gambar 1
+Gambar 2,3
+Gambar 4",Not Passed ❌,Vigo ,07 November 2025,2. 500 response instead of 400
+59,TC-SETTINGS-001,Site Settings,Frontend UI,Update Settings,,,Positive,Superadmin updates site title and colors,"Logged in as: Superadmin
+
+Site Title: My Campus Events
+Primary Color: #FF5733
+Secondary Color: #33FF57","- Settings updated successfully
+- Changes reflect immediately in UI
+- New title in header/navbar
+- Colors applied to theme
+- Updated timestamp recorded","1. Settings form with changes
+2. Success notification
+3. Updated UI showing new title
+4. Theme with new colors
+5. Settings page after refresh","Gambar 1,2,3,4",Passed ✅,Vigo ,07 November 2025,
+60,TC-SETTINGS-002,Site Settings,Frontend UI,Update Settings,,,Negative,Admin tries to update settings,Logged in as: Admin,"- Settings page not accessible or read-only
+- If attempted: HTTP 403 Forbidden
+- Settings unchanged","1. UI showing no access or read-only view
+2. 403 error if attempted
+3. Permission denied message","Gambar 1,2,3",Not Passed ❌,Vigo ,07 November 2025,2. Belum ada error 403
+61,TC-SETTINGS-LOGO-001,Site Settings,Frontend UI,Upload Logo,,,Positive,Superadmin uploads site logo,"Logged in as: Superadmin
+File: Valid image (PNG/JPG) < 5MB","- Logo uploaded successfully
+- Logo displayed in header/navbar
+- File saved to server
+- Logo URL updated in settings","1. Logo upload form
+2. Success message
+3. Logo displayed in header
+4. Settings showing logo URL","Gambar 1,2,3,4",Not Passed ❌,Vigo ,07 November 2025,"3. Logo belum display di header
+4. Belum ada URL logo di setting"
+62,TC-API-SETTINGS-001,Site Settings,Backend API,Get Settings,/settings,GET,Positive,Get site settings (public access),"Headers:
+[No auth required]","- HTTP 200 OK
+- Response contains all settings:
+  {
+    ""success"": true,
+    ""data"": {
+      ""siteTitle"": string,
+      ""primaryColor"": string,
+      ""secondaryColor"": string,
+      ...
+    }
+  }","1. GET request without auth
+2. 200 response
+3. Complete settings object","Gambar 1
+Gambar 2,3",Passed ✅,Vigo ,07 November 2025,
+63,TC-API-SETTINGS-002,Site Settings,Backend API,Update Settings,/settings,PUT,Positive,Superadmin updates settings,"Headers:
+Authorization: Bearer [SUPERADMIN_TOKEN]
+
+Body:
+{
+  ""siteTitle"": ""Updated Title"",
+  ""primaryColor"": ""#007bff""
+}","- HTTP 200 OK
+- Settings updated in database
+- Response contains updated settings
+- Updated timestamp changed","1. PUT request with updates
+2. 200 response
+3. Updated settings object
+4. Database reflecting changes","Gambar 1
+Gambar 2
+Gambar 3
+Gambar 4",Passed ✅,Vigo ,07 November 2025,
+64,TC-API-SETTINGS-003,Site Settings,Backend API,Update Settings,/settings,PUT,Negative,Admin tries to update settings,"Headers:
+Authorization: Bearer [ADMIN_TOKEN]
+
+Body:
+{
+  ""siteTitle"": ""Hacked Title""
+}","- HTTP 403 Forbidden
+- Error: ""Only superadmin can update settings""
+- Settings unchanged","1. Request with admin token
+2. 403 response
+3. Permission error
+4. Settings unchanged in database","Gambar 1
+Gambar 2,3
+Gambar 4",Passed ✅,Vigo ,07 November 2025,
+65,TC-FORGOT-PW-001,Authentication & Authorization,Frontend UI,Forgot Password,,,Positive,User requests password reset with valid registered email,Email: user@campus-event-hub.local,"- Success message displayed
+- Message: ""Password reset link sent to your email""
+- Email sent with reset link
+- User redirected or shown confirmation","1. Forgot password page with email input
+2. Success message displayed
+3. Email inbox showing reset email","Gambar 1 
+Gambar 2 
+Gambar 3 ",Passed ✅,Arkan Rizkiadi,10 December 2025,PART 2
+66,TC-FORGOT-PW-002,Authentication & Authorization,Frontend UI,Forgot Password,,,Negative,User enters invalid email format,Email: invalid-email,"- Validation error shown
+- Message: ""Please enter a valid email address""
+- Form not submitted
+- No API call made","1. Form with invalid email
+2. Validation error under email field",Gambar 1 & 2,,Arkan Rizkiadi,10 December 2025,PART 2
+67,TC-FORGOT-PW-003,Authentication & Authorization,Frontend UI,Forgot Password,,,Positive,User enters non-existent email,Email: nonexistent@test.com,"- Success message displayed (security best practice)
+- Message: ""If email exists password reset link will be sent""
+- No indication whether email exists
+- Prevents user enumeration","1. Form with non-existent email
+2. Generic success message shown","Gambar 1 
+Gambar 2 ",,Arkan Rizkiadi,"10 December 2025
+Security best practice: don't reveal if email exists",PART 2
+68,TC-FORGOT-PW-004,Authentication & Authorization,Frontend UI,Forgot Password,,,Negative,User submits empty email field,Email: [empty],"- Validation error shown
+- Message: ""Email is required""
+- Form not submitted","1. Empty email field
+2. Required field error displayed",Gambar 1 ,,Arkan Rizkiadi,10 December 2025,PART 2
+69,TC-RESET-PW-001,Authentication & Authorization,Frontend UI,Reset Password,,,Positive,User resets password with valid token and strong password,"Token: [valid-reset-token]
+New Password: NewSecure123!
+Confirm Password: NewSecure123!","- Password reset successfully
+- Success message displayed
+- User can login with new password
+- Old password no longer works
+- Token invalidated after use","1. Reset password form with valid token
+2. Success notification
+3. Redirect to login page
+4. Successful login with new password","Gambar 1 
+Gambar 2, 3 & 4 ",,Arkan Rizkiadi,10 December 2025,PART 2
+70,TC-RESET-PW-002,Authentication & Authorization,Frontend UI,Reset Password,,,Negative,User enters weak password (less than 8 characters),"New Password: Pass123
+Confirm Password: Pass123","- Validation error shown
+- Message: ""Password must be at least 8 characters""
+- Form not submitted
+- Password not changed","1. Form with weak password
+2. Validation error under password field","Gambar 1 
+Gambar 2 ",,Arkan Rizkiadi,10 December 2025,PART 2
+71,TC-RESET-PW-003,Authentication & Authorization,Frontend UI,Reset Password,,,Negative,Password and confirm password don't match,"New Password: Password123!
+Confirm Password: Different123!","- Validation error shown
+- Message: ""Passwords do not match""
+- Form not submitted
+- Password not changed","1. Form with mismatched passwords
+2. Validation error displayed","Gambar 1 
+Gambar 2 ",,Arkan Rizkiadi,10 December 2025,PART 2
+72,TC-RESET-PW-004,Authentication & Authorization,Frontend UI,Reset Password,,,Negative,User tries to reset password with expired token,"Token: [expired-token]
+New Password: NewSecure123!","- Error message displayed
+- Message: ""Reset link has expired"" or ""Invalid token""
+- Password not changed
+- User directed to request new reset link","1. Form with expired token
+2. Error message
+3. Link to forgot password page","Gambar 1, 2, 3",,Dimas,,PART 2
+73,TC-EVENT-MSG-001,Event Management,Frontend UI,Manual Event Message,,,Positive,Event creator sends message to attendees with valid data,"Logged in as: Event Creator
+Subject: Important Update (under 200 chars)
+Message: Valid message content (under 2000 chars)","- Message sent successfully
+- Success notification showing number of recipients
+- All registered attendees receive email
+- Message recorded in system","1. Event message form
+2. Success notification with recipient count
+3. Email inbox of attendee
+4. Message history in system","Gambar 1, 2
+Gambar 3
+Gambar 4",,Dimas,,PART 2
+74,TC-EVENT-MSG-002,Event Management,Frontend UI,Manual Event Message,,,Negative,User enters subject exceeding 200 characters,Subject: [text with 201+ characters],"- Validation error shown
+- Message: ""Subject must be 200 characters or less""
+- Character counter shows exceeded limit
+- Form not submitted","1. Form with long subject
+2. Character counter showing excess
+3. Validation error message",Gambar 1,,Dimas,,PART 2
+75,TC-EVENT-MSG-003,Event Management,Frontend UI,Manual Event Message,,,Negative,User enters message exceeding 2000 characters,Message: [text with 2001+ characters],"- Validation error shown
+- Message: ""Message must be 2000 characters or less""
+- Character counter shows exceeded limit
+- Form not submitted","1. Form with long message
+2. Character counter showing excess
+3. Validation error message",Gambar 1,,Dimas,,PART 2
+76,TC-EVENT-MSG-004,Event Management,Frontend UI,Manual Event Message,,,Negative,Non-creator tries to access message form,"Logged in as: Regular User (not event creator)
+Event: Created by another user","- Message form not visible
+- Send message button not shown
+- If accessed directly: 403 error or redirect","1. Event details page showing no message button
+2. 403 error if attempted via URL","Gambar 1-2
+",,Dimas,,PART 2
+77,TC-EVENT-ATTACH-001,Event Management,Frontend UI,Event Attachment Validation,,,Positive,User creates event with valid attachments,"Logged in as: User
+Files: 1 or more valid files (PDF JPG etc.)
+File sizes: All < 10MB","- Event created successfully
+- Attachments uploaded and saved
+- Files visible in event details
+- Download links available","1. Create event form with file uploads
+2. Success notification
+3. Event details showing attachments
+4. Downloadable attachment links","Gambar 1-2
+Gambar 3-4",,Dimas,,PART 2
+78,TC-EVENT-ATTACH-002,Event Management,Frontend UI,Event Attachment Validation,,,Negative,User tries to submit event without attachments,"Logged in as: User
+Files: [none selected]","- Validation error shown
+- Message: ""At least one attachment is required""
+- Form not submitted
+- Event not created
+- Error highlighted in red","1. Create event form with no files
+2. Validation error message
+3. Form state showing error",,,Eduardus,,PART 2
+79,TC-EVENT-ATTACH-003,Event Management,Frontend UI,Event Attachment Validation,,,Negative,User tries to upload file larger than 10MB,File: large-file.pdf (>10MB),"- Validation error shown
+- Message: ""File size must be less than 10MB"" or similar
+- File not uploaded
+- Form shows error
+- File rejected","1. File upload attempt with large file
+2. Error message displayed
+3. File not added to upload list",,,Eduardus,,PART 2
+80,TC-EVENT-CAPACITY-001,Event Management,Frontend UI,Building Capacity Validation,,,Positive,User sets max attendees within location capacity,"Logged in as: User
+Location: Main Hall (capacity: 200)
+Max Attendees: 150","- Event created successfully
+- Max attendees accepted
+- No validation error
+- Capacity hint shown: ""Location capacity: 200""","1. Create event form
+2. Location selected showing capacity
+3. Max attendees within limit
+4. Success notification",,,Eduardus,,PART 2
+81,TC-EVENT-CAPACITY-002,Event Management,Frontend UI,Building Capacity Validation,,,Negative,User sets max attendees exceeding location capacity,"Logged in as: User
+Location: Small Room (capacity: 50)
+Max Attendees: 100","- Validation error shown
+- Message: ""Maximum attendees cannot exceed location capacity""
+- Form not submitted
+- Error highlighted
+- Capacity hint shown","1. Create event form
+2. Max attendees exceeding location capacity
+3. Validation error message in red
+4. Capacity hint: ""Location capacity: 50""",,,Eduardus,,PART 2
+82,TC-EVENT-CAPACITY-003,Event Management,Frontend UI,Building Capacity Validation,,,Negative,User enters max attendees of 150 for location with capacity 100,"Location: Conference Room (capacity: 100)
+Max Attendees: 150","- Validation error displayed
+- Message: ""Maximum attendees cannot exceed location capacity (100)""
+- Input field shows error state
+- Form submission blocked","1. Form with capacity mismatch
+2. Error message with capacity shown
+3. Red border on input field",,,Eduardus,,PART 2
+83,TC-EXPORT-ATTENDEES-001,Event Management,Frontend UI,Export Attendees,,,Positive,Event creator exports attendees list with registrations,"Logged in as: Event Creator
+Event: Has registered attendees","- CSV file downloaded successfully
+- Filename: [event-title]-attendees.csv
+- Contains attendee data: name email registration status
+- File opens correctly in Excel/Sheets","1. Event details page with Export button
+2. File download dialog
+3. CSV file content in Excel/Sheets",,,Eduardus,,PART 2
+84,TC-EXPORT-ATTENDEES-002,Event Management,Frontend UI,Export Attendees,,,Positive,Export attendees for event with no registrations,"Logged in as: Event Creator
+Event: No registered attendees","- Appropriate message or empty CSV
+- User notified of no attendees
+- Or CSV with headers only","1. Event with no attendees
+2. Export button clicked
+3. Message or empty CSV result",,,Eduardus,,PART 2
+85,TC-EXPORT-ATTENDEES-003,Event Management,Frontend UI,Export Attendees,,,Negative,Non-creator tries to export attendees,"Logged in as: Regular User
+Event: Created by another user","- Export button not visible
+- If accessed directly: 403 error
+- No CSV generated","1. Event details showing no export button
+2. 403 error if attempted",Gambar 1,Passed ✅,Vigo ,,PART 2
+86,TC-EXPORT-EVENTS-001,Event Management,Frontend UI,Export Events,,,Positive,Authenticated user exports all events to CSV,Logged in as: User/Admin/Approver,"- CSV file downloaded successfully
+- Filename: events-export.csv
+- Contains event data: title date location status
+- File opens correctly","1. Events page with Export button
+2. File download dialog
+3. CSV content in Excel/Sheets","Gambar 1,2
+Gambar 3",Passed ✅,Vigo ,,PART 2
+87,TC-EXPORT-EVENTS-002,Event Management,Frontend UI,Export Events,,,Negative,Guest user tries to export events,Not logged in,"- Export button not visible
+- Feature requires authentication","1. Events page as guest
+2. No export button shown","Gambar 1,2",Passed ✅,Vigo ,,PART 2
+88,TC-PAGINATION-001,User Interface,Frontend UI,Pagination,,,Positive,User navigates between pages using next/previous buttons,"Page: 1 of 10
+Items per page: 10","- Clicking Next loads page 2
+- Data updates to show items 11-20
+- Page indicator updates
+- Previous button becomes enabled
+- URL may update with page parameter","1. List page showing page 1
+2. Next button clicked
+3. Page 2 data displayed
+4. Updated pagination controls",,,Vigo ,,PART 2
+89,TC-PAGINATION-002,User Interface,Frontend UI,Pagination,,,Positive,User changes items per page from dropdown,"Current: 10 items per page
+Change to: 50 items per page","- Page reloads with 50 items
+- Pagination controls update
+- Shows: ""Showing 1-50 of X results""
+- Total pages reduced
+- Returns to page 1","1. Items per page dropdown
+2. Select 50 option
+3. Page showing 50 items
+4. Updated pagination info",,,Vigo ,,PART 2
+90,TC-PAGINATION-003,User Interface,Frontend UI,Pagination,,,Positive,User clicks specific page number,"Total pages: 10
+Click: Page 5","- Page 5 loads
+- Shows items 41-50 (if 10 per page)
+- Page 5 highlighted in pagination
+- Correct data range displayed
+- URL updates to ?page=5","1. Pagination showing page numbers
+2. Click page 5
+3. Page 5 data shown
+4. Page 5 highlighted",,,Vigo ,,PART 2
+91,TC-PAGINATION-004,User Interface,Frontend UI,Pagination,,,Negative,User is on last page and tries to click Next,Current page: Last page (10 of 10),"- Next button is disabled
+- No action occurs on click
+- User remains on last page
+- Visual indication (grayed out button)","1. Last page of results
+2. Next button disabled/grayed
+3. No page change on attempt",,,Vigo ,,PART 2
