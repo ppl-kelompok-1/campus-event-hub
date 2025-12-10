@@ -21,10 +21,12 @@ Users with "Approver" role or higher
 
 **Screenshots:**
 
-![Request Revision Form](placeholder-gambar-1.png)
+![Request Revision Form](/docs/user-manual/approvers/images/requesting-revision-1.png)
+
 *Figure 1: Request revision form with comment field*
 
-![Updated Status and Comments](placeholder-gambar-2-3-4.png)
+![Updated Status and Comments](/docs/user-manual/approvers/images/requesting-revision-2.png)
+
 *Figure 2-4: Event status updated and comments visible to creator*
 
 **Tips:**

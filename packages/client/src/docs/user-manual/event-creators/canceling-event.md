@@ -21,13 +21,13 @@ Event creators (for their own published events)
 
 **Screenshots:**
 
-![Cancel Confirmation](placeholder-gambar-1.png)
+![Cancel Confirmation](/docs/user-manual/event-creators/images/canceling-event-1.png)
 *Figure 1: Confirmation dialog for canceling the event*
 
-![Cancelled Event Display](placeholder-gambar-2-3.png)
+![Cancelled Event Display](/docs/user-manual/event-creators/images/canceling-event-2.png)
 *Figure 2-3: Event showing "Cancelled" status and badge*
 
-![Registration Disabled](placeholder-gambar-4.png)
+![Registration Disabled](/docs/user-manual/event-creators/images/canceling-event-3.png)
 *Figure 4: Registration button disabled for cancelled event*
 
 **Tips:**

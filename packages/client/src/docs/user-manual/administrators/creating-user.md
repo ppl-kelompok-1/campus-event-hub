@@ -23,13 +23,14 @@ Users with "Admin" or "Superadmin" role
 
 **Screenshots:**
 
-![Create User Form](placeholder-gambar-1.png)
+![Create User Form](/docs/user-manual/administrators/images/creating-user-1.png)
 *Figure 1: Create user form with all fields filled (Admin logged in)*
 
-![Users List](placeholder-gambar-2-3.png)
+![Users List](/docs/user-manual/administrators/images/creating-user-2.png)
 *Figure 2-3: Users list showing the newly created user*
 
-![Successful Login](placeholder-gambar-4.png)
+![Successful Login](/docs/user-manual/administrators/images/creating-user-3.png)
+
 *Figure 4: New user able to log in successfully*
 
 **Tips:**
