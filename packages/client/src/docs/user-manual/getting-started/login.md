@@ -20,13 +20,15 @@ All registered users (User, Approver, Admin, Superadmin)
 
 **Screenshots:**
 
-![Login Form](placeholder-gambar-1.png)
+![Login Form](/docs/user-manual/getting-started/images/login-1.png)
 *Figure 1: Login form with email and password fields*
 
-![Dashboard After Login](placeholder-gambar-2.png)
+![Dashboard After Login](/docs/user-manual/getting-started/images/login-2.png)
+
 *Figure 2: Dashboard showing successful login with user name displayed*
 
-![Token Storage](placeholder-gambar-3.png)
+![Token Storage](/docs/user-manual/getting-started/images/login-3.png)
+
 *Figure 3: Browser DevTools showing JWT token in Local Storage*
 
 **Tips:**

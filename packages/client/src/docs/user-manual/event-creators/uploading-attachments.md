@@ -39,11 +39,11 @@
 - File sizes shown in B, KB, or MB format
 - Validation error in red if requirements aren't met
 
-![Event Attachments section in create event form](placeholder-gambar-1.png)
+![Event Attachments section in create event form](/docs/user-manual/event-creators/images/uploading-attachments-1.png)
 
-![Selected files list with remove buttons](placeholder-gambar-2.png)
+![Selected files list with remove buttons](/docs/user-manual/event-creators/images/uploading-attachments-2.png)
 
-![Validation error for missing attachments](placeholder-gambar-3.png)
+![Validation error for missing attachments](/docs/user-manual/event-creators/images/uploading-attachments-3.png)
 
 **Accepted File Formats:**
 - Documents: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT
