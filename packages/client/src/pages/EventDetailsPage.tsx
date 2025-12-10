@@ -43,7 +43,7 @@ const EventDetailsPage = () => {
     }
 
     fetchEvent()
-  }, [id])
+  }, [id, user])
 
   useEffect(() => {
       console.log(event);
