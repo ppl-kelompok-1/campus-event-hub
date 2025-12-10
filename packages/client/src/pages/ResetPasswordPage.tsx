@@ -13,15 +13,37 @@ const ResetPasswordPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [validating, setValidating] = useState(true)
+  const [tokenInvalid, setTokenInvalid] = useState(false)
 
   useEffect(() => {
-    // Extract token from URL on component mount
-    const urlToken = searchParams.get('token')
-    if (!urlToken) {
-      setError('Invalid reset link. No token found.')
-    } else {
+    const validateToken = async () => {
+      const urlToken = searchParams.get('token')
+
+      if (!urlToken) {
+        setError('Invalid reset link. No token found.')
+        setValidating(false)
+        return
+      }
+
       setTokenState(urlToken)
+
+      // Validate token with backend
+      try {
+        const response = await authApi.validateResetToken(urlToken)
+
+        if (!response.data.valid) {
+          setTokenInvalid(true)
+        }
+      } catch (err) {
+        // If validation fails, mark as invalid
+        setTokenInvalid(true)
+      } finally {
+        setValidating(false)
+      }
     }
+
+    validateToken()
   }, [searchParams])
 
   const handleSubmit = async (e: FormEvent) => {
@@ -56,10 +78,22 @@ const ResetPasswordPage = () => {
       // Redirect to home
       navigate('/')
     } catch (err: any) {
-      setError(err.message || 'Failed to reset password. The link may be invalid or expired.')
+      // Mark token as invalid - this will trigger the dedicated error UI
+      // We don't set the error state here because we'll show a dedicated error page instead
+      setTokenInvalid(true)
     } finally {
       setLoading(false)
     }
+  }
+
+  // Show loading state while validating
+  if (validating) {
+    return (
+      <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
+        <h1>Reset Password</h1>
+        <p>Validating reset link...</p>
+      </div>
+    )
   }
 
   // If no token in URL, show error state
@@ -73,6 +107,57 @@ const ResetPasswordPage = () => {
         <Link to="/forgot-password" style={{ color: '#007bff' }}>
           Request a new reset link
         </Link>
+      </div>
+    )
+  }
+
+  // If token is invalid after API call, show dedicated error state
+  if (tokenInvalid) {
+    return (
+      <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
+        <h1>Reset Password</h1>
+
+        <div style={{
+          backgroundColor: '#fff3cd',
+          border: '1px solid #ffc107',
+          borderRadius: '4px',
+          padding: '15px',
+          marginBottom: '20px'
+        }}>
+          <h2 style={{
+            margin: '0 0 10px 0',
+            fontSize: '18px',
+            color: '#856404'
+          }}>
+            ⚠️ Invalid Token
+          </h2>
+          <p style={{ margin: 0, color: '#856404' }}>
+            The reset link has expired or is no longer valid. Please request a new password reset.
+          </p>
+        </div>
+
+        <button
+          onClick={() => navigate('/forgot-password')}
+          style={{
+            width: '100%',
+            padding: '10px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            marginBottom: '15px',
+            fontSize: '16px',
+            borderRadius: '4px'
+          }}
+        >
+          Request New Reset Link
+        </button>
+
+        <div style={{ textAlign: 'center' }}>
+          <Link to="/login" style={{ color: '#007bff', fontSize: '14px' }}>
+            Back to Login
+          </Link>
+        </div>
       </div>
     )
   }

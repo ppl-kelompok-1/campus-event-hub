@@ -306,6 +306,19 @@ export const authApi = {
       requireAuth: false,
     })
   },
+
+  validateResetToken: async (token: string) => {
+    return fetchApi<{
+      success: boolean
+      data: {
+        valid: boolean
+        message?: string
+      }
+    }>(`/auth/validate-reset-token?token=${encodeURIComponent(token)}`, {
+      method: 'GET',
+      requireAuth: false,
+    })
+  },
 }
 
 // User management API calls

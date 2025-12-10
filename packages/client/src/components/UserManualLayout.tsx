@@ -26,7 +26,10 @@ export const UserManualLayout: React.FC<UserManualLayoutProps> = ({ children }) 
       title: 'Getting Started',
       icon: '🚀',
       pages: [
-        { path: '/user-manual/getting-started/login', title: 'Login' }
+        { path: '/user-manual/getting-started/login', title: 'Login' },
+        { path: '/user-manual/getting-started/forgot-password', title: 'Forgot Password' },
+        { path: '/user-manual/getting-started/reset-password', title: 'Reset Password' },
+        { path: '/user-manual/getting-started/using-pagination', title: 'Using Pagination' }
       ]
     },
     'users': {
@@ -36,7 +39,8 @@ export const UserManualLayout: React.FC<UserManualLayoutProps> = ({ children }) 
         { path: '/user-manual/users/viewing-profile', title: 'Viewing Profile' },
         { path: '/user-manual/users/updating-profile', title: 'Updating Profile' },
         { path: '/user-manual/users/registering-events', title: 'Registering for Events' },
-        { path: '/user-manual/users/unregistering-events', title: 'Unregistering from Events' }
+        { path: '/user-manual/users/unregistering-events', title: 'Unregistering from Events' },
+        { path: '/user-manual/users/exporting-events', title: 'Exporting Events' }
       ]
     },
     'event-creators': {
@@ -44,10 +48,14 @@ export const UserManualLayout: React.FC<UserManualLayoutProps> = ({ children }) 
       icon: '📝',
       pages: [
         { path: '/user-manual/event-creators/creating-event', title: 'Creating an Event' },
+        { path: '/user-manual/event-creators/uploading-attachments', title: 'Uploading Attachments' },
+        { path: '/user-manual/event-creators/managing-capacity', title: 'Managing Event Capacity' },
         { path: '/user-manual/event-creators/submitting-event', title: 'Submitting for Approval' },
         { path: '/user-manual/event-creators/editing-event', title: 'Editing an Event' },
         { path: '/user-manual/event-creators/deleting-event', title: 'Deleting an Event' },
-        { path: '/user-manual/event-creators/canceling-event', title: 'Canceling an Event' }
+        { path: '/user-manual/event-creators/canceling-event', title: 'Canceling an Event' },
+        { path: '/user-manual/event-creators/sending-messages', title: 'Sending Messages to Attendees' },
+        { path: '/user-manual/event-creators/exporting-attendees', title: 'Exporting Attendees' }
       ]
     },
     'approvers': {
