@@ -34,11 +34,11 @@
 - Error message in red if capacity exceeded
 - Input field dynamically limited to location maximum
 
-![Maximum Attendees field with capacity hint](placeholder-gambar-1.png)
+![Maximum Attendees field with capacity hint](/docs/user-manual/event-creators/images/managing-capacity-1.png)
 
-![Validation error when exceeding capacity](placeholder-gambar-2.png)
+![Validation error when exceeding capacity](/docs/user-manual/event-creators/images/managing-capacity-2.png)
 
-![Success state with valid capacity](placeholder-gambar-3.png)
+![Success state with valid capacity](/docs/user-manual/event-creators/images/managing-capacity-3.png)
 
 **Example Scenarios:**
 

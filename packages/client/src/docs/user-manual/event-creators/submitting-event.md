@@ -20,13 +20,16 @@ Users with "User" role
 
 **Screenshots:**
 
-![Draft Event Detail](placeholder-gambar-1.png)
+![Draft Event Detail](/docs/user-manual/event-creators/images/submitting-event-1.png)
+
 *Figure 1: Draft event detail page with "Submit for Approval" button*
 
-![Success Message](placeholder-gambar-2-3-4.png)
+![Success Message](/docs/user-manual/event-creators/images/submitting-event-2.png)
+
 *Figure 2-4: Success message and updated status showing "Pending Approval"*
 
-![Approver's Queue](placeholder-gambar-5.png)
+![Approver's Queue](/docs/user-manual/event-creators/images/submitting-event-3.png)
+
 *Figure 5: Event appearing in approver's pending approval list*
 
 **Tips:**

@@ -28,13 +28,16 @@ All authenticated users (User, Approver, Admin, Superadmin)
 
 **Screenshots:**
 
-![Create Event Form](placeholder-gambar-1.png)
+![Create Event Form](/docs/user-manual/event-creators/images/creating-event-1.png)
+
 *Figure 1: Create event form with all required fields filled*
 
-![Event in My Events](placeholder-gambar-3.png)
+![Event in My Events](/docs/user-manual/event-creators/images/creating-event-2.png)
+
 *Figure 2: Newly created event showing in "My Events" with Draft status*
 
-![Event Detail Page](placeholder-gambar-4.png)
+![Event Detail Page](/docs/user-manual/event-creators/images/creating-event-3.png)
+
 *Figure 3: Event detail page showing all saved information*
 
 **Tips:**
