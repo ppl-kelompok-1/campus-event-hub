@@ -1,10 +1,12 @@
 import { sendEmail } from '../infrastructure/email/mailer';
+import { emailConfig } from '../infrastructure/email/config';
 import { eventApprovedTemplate } from '../infrastructure/email/templates/eventApproved';
 import { registrationConfirmedTemplate } from '../infrastructure/email/templates/registrationConfirmed';
 import { eventReminderTemplate } from '../infrastructure/email/templates/eventReminder';
 import { passwordResetTemplate } from '../infrastructure/email/templates/passwordReset';
 import { eventMessageTemplate } from '../infrastructure/email/templates/eventMessage';
 import { eventCancelledTemplate, EventCancelledData } from '../infrastructure/email/templates/eventCancelled';
+import { registrationDeadlineReminder, RegistrationDeadlineReminderData } from '../infrastructure/email/templates/registrationDeadlineReminder';
 import { RegistrationStatus } from '../models/EventRegistration';
 import { IEventRepository } from '../repositories/IEventRepository';
 import { IUserRepository } from '../repositories/IUserRepository';
@@ -93,7 +95,6 @@ export class NotificationService {
         to: user.email,
         subject: `Reminder: ${event.title} Tomorrow`,
         html: eventReminderTemplate({
-          userName: user.name,
           eventTitle: event.title,
           eventDate: event.eventDate,
           eventTime: event.eventTime,
@@ -102,6 +103,52 @@ export class NotificationService {
         })
       });
     }
+  }
+
+  async sendEventReminderEmailsBatch(eventId: number, userIds: number[]): Promise<void> {
+    const event = await this.eventRepository.findById(eventId);
+    if (!event) return;
+
+    const location = event.locationId
+      ? await this.locationRepository.findById(event.locationId)
+      : null;
+
+    // Get all user emails
+    const users = await Promise.all(userIds.map(id => this.userRepository.findById(id)));
+    const validUsers = users.filter(u => u !== null) as any[];
+
+    if (validUsers.length === 0) return;
+
+    console.log(`[NotificationService] Sending event attendance reminder for event ${eventId} to ${validUsers.length} recipients`);
+    console.log(`[NotificationService] Event: "${event.title}"`);
+
+    let successCount = 0;
+    let failureCount = 0;
+
+    // Send individual emails
+    for (const user of validUsers) {
+      try {
+        await sendEmail({
+          to: user.email,  // Direct "to" instead of BCC
+          subject: `Reminder: ${event.title} Tomorrow`,
+          html: eventReminderTemplate({
+            eventTitle: event.title,
+            eventDate: event.eventDate,
+            eventTime: event.eventTime,
+            locationName: location?.name || 'TBA',
+            description: event.description || 'No description provided'
+          })
+        });
+
+        console.log(`[NotificationService] ✅ Sent to: ${user.email}`);
+        successCount++;
+      } catch (error) {
+        console.error(`[NotificationService] ❌ Failed to send to ${user.email}:`, error);
+        failureCount++;
+      }
+    }
+
+    console.log(`[NotificationService] ✅ Successfully sent event attendance reminder for event ${eventId}: ${successCount} succeeded, ${failureCount} failed`);
   }
 
   async sendEventCancelledEmail(eventId: number): Promise<void> {
@@ -246,5 +293,80 @@ export class NotificationService {
         expiresAt: expiresAtFormatted
       })
     });
+  }
+
+  async sendRegistrationDeadlineReminder(eventId: number, userId: number): Promise<void> {
+    const event = await this.eventRepository.findById(eventId);
+    if (!event) {
+      throw new Error(`Event not found: ${eventId}`);
+    }
+
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
+    }
+
+    const emailData: RegistrationDeadlineReminderData = {
+      eventTitle: event.title,
+      eventDate: event.eventDate,
+      eventTime: event.eventTime,
+      registrationEndDate: event.registrationEndDate,
+      registrationEndTime: event.registrationEndTime,
+      eventUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/events/${event.id}`
+    };
+
+    await sendEmail({
+      to: user.email,
+      subject: `Registration Closing Soon: ${event.title}`,
+      html: registrationDeadlineReminder(emailData)
+    });
+  }
+
+  async sendRegistrationDeadlineReminderBatch(eventId: number, userIds: number[]): Promise<void> {
+    const event = await this.eventRepository.findById(eventId);
+    if (!event) {
+      throw new Error(`Event not found: ${eventId}`);
+    }
+
+    // Get all user emails
+    const users = await Promise.all(userIds.map(id => this.userRepository.findById(id)));
+    const validUsers = users.filter(u => u !== null) as any[];
+
+    if (validUsers.length === 0) return;
+
+    console.log(`[NotificationService] Sending registration deadline reminder for event ${eventId} to ${validUsers.length} recipients`);
+    console.log(`[NotificationService] Event: "${event.title}"`);
+    console.log(`[NotificationService] Registration closes: ${event.registrationEndDate} at ${event.registrationEndTime}`);
+
+    const emailData: RegistrationDeadlineReminderData = {
+      eventTitle: event.title,
+      eventDate: event.eventDate,
+      eventTime: event.eventTime,
+      registrationEndDate: event.registrationEndDate,
+      registrationEndTime: event.registrationEndTime,
+      eventUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/events/${event.id}`
+    };
+
+    let successCount = 0;
+    let failureCount = 0;
+
+    // Send individual emails
+    for (const user of validUsers) {
+      try {
+        await sendEmail({
+          to: user.email,  // Direct "to" instead of BCC
+          subject: `Registration Closing Soon: ${event.title}`,
+          html: registrationDeadlineReminder(emailData)
+        });
+
+        console.log(`[NotificationService] ✅ Sent to: ${user.email}`);
+        successCount++;
+      } catch (error) {
+        console.error(`[NotificationService] ❌ Failed to send to ${user.email}:`, error);
+        failureCount++;
+      }
+    }
+
+    console.log(`[NotificationService] ✅ Successfully sent registration deadline reminder for event ${eventId}: ${successCount} succeeded, ${failureCount} failed`);
   }
 }

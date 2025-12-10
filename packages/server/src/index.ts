@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import apiRoutes from './routes';
 import { errorHandler } from './middleware/error';
+import { Container } from './infrastructure/Container';
+import { ReminderScheduler } from './infrastructure/scheduler/ReminderScheduler';
 
 // Load environment variables
 dotenv.config();
@@ -55,6 +57,13 @@ app.use(errorHandler);
 const server = app.listen(port, () => {
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
   console.log(`⚡️[server]: Environment: ${process.env.NODE_ENV || 'development'}`);
+
+  // Initialize reminder scheduler
+  const container = Container.getInstance();
+  const reminderService = container.getReminderService();
+  const reminderScheduler = new ReminderScheduler(reminderService);
+  reminderScheduler.start();
+  console.log('⚡️[server]: Reminder scheduler initialized');
 });
 
 // Graceful shutdown
