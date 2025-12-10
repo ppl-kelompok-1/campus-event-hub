@@ -20,13 +20,13 @@ All authenticated users
 
 **Screenshots:**
 
-![Profile Edit Form](placeholder-gambar-1.png)
+![Profile Edit Form](/docs/user-manual/users/images/updating-profile-1.png)
 *Figure 1: Profile edit form with name field*
 
-![Success Notification](placeholder-gambar-2.png)
+![Success Notification](/docs/user-manual/users/images/updating-profile-2.png)
 *Figure 2: Brief success notification after update*
 
-![Updated Header](placeholder-gambar-3-4.png)
+![Updated Header](/docs/user-manual/users/images/updating-profile-3.png)
 *Figure 3-4: Header showing updated name after profile changes*
 
 **Tips:**

@@ -21,13 +21,13 @@ All authenticated users
 
 **Screenshots:**
 
-![Event Detail with Register Button](placeholder-gambar-1.png)
+![Event Detail with Register Button](/docs/user-manual/users/images/registering-events-1.png)
 *Figure 1: Event detail page showing Register button*
 
-![After Registration](placeholder-gambar-3-5.png)
+![After Registration](/docs/user-manual/users/images/registering-events-2.png)
 *Figure 2: Button changed to "Leave" and updated registration count*
 
-![Attendees List](placeholder-gambar-4.png)
+![Attendees List](/docs/user-manual/users/images/registering-events-3.png)
 *Figure 3: Your name appearing in the attendees list*
 
 **Tips:**
