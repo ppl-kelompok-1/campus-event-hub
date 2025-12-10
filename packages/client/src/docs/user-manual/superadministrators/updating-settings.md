@@ -23,7 +23,7 @@ Users with "Superadmin" role only
 
 **Screenshots:**
 
-![Settings Form with Changes](placeholder-gambar-1-2-3-4.png)
+![Settings Form with Changes](/docs/user-manual/superadministrators/images/updating-settings-1.gif)
 *Figure 1-4: Settings form showing updated values and immediate UI changes*
 
 **Tips:**
