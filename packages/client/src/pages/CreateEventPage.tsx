@@ -24,6 +24,7 @@ const CreateEventPage = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [files, setFiles] = useState<File[]>([])
+  const [fileSizeError, setFileSizeError] = useState<string>('')
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
   const { isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
@@ -115,6 +116,10 @@ const CreateEventPage = () => {
 
     // Validate attachments are required
     if (files.length === 0) {
+      // If there was a file size error, show that instead
+      if (fileSizeError) {
+        return fileSizeError
+      }
       return 'At least one attachment is required'
     }
 
@@ -175,11 +180,14 @@ const CreateEventPage = () => {
     // Validate file sizes
     const invalidFiles = selectedFiles.filter(file => file.size > 10 * 1024 * 1024)
     if (invalidFiles.length > 0) {
-      setError(`Some files exceed 10MB limit: ${invalidFiles.map(f => f.name).join(', ')}`)
+      const errorMsg = `File size exceeds 10MB limit: ${invalidFiles.map(f => f.name).join(', ')}. Please select a smaller file.`
+      setError(errorMsg)
+      setFileSizeError(errorMsg)
       return
     }
 
     setFiles(prev => [...prev, ...selectedFiles])
+    setFileSizeError('')
     setError('')
   }
 
