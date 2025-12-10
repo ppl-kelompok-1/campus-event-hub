@@ -23,9 +23,9 @@
 - You'll be automatically redirected to the login page
 - Check your email inbox for the reset link
 
-![Forgot Password page with email field highlighted](placeholder-gambar-1.png)
+![Forgot Password page with email field highlighted](/docs/user-manual/getting-started/images/forgot-password-1.png)
 
-![Success message displayed after submission](placeholder-gambar-2.png)
+![Success message displayed after submission](/docs/user-manual/getting-started/images/forgot-password-2.png)
 
 **Tips:**
 ✓ Check your spam/junk folder if you don't see the email within a few minutes
