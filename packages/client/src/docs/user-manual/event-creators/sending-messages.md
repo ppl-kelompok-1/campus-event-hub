@@ -40,11 +40,9 @@
 - Character counters reset to 0
 - All registered attendees receive an email with your message
 
-![Send Message to Attendees form](placeholder-gambar-1.png)
+![Send Message to Attendees form](/docs/user-manual/event-creators/images/sending-messages-1.png)
 
-![Character counters showing remaining characters](placeholder-gambar-2.png)
-
-![Success notification with recipient count](placeholder-gambar-3.png)
+![Success notification with recipient count](/docs/user-manual/event-creators/images/sending-messages-2.png)
 
 **Field Requirements:**
 

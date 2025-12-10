@@ -33,11 +33,7 @@
 - File automatically downloaded to your default downloads folder
 - Filename uses your event title (non-alphanumeric characters replaced with underscores)
 
-![Export Attendees button on event details page](placeholder-gambar-1.png)
-
-![Downloaded CSV file in Downloads folder](placeholder-gambar-2.png)
-
-![CSV file opened in Excel showing attendee list](placeholder-gambar-3.png)
+![Export Attendees button on event details page](/docs/user-manual/event-creators/images/export-attendees.png)
 
 **CSV File Contents:**
 - **Name:** Attendee's full name

@@ -19,13 +19,13 @@ Event creators (for their own draft events only)
 
 **Screenshots:**
 
-![Delete Confirmation Dialog](placeholder-gambar-1.png)
+![Delete Confirmation Dialog](/docs/user-manual/event-creators/images/deleting-event-1.png)
 *Figure 1: Confirmation dialog before deleting the event*
 
-![Event Removed from List](placeholder-gambar-3.png)
+![Event Removed from List](/docs/user-manual/event-creators/images/deleting-event-2.png)
 *Figure 2: "My Events" page showing the event has been removed*
 
-![Database Confirmation](placeholder-gambar-4.png)
+![Database Confirmation](/docs/user-manual/event-creators/images/deleting-event-3.png)
 *Figure 3: Database query showing the event has been deleted*
 
 **Tips:**

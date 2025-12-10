@@ -21,10 +21,12 @@ Event creators (for their own draft events)
 
 **Screenshots:**
 
-![Edit Event Form](placeholder-gambar-1.png)
+![Edit Event Form](/docs/user-manual/event-creators/images/editing-event-1.png)
+
 *Figure 1: Edit form showing current event data with modified title*
 
-![Success and Updated Details](placeholder-gambar-2.png)
+![Success and Updated Details](/docs/user-manual/event-creators/images/editing-event-2.png)
+
 *Figure 2: Success message and event detail showing updated information*
 
 **Tips:**
