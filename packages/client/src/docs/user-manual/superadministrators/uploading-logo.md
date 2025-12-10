@@ -21,7 +21,7 @@ Users with "Superadmin" role only
 
 **Screenshots:**
 
-![Logo Upload Form](placeholder-gambar-1-2-3-4.png)
+![Logo Upload Form](/docs/user-manual/superadministrators/images/uploading-logo-1.gif)
 *Figure 1-4: Logo upload interface and successful upload confirmation*
 
 **Tips:**

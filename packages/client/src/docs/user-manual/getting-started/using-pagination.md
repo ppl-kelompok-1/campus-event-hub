@@ -35,11 +35,11 @@
 - Page numbers with "..." ellipsis if there are many pages
 - URL updates to reflect current page (e.g., ?page=2)
 
-![Pagination controls at bottom of list](placeholder-gambar-1.png)
+![Pagination controls at bottom of list](/docs/user-manual/getting-started/images/using-pagination-1.jpeg)
 
-![Items per page dropdown menu](placeholder-gambar-2.png)
+![Items per page dropdown menu](/docs/user-manual/getting-started/images/using-pagination-2.png)
 
-![Page indicator showing current results range](placeholder-gambar-3.png)
+![Page indicator showing current results range](/docs/user-manual/getting-started/images/using-pagination-3.png)
 
 **Tips:**
 ✓ Use higher items per page (50 or 100) if you want to see more results at once

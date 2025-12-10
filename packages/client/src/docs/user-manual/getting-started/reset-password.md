@@ -32,9 +32,9 @@
 - You can now login with your new password
 - The old password will no longer work
 
-![Reset Password page with password fields](placeholder-gambar-1.png)
+![Reset Password page with password fields](/docs/user-manual/getting-started/images/reset-password-1.png)
 
-![Success message after password reset](placeholder-gambar-2.png)
+![Success message after password reset](/docs/user-manual/getting-started/images/reset-password-2.png)
 
 **Tips:**
 ✓ Use a strong password with at least 8 characters
