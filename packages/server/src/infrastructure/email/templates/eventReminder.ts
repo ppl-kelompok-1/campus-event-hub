@@ -1,5 +1,4 @@
 export interface EventReminderData {
-  userName: string;
   eventTitle: string;
   eventDate: string;
   eventTime: string;
@@ -22,7 +21,7 @@ export const eventReminderTemplate = (data: EventReminderData): string => {
     <body>
       <div class="container">
         <h1>Event Reminder: ${data.eventTitle}</h1>
-        <p>Hi ${data.userName},</p>
+        <p>Hi there,</p>
         <p>This is a reminder that you're registered for an event happening tomorrow!</p>
 
         <div class="info">

@@ -7,6 +7,7 @@ import { ILocationRepository } from '../repositories/ILocationRepository';
 import { IEventAttachmentRepository } from '../repositories/IEventAttachmentRepository';
 import { IEventApprovalHistoryRepository } from '../repositories/IEventApprovalHistoryRepository';
 import { IEventMessageRepository } from '../repositories/IEventMessageRepository';
+import { IReminderLogRepository } from '../repositories/IReminderLogRepository';
 import { SQLiteUserRepository } from './repositories/SQLiteUserRepository';
 import { SQLiteEventRepository } from './repositories/SQLiteEventRepository';
 import { SQLiteEventRegistrationRepository } from '../repositories/SQLiteEventRegistrationRepository';
@@ -14,6 +15,7 @@ import { SQLiteLocationRepository } from './repositories/SQLiteLocationRepositor
 import { SQLiteEventAttachmentRepository } from './repositories/SQLiteEventAttachmentRepository';
 import { SQLiteEventApprovalHistoryRepository } from './repositories/SQLiteEventApprovalHistoryRepository';
 import { SQLiteEventMessageRepository } from '../repositories/SQLiteEventMessageRepository';
+import { SQLiteReminderLogRepository } from '../repositories/SQLiteReminderLogRepository';
 import { UserService } from '../services/UserService';
 import { AuthService } from '../services/AuthService';
 import { EventService } from '../services/EventService';
@@ -24,6 +26,7 @@ import { EventApprovalHistoryService } from '../services/EventApprovalHistorySer
 import { EventMessageService } from '../services/EventMessageService';
 import { SettingsService } from '../services/SettingsService';
 import { NotificationService } from '../services/NotificationService';
+import { ReminderService } from '../services/ReminderService';
 import { MigrationRunner } from './database/MigrationRunner';
 import path from 'path';
 
@@ -38,6 +41,7 @@ export class Container {
   private eventAttachmentRepository?: IEventAttachmentRepository;
   private eventApprovalHistoryRepository?: IEventApprovalHistoryRepository;
   private eventMessageRepository?: IEventMessageRepository;
+  private reminderLogRepository?: IReminderLogRepository;
   private userService?: UserService;
   private authService?: AuthService;
   private eventService?: EventService;
@@ -48,6 +52,7 @@ export class Container {
   private eventMessageService?: EventMessageService;
   private settingsService?: SettingsService;
   private notificationService?: NotificationService;
+  private reminderService?: ReminderService;
 
   private constructor() {}
 
@@ -220,6 +225,28 @@ export class Container {
       );
     }
     return this.notificationService;
+  }
+
+  // Reminder log repository (singleton)
+  getReminderLogRepository(): IReminderLogRepository {
+    if (!this.reminderLogRepository) {
+      this.reminderLogRepository = new SQLiteReminderLogRepository(this.getDatabase());
+    }
+    return this.reminderLogRepository;
+  }
+
+  // Reminder service (singleton)
+  getReminderService(): ReminderService {
+    if (!this.reminderService) {
+      this.reminderService = new ReminderService(
+        this.getEventRepository(),
+        this.getEventRegistrationRepository(),
+        this.getUserRepository(),
+        this.getReminderLogRepository(),
+        this.getNotificationService()
+      );
+    }
+    return this.reminderService;
   }
 
   // Event message service (singleton)
