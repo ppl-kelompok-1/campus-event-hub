@@ -27,7 +27,23 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuToggle }) => {
         {/* Center Section - Logo/Brand */}
         <div className="topbar-center">
           <Link to="/" className="topbar-logo">
-            {settings?.siteTitle || 'Campus Event Hub'}
+            {settings?.siteLogoUrl ? (
+              <div className="topbar-logo-with-image">
+                <img
+                  src={`http://localhost:3000${settings.siteLogoUrl}`}
+                  alt={settings?.siteTitle || 'Campus Event Hub'}
+                  className="topbar-logo-image"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <span className="topbar-logo-text">
+                  {settings?.siteTitle || 'Campus Event Hub'}
+                </span>
+              </div>
+            ) : (
+              <span>{settings?.siteTitle || 'Campus Event Hub'}</span>
+            )}
           </Link>
         </div>
 

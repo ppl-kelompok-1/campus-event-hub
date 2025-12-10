@@ -321,6 +321,42 @@ tr:hover {
   font-weight: bold;
 }
 
+/* Logo with image - integrated layout */
+.topbar-logo-with-image {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-logo-image {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.topbar-logo-text {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--color-text-primary);
+  line-height: 1;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 480px) {
+  .topbar-logo-image {
+    height: 28px;
+  }
+
+  .topbar-logo-text {
+    font-size: 1.1rem;
+  }
+
+  .topbar-logo-with-image {
+    gap: 6px;
+  }
+}
+
 .topbar-user {
   display: flex;
   align-items: center;
