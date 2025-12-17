@@ -7,7 +7,7 @@
 
 import dotenv from 'dotenv';
 import { container } from '../src/infrastructure/Container';
-import { UserRole } from '../src/models/User';
+import { UserRole, UserCategory } from '../src/models/User';
 
 // Load environment variables
 dotenv.config();
@@ -105,7 +105,8 @@ async function createDummyUsers(): Promise<void> {
           name: config.name,
           email: config.email,
           password: hashedPassword,
-          role: role
+          role: role,
+          category: UserCategory.STAFF
         });
 
         console.log(`   🎉 ${role.toUpperCase()} user created successfully!`);
@@ -136,7 +137,8 @@ async function createDummyUsers(): Promise<void> {
           name: userConfig.name,
           email: userConfig.email,
           password: hashedPassword,
-          role: userConfig.role
+          role: userConfig.role,
+          category: UserCategory.MAHASISWA
         });
 
         console.log(`   🎉 ${userConfig.name} created successfully!`);
