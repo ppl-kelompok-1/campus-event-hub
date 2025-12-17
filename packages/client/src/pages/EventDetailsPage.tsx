@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { eventApi } from '../auth/api'
+import { eventApi, API_BASE_URL } from '../auth/api'
 import type { Event, EventAttachment, EventApprovalHistory } from '../auth/api'
 import { FileUpload } from '../components/FileUpload'
 import { AttachmentList } from '../components/AttachmentList'
@@ -346,7 +346,6 @@ const EventDetailsPage = () => {
         return
       }
 
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
       const response = await fetch(`${API_BASE_URL}/events/${event.id}/attendees/export/csv`, {
         method: 'GET',
         headers: {

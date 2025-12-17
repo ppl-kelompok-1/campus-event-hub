@@ -1,6 +1,10 @@
 import { getToken } from './storage'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
+
+// Server base URL for static assets (logos, uploads, etc.)
+// Derive from API_BASE_URL by removing /api/v1 suffix
+export const SERVER_BASE_URL = API_BASE_URL.replace(/\/api\/v1\/?$/, '')
 
 interface FetchOptions extends RequestInit {
   requireAuth?: boolean

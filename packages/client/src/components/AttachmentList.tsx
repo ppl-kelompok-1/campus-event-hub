@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { eventApi } from '../auth/api'
+import { eventApi, API_BASE_URL } from '../auth/api'
 import type { EventAttachment } from '../auth/api'
 import { useAuth } from '../auth/AuthContext'
 
@@ -101,7 +101,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
           </div>
 
           <a
-            href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'}${attachment.downloadUrl}`}
+            href={`${API_BASE_URL}${attachment.downloadUrl}`}
             download
             style={{
               padding: '6px 12px',

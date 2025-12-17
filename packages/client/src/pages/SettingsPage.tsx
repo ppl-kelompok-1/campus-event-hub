@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSettings } from '../contexts/SettingsContext'
 import { useAuth } from '../auth/AuthContext'
-import type { UpdateSettingsDto } from '../auth/api'
+import { SERVER_BASE_URL, type UpdateSettingsDto } from '../auth/api'
 
 // Default settings values
 const DEFAULT_SETTINGS: UpdateSettingsDto = {
@@ -262,7 +262,7 @@ const SettingsPage = () => {
               {settings.siteLogoUrl && (
                 <div style={{ marginBottom: '12px' }}>
                   <img
-                    src={`http://localhost:3000${settings.siteLogoUrl}`}
+                    src={`${SERVER_BASE_URL}${settings.siteLogoUrl}`}
                     alt="Current Logo"
                     style={{ maxHeight: '80px', marginBottom: '12px' }}
                   />

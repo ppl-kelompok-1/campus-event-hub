@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useSettings } from '../contexts/SettingsContext'
+import { SERVER_BASE_URL } from '../auth/api'
 
 interface TopBarProps {
   onMenuToggle: () => void
@@ -30,7 +31,7 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuToggle }) => {
             {settings?.siteLogoUrl ? (
               <div className="topbar-logo-with-image">
                 <img
-                  src={`http://localhost:3000${settings.siteLogoUrl}`}
+                  src={`${SERVER_BASE_URL}${settings.siteLogoUrl}`}
                   alt={settings?.siteTitle || 'Campus Event Hub'}
                   className="topbar-logo-image"
                   onError={(e) => {

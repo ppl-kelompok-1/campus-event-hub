@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react'
-import { eventApi } from '../auth/api'
+import { eventApi, API_BASE_URL } from '../auth/api'
 import type { Event } from '../auth/api'
 import EventsTable from '../components/EventsTable'
 import type { EventsTableAction } from '../components/EventsTable'
 import { useAuth } from '../auth/AuthContext'
 import { getToken } from '../auth/storage'
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
 
 const EventsPage = () => {
   const [events, setEvents] = useState<Event[]>([])
