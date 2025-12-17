@@ -15,7 +15,6 @@
 | **Frontend** | `/packages/client/dist/` | React application (HTML, CSS, JS bundles) |
 | **Backend API** | `/packages/server/dist/` | Express.js server (compiled JavaScript) |
 | **Database** | `app.db` | SQLite database with schema |
-| **Email Service** | `/packages/notification/dist/` | Notification service |
 
 ### 1.2 Deployment Package
 
