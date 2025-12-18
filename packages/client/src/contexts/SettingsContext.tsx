@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
-import { settingsApi } from '../auth/api'
+import { settingsApi, SERVER_BASE_URL } from '../auth/api'
 import type { SiteSettings, UpdateSettingsDto } from '../auth/api'
 
 interface SettingsContextType {
@@ -67,6 +67,17 @@ export const SettingsProvider = ({ children }: SettingsProviderProps) => {
 
       // Update document background color
       document.body.style.backgroundColor = settings.backgroundColor
+
+      // Update document title
+      document.title = settings.siteTitle || 'Campus Event Hub'
+
+      // Update favicon if logo is uploaded
+      if (settings.siteLogoUrl) {
+        const faviconLink = document.querySelector("link[rel~='icon']") as HTMLLinkElement
+        if (faviconLink) {
+          faviconLink.href = `${SERVER_BASE_URL}${settings.siteLogoUrl}`
+        }
+      }
     }
   }, [settings])
 

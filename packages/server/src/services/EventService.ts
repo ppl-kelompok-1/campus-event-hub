@@ -115,7 +115,8 @@ export class EventService {
   // Get events created by a specific user
   async getUserEvents(userId: number): Promise<EventResponse[]> {
     const events = await this.eventRepository.findByCreator(userId);
-    return this.enrichEventsWithCreatorNames(events);
+    const enrichedWithCreators = await this.enrichEventsWithCreatorNames(events);
+    return this.enrichEventsWithRegistrationInfo(enrichedWithCreators, userId);
   }
 
   // Update event (only by creator or admin)
@@ -130,6 +131,16 @@ export class EventService {
     const canModify = await this.canModifyEvent(id, userId, userRole);
     if (!canModify) {
       throw new Error('Insufficient permissions to modify this event');
+    }
+
+    // Validate status change permissions for regular users
+    if (userRole === UserRole.USER && eventData.status) {
+      if (eventData.status === EventStatus.PUBLISHED) {
+        throw new Error('Regular users cannot publish events directly. Please submit for approval.');
+      }
+      if (eventData.status === EventStatus.CANCELLED) {
+        throw new Error('Regular users cannot cancel events directly.');
+      }
     }
 
     // Validate locationId if being updated
@@ -659,17 +670,13 @@ export class EventService {
 
     // Fetch events based on user role
     if (userRole === UserRole.ADMIN || userRole === UserRole.SUPERADMIN) {
-      // Admins can export all events
+      // Admins can export all events with optional status filter
       const result = await this.getEventsPaginated(1, 10000, filters?.status, userId);
       events = result.events;
     } else {
-      // Regular users and approvers can only export their own events
-      events = await this.getUserEvents(userId);
-
-      // Apply status filter if provided
-      if (filters?.status) {
-        events = events.filter(event => event.status === filters.status);
-      }
+      // Regular users and approvers can export all PUBLISHED events
+      const result = await this.getEventsPaginated(1, 10000, EventStatus.PUBLISHED, userId);
+      events = result.events;
     }
 
     // Apply date range filter if provided

@@ -691,7 +691,7 @@ export const locationApi = {
   },
 
   // Create a new location (admin only)
-  create: async (data: { name: string }) => {
+  create: async (data: { name: string; maxCapacity?: number }) => {
     return fetchApi<ApiResponse<Location>>('/locations', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -701,7 +701,7 @@ export const locationApi = {
   },
 
   // Update a location (admin only)
-  update: async (id: number, data: { name?: string; isActive?: boolean }) => {
+  update: async (id: number, data: { name?: string; maxCapacity?: number; isActive?: boolean }) => {
     return fetchApi<ApiResponse<Location>>(`/locations/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
