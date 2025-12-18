@@ -83,6 +83,17 @@ export const UserManualLayout: React.FC<UserManualLayoutProps> = ({ children }) 
         { path: '/user-manual/superadministrators/updating-settings', title: 'Updating Settings' },
         { path: '/user-manual/superadministrators/uploading-logo', title: 'Uploading Logo' }
       ]
+    },
+    'troubleshooting': {
+      title: 'Troubleshooting',
+      icon: '🔧',
+      pages: [
+        { path: '/user-manual/troubleshooting/common-issues', title: 'Common Issues' },
+        { path: '/user-manual/troubleshooting/event-creator-issues', title: 'Event Creator Issues' },
+        { path: '/user-manual/troubleshooting/approver-issues', title: 'Approver Issues' },
+        { path: '/user-manual/troubleshooting/admin-issues', title: 'Administrator Issues' },
+        { path: '/user-manual/troubleshooting/technical-issues', title: 'Technical Issues' }
+      ]
     }
   };
 

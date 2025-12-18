@@ -74,6 +74,18 @@ export default function UserManualIndexPage() {
         { title: 'Updating Settings', path: '/user-manual/superadministrators/updating-settings' },
         { title: 'Uploading Logo', path: '/user-manual/superadministrators/uploading-logo' }
       ]
+    },
+    {
+      role: 'Troubleshooting',
+      icon: '🔧',
+      description: 'Solutions for common problems and technical issues',
+      pages: [
+        { title: 'Common Issues', path: '/user-manual/troubleshooting/common-issues' },
+        { title: 'Event Creator Issues', path: '/user-manual/troubleshooting/event-creator-issues' },
+        { title: 'Approver Issues', path: '/user-manual/troubleshooting/approver-issues' },
+        { title: 'Administrator Issues', path: '/user-manual/troubleshooting/admin-issues' },
+        { title: 'Technical Issues', path: '/user-manual/troubleshooting/technical-issues' }
+      ]
     }
   ];
 

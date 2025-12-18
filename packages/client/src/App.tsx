@@ -46,6 +46,11 @@ import CreatingLocationPage from './pages/user-manual/administrators/CreatingLoc
 import TogglingLocationPage from './pages/user-manual/administrators/TogglingLocationPage'
 import UpdatingSettingsPage from './pages/user-manual/superadministrators/UpdatingSettingsPage'
 import UploadingLogoPage from './pages/user-manual/superadministrators/UploadingLogoPage'
+import CommonIssuesPage from './pages/user-manual/troubleshooting/CommonIssuesPage'
+import EventCreatorIssuesPage from './pages/user-manual/troubleshooting/EventCreatorIssuesPage'
+import ApproverIssuesPage from './pages/user-manual/troubleshooting/ApproverIssuesPage'
+import AdminIssuesPage from './pages/user-manual/troubleshooting/AdminIssuesPage'
+import TechnicalIssuesPage from './pages/user-manual/troubleshooting/TechnicalIssuesPage'
 import './App.css'
 
 function App() {
@@ -94,6 +99,11 @@ function App() {
           <Route path="/user-manual/administrators/toggling-location" element={<TogglingLocationPage />} />
           <Route path="/user-manual/superadministrators/updating-settings" element={<UpdatingSettingsPage />} />
           <Route path="/user-manual/superadministrators/uploading-logo" element={<UploadingLogoPage />} />
+          <Route path="/user-manual/troubleshooting/common-issues" element={<CommonIssuesPage />} />
+          <Route path="/user-manual/troubleshooting/event-creator-issues" element={<EventCreatorIssuesPage />} />
+          <Route path="/user-manual/troubleshooting/approver-issues" element={<ApproverIssuesPage />} />
+          <Route path="/user-manual/troubleshooting/admin-issues" element={<AdminIssuesPage />} />
+          <Route path="/user-manual/troubleshooting/technical-issues" element={<TechnicalIssuesPage />} />
 
           {/* Protected routes */}
           <Route
