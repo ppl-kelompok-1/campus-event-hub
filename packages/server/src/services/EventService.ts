@@ -659,17 +659,13 @@ export class EventService {
 
     // Fetch events based on user role
     if (userRole === UserRole.ADMIN || userRole === UserRole.SUPERADMIN) {
-      // Admins can export all events
+      // Admins can export all events with optional status filter
       const result = await this.getEventsPaginated(1, 10000, filters?.status, userId);
       events = result.events;
     } else {
-      // Regular users and approvers can only export their own events
-      events = await this.getUserEvents(userId);
-
-      // Apply status filter if provided
-      if (filters?.status) {
-        events = events.filter(event => event.status === filters.status);
-      }
+      // Regular users and approvers can export all PUBLISHED events
+      const result = await this.getEventsPaginated(1, 10000, EventStatus.PUBLISHED, userId);
+      events = result.events;
     }
 
     // Apply date range filter if provided
