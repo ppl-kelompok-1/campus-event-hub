@@ -785,6 +785,48 @@ const EventDetailsPage = () => {
 
           <div>
             <div style={{ color: '#6c757d', fontSize: '0.875rem', marginBottom: '4px' }}>
+              📝 Registration Period
+            </div>
+            <div style={{ fontWeight: '500' }}>
+              Opens: {formatDate(event.registrationStartDate)} at {formatTime(event.registrationStartTime)}
+            </div>
+            <div style={{ fontWeight: '500' }}>
+              Closes: {formatDate(event.registrationEndDate)} at {formatTime(event.registrationEndTime)}
+            </div>
+            {!event.hasRegistrationStarted && (
+              <div style={{
+                color: '#ffc107',
+                fontSize: '0.875rem',
+                fontStyle: 'italic',
+                marginTop: '4px'
+              }}>
+                Registration not yet open
+              </div>
+            )}
+            {event.hasRegistrationEnded && (
+              <div style={{
+                color: '#dc3545',
+                fontSize: '0.875rem',
+                fontStyle: 'italic',
+                marginTop: '4px'
+              }}>
+                Registration closed
+              </div>
+            )}
+            {event.isRegistrationOpen && (
+              <div style={{
+                color: '#28a745',
+                fontSize: '0.875rem',
+                fontStyle: 'italic',
+                marginTop: '4px'
+              }}>
+                Registration open
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div style={{ color: '#6c757d', fontSize: '0.875rem', marginBottom: '4px' }}>
               📍 Location
             </div>
             <div style={{ fontWeight: '500' }}>

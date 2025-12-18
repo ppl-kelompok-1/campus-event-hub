@@ -191,6 +191,38 @@ const EventsTable: React.FC<EventsTableProps> = ({
     return labels[status] || status
   }
 
+  // Calculate date filter counts based on status-filtered events
+  const getDateFilterCounts = () => {
+    // First apply status filter
+    let statusFiltered = [...events]
+    if (showStatusFilters && statusFilter !== 'all') {
+      statusFiltered = statusFiltered.filter(event => event.status === statusFilter)
+    }
+
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+    const upcomingCount = statusFiltered.filter(event => {
+      const eventDate = new Date(event.eventDate)
+      const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate())
+      return eventDateOnly >= today
+    }).length
+
+    const pastCount = statusFiltered.filter(event => {
+      const eventDate = new Date(event.eventDate)
+      const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate())
+      return eventDateOnly < today
+    }).length
+
+    return {
+      all: statusFiltered.length,
+      upcoming: upcomingCount,
+      past: pastCount
+    }
+  }
+
+  const dateFilterCounts = getDateFilterCounts()
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '40px' }}>
@@ -263,7 +295,7 @@ const EventsTable: React.FC<EventsTableProps> = ({
                   transition: 'all 0.2s'
                 }}
               >
-                All Events
+                All Events ({dateFilterCounts.all})
               </button>
               <button
                 onClick={() => setDateFilter('upcoming')}
@@ -279,7 +311,7 @@ const EventsTable: React.FC<EventsTableProps> = ({
                   transition: 'all 0.2s'
                 }}
               >
-                Upcoming
+                Upcoming ({dateFilterCounts.upcoming})
               </button>
               <button
                 onClick={() => setDateFilter('past')}
@@ -295,7 +327,7 @@ const EventsTable: React.FC<EventsTableProps> = ({
                   transition: 'all 0.2s'
                 }}
               >
-                Past
+                Past ({dateFilterCounts.past})
               </button>
             </div>
           </div>
