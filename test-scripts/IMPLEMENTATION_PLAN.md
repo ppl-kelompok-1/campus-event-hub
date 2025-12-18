@@ -46,79 +46,191 @@ tar -czf campus-event-hub-v1.0.0.tar.gz \
   packages/notification/dist/
 ```
 
-### 2.2 Server Setup
+### 2.2 Server Setup & Deployment
 
-**Azure VM Connection**:
+**Step 1: Connect to Azure VM**
 ```bash
-# Connect via SSH
-ssh pplkelompok1@<VM_PUBLIC_IP>
-
-# Or use Azure CLI
-az ssh vm --resource-group rg-campus-event-hub --name vm-campus-event-hub
+ssh pplkelompok1@57.158.27.31
 ```
 
-**System Requirements** (Azure VM: Standard D2s v3):
-- OS: Ubuntu Server 24.04 LTS
-- CPU: 2 vCPUs
-- RAM: 8 GiB
-- Storage: Standard SSD LRS
-- Ports: 22 (SSH), 80 (HTTP), 443 (HTTPS)
-
-**Install Dependencies**:
+**Step 2: Update System**
 ```bash
-# Update system
 sudo apt update && sudo apt upgrade -y
+```
 
-# Node.js 20.x
+**Step 3: Install Node.js (v20 LTS)**
+```bash
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
-
-# Package manager
-npm install -g pnpm
-
-# Web server
-sudo apt install -y nginx
-
-# Process manager
-npm install -g pm2
-
-# SSL certificates
-sudo apt install -y certbot python3-certbot-nginx
-
-# Build tools (for native dependencies)
-sudo apt install -y build-essential python3
 ```
 
-### 2.3 Deployment Steps
+**Step 4: Install pnpm**
+```bash
+sudo npm install -g pnpm
+```
+
+**Step 5: Install Nginx (Reverse Proxy)**
+```bash
+sudo apt install -y nginx
+```
+
+**Step 6: Clone Repository**
+```bash
+git clone https://github.com/ppl-kelompok-1/campus-event-hub.git
+cd campus-event-hub
+```
+
+**Step 7: Install Dependencies**
+```bash
+pnpm install
+```
+
+**Step 8: Setup Environment Variables**
+```bash
+# Create .env file for server
+vim packages/server/.env
+```
+
+**Server .env contents**:
+```env
+PORT=3000
+DATABASE_PATH=./data/app.db
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_EXPIRES_IN=7d
+
+# Email Configuration (optional)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+EMAIL_FROM=noreply@campus-event-hub.com
+
+# Application URL
+APP_URL=http://57.158.27.31
+```
 
 ```bash
-# 1. Upload to server
-scp campus-event-hub-v1.0.0.tar.gz user@server:/var/www/
+# Create .env file for client
+vim packages/client/.env
+```
 
-# 2. Extract
-cd /var/www/campus-event-hub
-tar -xzf campus-event-hub-v1.0.0.tar.gz
+**Client .env contents**:
+```env
+VITE_API_URL=http://57.158.27.31/api/v1
+```
 
-# 3. Configure environment
-cp .env.example .env
-nano .env  # Edit production settings
+**Step 9: Build Application**
+```bash
+# Build both client and server
+pnpm build
+```
 
-# 4. Initialize database
+**Step 10: Initialize Database**
+```bash
 cd packages/server
-pnpm run init-superadmin
+pnpm init-superadmin
+cd ../..
+```
 
-# 5. Configure Nginx
-sudo cp configs/nginx.conf /etc/nginx/sites-available/campus-event-hub
-sudo ln -s /etc/nginx/sites-available/campus-event-hub /etc/nginx/sites-enabled/
+**Step 11: Install PM2 for Process Management**
+```bash
+sudo npm install -g pm2
+```
+
+**Step 12: Start Backend Server**
+```bash
+cd packages/server
+pm2 start "pnpm start" --name server
+cd ../..
+```
+
+**Step 13: Configure Nginx**
+```bash
+sudo vim /etc/nginx/sites-available/default
+```
+
+**Nginx Configuration**:
+```nginx
+server {
+    listen 80;
+    server_name 57.158.27.31;
+
+    # Frontend static files
+    location / {
+        root /home/pplkelompok1/campus-event-hub/packages/client/dist;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # API reverse proxy
+    location /api/ {
+        proxy_pass http://localhost:3000/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Serve uploaded files
+    location /uploads/ {
+        alias /home/pplkelompok1/campus-event-hub/packages/server/uploads/;
+    }
+}
+```
+
+**Step 14: Test and Reload Nginx**
+```bash
 sudo nginx -t
 sudo systemctl reload nginx
+```
 
-# 6. Setup SSL
-sudo certbot --nginx -d your-domain.com
-
-# 7. Start services
-pm2 start configs/pm2.config.js
+**Step 15: Setup PM2 Auto-start on Reboot**
+```bash
+pm2 startup
+# Run the command it outputs (sudo env PATH=...)
 pm2 save
+```
+
+**Step 16: Verify Deployment**
+```bash
+# Check PM2 processes
+pm2 list
+
+# Check Nginx status
+sudo systemctl status nginx
+
+# Test API
+curl http://localhost:3000/api/v1/health
+
+# Test from browser
+# Frontend: http://57.158.27.31
+# API: http://57.158.27.31/api/v1/health
+```
+
+### 2.3 Quick Reference Commands
+
+```bash
+# View logs
+pm2 logs server
+
+# Restart services
+pm2 restart server
+
+# Stop services
+pm2 stop all
+
+# Monitor resources
+pm2 monit
+
+# Update application
+cd ~/campus-event-hub
+git pull
+pnpm install
+pnpm build
+pm2 restart server
 ```
 
 ### 2.4 Configuration Files
@@ -259,7 +371,7 @@ newman run campus-event-hub-collection.json \
 |---------|-------|
 | Virtual Network | `vm-campus-event-hub-vnet` (new) |
 | Subnet | `default` (10.0.0.0/24) (new) |
-| Public IP | `vm-campus-event-hub-ip` (new) |
+| Public IP | `57.158.27.31` |
 | Public Inbound Ports | SSH (22), HTTP (80), HTTPS (443) |
 | Accelerated Networking | On |
 | Load Balancer | No |
@@ -497,9 +609,9 @@ This implementation plan provides a structured approach for deploying Campus Eve
 - Monthly cost: $20-50
 
 **Next Steps**:
-1. Create Azure VM `vm-campus-event-hub` in resource group `rg-campus-event-hub`
-2. Connect via SSH: `ssh pplkelompok1@<VM_PUBLIC_IP>`
-3. Execute deployment following steps in Section 2
-4. Run validation tests from Section 3
+1. Connect to Azure VM: `ssh pplkelompok1@57.158.27.31`
+2. Execute deployment following steps in Section 2.2
+3. Run validation tests from Section 3
+4. Access application at: http://57.158.27.31
 5. Monitor metrics from Section 5
 6. Maintain with backup strategy from Section 6
