@@ -688,7 +688,7 @@ export class EventService {
     }
 
     // CSV headers
-    const headers = ['Event Title', 'Creator', 'Status', 'Event Date', 'Location', 'Attendees', 'Last Updated'];
+    const headers = ['Event Title', 'Creator', 'Status', 'Event Date', 'Registration Start', 'Registration End', 'Location', 'Attendees', 'Last Updated'];
 
     // Map events to CSV rows
     const rows = events.map(event => [
@@ -696,6 +696,8 @@ export class EventService {
       this.escapeCSV(event.creatorName),
       this.getStatusText(event.status),
       this.formatDateTime(`${event.eventDate}T${event.eventTime}`),
+      this.formatDateTime(`${event.registrationStartDate}T${event.registrationStartTime}`),
+      this.formatDateTime(`${event.registrationEndDate}T${event.registrationEndTime}`),
       this.escapeCSV(event.locationName),
       this.formatAttendees(event.currentAttendees, event.maxAttendees),
       this.formatDateTime(event.updatedAt)
