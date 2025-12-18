@@ -115,7 +115,8 @@ export class EventService {
   // Get events created by a specific user
   async getUserEvents(userId: number): Promise<EventResponse[]> {
     const events = await this.eventRepository.findByCreator(userId);
-    return this.enrichEventsWithCreatorNames(events);
+    const enrichedWithCreators = await this.enrichEventsWithCreatorNames(events);
+    return this.enrichEventsWithRegistrationInfo(enrichedWithCreators, userId);
   }
 
   // Update event (only by creator or admin)
