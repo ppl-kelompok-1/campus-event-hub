@@ -25,7 +25,7 @@ const EditEventPage = () => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
 
@@ -51,7 +51,19 @@ const EditEventPage = () => {
       setError('')
       const response = await eventApi.getEventById(Number(id))
       const eventData = response.data
-      
+
+      // Check ownership - only owner or admin/superadmin/approver can edit
+      const canEdit = eventData.createdBy === user?.id ||
+                      user?.role === 'admin' ||
+                      user?.role === 'superadmin' ||
+                      user?.role === 'approver'
+
+      if (!canEdit) {
+        setError('You do not have permission to edit this event.')
+        setLoading(false)
+        return
+      }
+
       setEvent(eventData)
       setFormData({
         title: eventData.title,
@@ -463,9 +475,23 @@ const EditEventPage = () => {
             }}
           >
             <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="cancelled">Cancelled</option>
+            {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'approver') && (
+              <option value="published">Published</option>
+            )}
+            {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'approver') && (
+              <option value="cancelled">Cancelled</option>
+            )}
           </select>
+          {user?.role === 'user' && (
+            <div style={{
+              marginTop: '8px',
+              fontSize: '14px',
+              color: '#6c757d',
+              fontStyle: 'italic'
+            }}>
+              Note: Regular users must submit events for approval before they can be published.
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>

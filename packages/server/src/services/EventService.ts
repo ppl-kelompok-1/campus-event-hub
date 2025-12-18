@@ -133,6 +133,16 @@ export class EventService {
       throw new Error('Insufficient permissions to modify this event');
     }
 
+    // Validate status change permissions for regular users
+    if (userRole === UserRole.USER && eventData.status) {
+      if (eventData.status === EventStatus.PUBLISHED) {
+        throw new Error('Regular users cannot publish events directly. Please submit for approval.');
+      }
+      if (eventData.status === EventStatus.CANCELLED) {
+        throw new Error('Regular users cannot cancel events directly.');
+      }
+    }
+
     // Validate locationId if being updated
     if (eventData.locationId !== undefined) {
       const locationExists = await this.locationRepository.exists(eventData.locationId);
