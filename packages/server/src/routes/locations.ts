@@ -89,7 +89,7 @@ export const createLocationRouter = (locationService: LocationService, authServi
     authenticate(authService),
     authorize(UserRole.ADMIN, UserRole.SUPERADMIN),
     asyncHandler(async (req: Request, res: Response) => {
-      const { name } = req.body as CreateLocationDto;
+      const { name, maxCapacity } = req.body as CreateLocationDto;
 
       if (!name) {
         return res.status(400).json({
@@ -99,7 +99,8 @@ export const createLocationRouter = (locationService: LocationService, authServi
       }
 
       const locationData: CreateLocationDto = {
-        name
+        name,
+        maxCapacity: maxCapacity !== undefined ? Number(maxCapacity) : undefined
       };
 
       const location = await locationService.createLocation(locationData);
@@ -125,11 +126,12 @@ export const createLocationRouter = (locationService: LocationService, authServi
         });
       }
 
-      const { name, isActive } = req.body as UpdateLocationDto;
+      const { name, isActive, maxCapacity } = req.body as UpdateLocationDto;
 
       const locationData: UpdateLocationDto = {
         name,
-        isActive: isActive !== undefined ? Boolean(isActive) : undefined
+        isActive: isActive !== undefined ? Boolean(isActive) : undefined,
+        maxCapacity: maxCapacity !== undefined ? Number(maxCapacity) : undefined
       };
 
       const location = await locationService.updateLocation(id, locationData);
