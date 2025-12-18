@@ -48,15 +48,27 @@ tar -czf campus-event-hub-v1.0.0.tar.gz \
 
 ### 2.2 Server Setup
 
-**System Requirements**:
-- OS: Ubuntu 22.04 LTS
-- CPU: 2-4 cores
-- RAM: 2-4 GB
-- Storage: 20-50 GB
-- Ports: 80 (HTTP), 443 (HTTPS)
+**Azure VM Connection**:
+```bash
+# Connect via SSH
+ssh pplkelompok1@<VM_PUBLIC_IP>
+
+# Or use Azure CLI
+az ssh vm --resource-group rg-campus-event-hub --name vm-campus-event-hub
+```
+
+**System Requirements** (Azure VM: Standard D2s v3):
+- OS: Ubuntu Server 24.04 LTS
+- CPU: 2 vCPUs
+- RAM: 8 GiB
+- Storage: Standard SSD LRS
+- Ports: 22 (SSH), 80 (HTTP), 443 (HTTPS)
 
 **Install Dependencies**:
 ```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
 # Node.js 20.x
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
@@ -72,6 +84,9 @@ npm install -g pm2
 
 # SSL certificates
 sudo apt install -y certbot python3-certbot-nginx
+
+# Build tools (for native dependencies)
+sudo apt install -y build-essential python3
 ```
 
 ### 2.3 Deployment Steps
@@ -198,30 +213,110 @@ newman run campus-event-hub-collection.json \
 
 ## 4. TARGET (Deployment Specifications)
 
-### 4.1 Server Specifications
+### 4.1 Azure Virtual Machine Configuration
 
-**Cloud Provider**: DigitalOcean / AWS EC2 / Vultr
+**Cloud Provider**: Microsoft Azure (Azure for Students)
+
+**Subscription & Resource**:
+| Setting | Value |
+|---------|-------|
+| Subscription | Azure for Students |
+| Resource Group | `rg-campus-event-hub` |
+| VM Name | `vm-campus-event-hub` |
+| Region | East Asia |
+| Availability Zone | Zone 1 (Self-selected) |
+| Cost | ~$0.1320 USD/hr |
 
 **Instance Configuration**:
-- **Minimum**: 2 CPU, 2 GB RAM, 20 GB SSD
-- **Recommended**: 4 CPU, 4 GB RAM, 50 GB SSD
+| Spec | Value |
+|------|-------|
+| Size | Standard D2s v3 |
+| vCPUs | 2 |
+| Memory | 8 GiB |
+| Security Type | Standard |
+| Image | Ubuntu Server 24.04 LTS - Gen2 |
+| Architecture | x64 |
+| Hibernation | Disabled |
+| Azure Spot | No |
 
-**Operating System**: Ubuntu 22.04 LTS (64-bit)
+**Authentication**:
+| Setting | Value |
+|---------|-------|
+| Type | Password |
+| Username | `pplkelompok1` |
 
-**Network**:
-- Static public IP address
-- Domain name configured (DNS)
-- Ports 22, 80, 443 open
-- UFW firewall enabled
+**Storage (Disks)**:
+| Setting | Value |
+|---------|-------|
+| OS Disk Size | Image default |
+| OS Disk Type | Standard SSD LRS |
+| Managed Disks | Yes |
+| Delete with VM | Enabled |
+| Ephemeral Disk | No |
 
-### 4.2 Database Configuration
+**Networking**:
+| Setting | Value |
+|---------|-------|
+| Virtual Network | `vm-campus-event-hub-vnet` (new) |
+| Subnet | `default` (10.0.0.0/24) (new) |
+| Public IP | `vm-campus-event-hub-ip` (new) |
+| Public Inbound Ports | SSH (22), HTTP (80), HTTPS (443) |
+| Accelerated Networking | On |
+| Load Balancer | No |
+| Delete IP/NIC with VM | Enabled |
+
+**Management**:
+| Setting | Value |
+|---------|-------|
+| Microsoft Defender | Basic (free) |
+| Managed Identity | Off |
+| Entra ID Login | Off |
+| Auto-shutdown | Off |
+| Backup | Disabled |
+| Hotpatch | Off |
+| Patch Orchestration | Image Default |
+
+**Monitoring**:
+| Setting | Value |
+|---------|-------|
+| Alerts | Off |
+| Boot Diagnostics | On |
+| OS Guest Diagnostics | Off |
+| App Health Monitoring | Off |
+
+**Advanced**:
+| Setting | Value |
+|---------|-------|
+| Extensions | None |
+| VM Applications | None |
+| Cloud Init | No |
+| User Data | No |
+| Disk Controller | SCSI |
+| Proximity Placement | None |
+| Capacity Reservation | None |
+
+### 4.2 Network Configuration
+
+**Firewall Rules (NSG)**:
+| Priority | Name | Port | Protocol | Source | Action |
+|----------|------|------|----------|--------|--------|
+| 300 | SSH | 22 | TCP | Any | Allow |
+| 320 | HTTP | 80 | TCP | Any | Allow |
+| 340 | HTTPS | 443 | TCP | Any | Allow |
+
+**DNS Configuration**:
+- Static public IP address assigned
+- Configure custom domain pointing to Azure Public IP
+- SSL certificate via Let's Encrypt
+
+### 4.3 Database Configuration
 
 - **Type**: SQLite 3 (file-based)
 - **Location**: `/var/www/campus-event-hub/packages/server/data/app.db`
 - **Backup**: Daily automated backups
 - **Retention**: 30 days
 
-### 4.3 Monitoring Setup
+### 4.4 Monitoring Setup
 
 **Tools**:
 - PM2 built-in monitoring
@@ -318,7 +413,8 @@ Uptime = (43,200 - 30) / 43,200 × 100 = 99.93% ✓
 - Backup/restore: <30 minutes
 
 **Cost Efficiency**:
-- Infrastructure: $20-50/month
+- Azure VM (Standard D2s v3): ~$0.1320/hr (~$95/month if running 24/7)
+- Azure for Students credits apply
 - Bandwidth: <500 GB/month
 - Storage growth: <10 GB/month
 
@@ -401,8 +497,9 @@ This implementation plan provides a structured approach for deploying Campus Eve
 - Monthly cost: $20-50
 
 **Next Steps**:
-1. Provision VPS server (DigitalOcean/AWS)
-2. Execute deployment following steps in Section 2
-3. Run validation tests from Section 3
-4. Monitor metrics from Section 5
-5. Maintain with backup strategy from Section 6
+1. Create Azure VM `vm-campus-event-hub` in resource group `rg-campus-event-hub`
+2. Connect via SSH: `ssh pplkelompok1@<VM_PUBLIC_IP>`
+3. Execute deployment following steps in Section 2
+4. Run validation tests from Section 3
+5. Monitor metrics from Section 5
+6. Maintain with backup strategy from Section 6
